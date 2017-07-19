@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.doc.OaDocDao">
+    
+	<sql id="oaDocColumns">
+		a.id AS "id",
+		a.title AS "title",
+		a.keyword AS "keyword",
+		a.office_id AS "office.id",
+		a.is_need_lend AS "isNeedLend",
+		a.is_public AS "isPublic",
+		a.file AS "file",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.doc_type AS "docType",
+		o4.name AS "office.name",
+		su1.name AS "createBy.name"
+	</sql>
+	<sql id="oaDocColumnsAdd">
+		<include refid="oaDocColumns"/>
+		<if test="loanUserId != null and loanUserId != ''">,
+			odrav.lend_user_id AS "oaDocReadApply.lendUserId",
+			odrav.lend_status AS "oaDocReadApply.lendStatus"
+		</if>
+		,
+			odracv.apply_count AS "applyCount",
+			ifnull(oddcv.download_count,0) AS "downloadCount"
+	</sql>
+	
+	<sql id="oaDocJoins">
+		LEFT JOIN sys_office o4 ON o4.id = a.office_id
+		LEFT JOIN sys_user su1 ON su1.id = a.create_by
+	</sql>
+	<sql id="oaDocJoinsAdd">
+		<include refid="oaDocJoins"/>
+		<if test="loanUserId != null and loanUserId != ''">
+			LEFT JOIN (<include refid="oaDocReadApplyView"/>) odrav ON odrav.doc_id = a.id
+		</if>
+			LEFT JOIN (<include refid="oaDocReadApplyCountView"/>) odracv ON odracv.doc_id = a.id
+			LEFT JOIN (<include refid="oaDocDownloadCountView"/>) oddcv ON oddcv.doc_id = a.id
+			
+	</sql>
+	
+	<sql id="oaDocReadApplyView">
+		SELECT 
+        	doc_id,lend_status,lend_user_id
+    	FROM
+        	oa_doc_read_apply AS odra
+    	WHERE del_flag=#{DEL_FLAG_NORMAL}
+    	AND lend_user_id=#{loanUserId}
+	</sql>
+	
+	<sql id="oaDocReadApplyCountView">
+		SELECT 
+        	count(id) as apply_count,doc_id
+    	FROM
+        	oa_doc_read_apply AS odra
+    	WHERE del_flag=#{DEL_FLAG_NORMAL}
+    	AND lend_status='0'
+    	GROUP BY doc_id
+	</sql>
+	
+	<sql id="oaDocDownloadCountView">
+		SELECT 
+        	count(id) as download_count,download_doc_id as doc_id
+    	FROM
+        	oa_doc_download AS odd
+    	WHERE del_flag=#{DEL_FLAG_NORMAL}
+    	GROUP BY download_doc_id
+	</sql>
+    
+	<select id="getBy" resultType="OaDoc">
+		SELECT 
+			<include refid="oaDocColumnsAdd"/>
+		FROM oa_doc a
+		<include refid="oaDocJoinsAdd"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="get" resultType="OaDoc">
+		SELECT 
+			<include refid="oaDocColumns"/>
+		FROM oa_doc a
+		<include refid="oaDocJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getOaDocListCount" resultType="Integer">
+		SELECT 
+			COUNT(a.id) as listCount
+		FROM oa_doc a
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="keyword != null and keyword != ''">
+				AND a.keyword LIKE 
+					<if test="dbName == 'oracle'">'%'||#{keyword}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{keyword}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{keyword},'%')</if>
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="isPublic != null and isPublic != ''">
+				AND a.is_public = #{isPublic}
+			</if>
+			<if test="isNeedLend != null and isNeedLend != ''">
+				AND a.is_need_lend = #{isNeedLend}
+			</if>
+			<if test="docType != null and docType != ''">
+				AND a.doc_type = #{docType}
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND a.create_by = #{currentUserId}
+			</if>
+		</where>
+	</select>
+	
+	
+	<select id="findList" resultType="OaDoc">
+		SELECT 
+			<include refid="oaDocColumnsAdd"/>
+		FROM oa_doc a
+		<include refid="oaDocJoinsAdd"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="keyword != null and keyword != ''">
+				AND a.keyword LIKE 
+					<if test="dbName == 'oracle'">'%'||#{keyword}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{keyword}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{keyword},'%')</if>
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="isPublic != null and isPublic != ''">
+				AND a.is_public = #{isPublic}
+			</if>
+			<if test="isNeedLend != null and isNeedLend != ''">
+				AND a.is_need_lend = #{isNeedLend}
+			</if>
+			<if test="docType != null and docType != ''">
+				AND a.doc_type = #{docType}
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND a.create_by = #{currentUserId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaDoc">
+		SELECT 
+			<include refid="oaDocColumns"/>
+		FROM oa_doc a
+		<include refid="oaDocJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_doc(
+			id,
+			title,
+			keyword,
+			office_id,
+			is_need_lend,
+			is_public,
+			file,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			doc_type,
+			del_flag
+		) VALUES (
+			#{id},
+			#{title},
+			#{keyword},
+			#{office.id},
+			#{isNeedLend},
+			#{isPublic},
+			#{file},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{docType},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_doc SET 	
+			title = #{title},
+			keyword = #{keyword},
+			office_id = #{office.id},
+			is_need_lend = #{isNeedLend},
+			is_public = #{isPublic},
+			file = #{file},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			doc_type = #{docType},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_doc SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteGroup">
+		UPDATE cy_tsp_oa_address_group SET 
+			del_flag = '1' 
+		WHERE group_id = #{groupId}
+	</update>
+	
+</mapper>

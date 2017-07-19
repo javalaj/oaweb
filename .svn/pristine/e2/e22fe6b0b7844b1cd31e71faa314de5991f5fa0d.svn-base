@@ -1,0 +1,307 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<!DOCTYPE html>
+<html>
+<head lang="zh-cn">
+<meta charset="UTF-8">
+<title>新建任务</title>
+<meta name="decorator" content="default"/>
+<meta name="" content="no-cache" http-equiv="Pragma" />
+<meta name="" content="no-cache" http-equiv="Cache-Control" />
+<meta name="" content="0" http-equiv="expires" />
+<meta name="viewport"
+	content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<link href="${ctxStatic}/mobile/frame_css/mui.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="${ctxStatic}/mobile/css/mui.css" />
+<link rel="stylesheet" href="${ctxStatic}/mobile/css/oabase.css" />
+<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+ <script type="text/javascript"
+	src="${ctxStatic}/jquery/jquery-1.9.1.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){
+function myfun(){
+    var value='${oaProject.projectName}';
+    var sel = document.getElementById('projectid');
+    for (var i = 0; i < sel.length; i++) {
+           if (sel[i].text == value) { //如果这一项的文本内容为客厅
+               sel[i].selected = true; //选中这一项
+           }
+       };
+   }
+       　window.onload = myfun;//不要括号
+});
+
+$("#btnSubmit1").click(function(){
+	$("#fruit").val("1")
+	var judeg2 = checkdate();
+	var judge1 = judgeInt(); 
+	var judge3=actorName();
+	var judge4=sdatelength();
+	var judge5=edatelength();
+	return judge1&&judeg2&&judge3&&judge4&&judge5;
+})
+	$("#btnSubmit").click(function() {
+					var judge4=sdatelength();
+					var judge5=edatelength();
+					var judge3=actorName();
+					var judeg2 = checkdate();
+					var judge1 = judgeInt(); 
+					return judge1&&judeg2&&judge3&&judge4&&judge5;
+				});
+function judgeInt() {
+	var judge = true;
+	$("input[name='planTitle']").each(function() {
+			if (!(/\S{2,}/.test($(this).val()))) {
+				judge = false;
+				 mui.alert("不能为空并且输入两位以上的字符！", "系统提示");
+			} else {
+			}
+	});
+	return judge;
+}
+function checkdate(){
+	 var judge = true;
+	   	var sDate = new Date($("input[name='startDaytime']").val().replace("-", "/").replace("-", "/"));
+	    var eDate = new Date($("input[name='endTime']").val().replace("-", "/").replace("-", "/"));
+	    if(sDate > eDate)
+	    {
+	    judge = false;
+	    mui.alert("开始日期大于结束日期！", "系统提示");
+	   }
+	    return judge;
+	    }
+function sdatelength(){
+	 var judge = true;
+	   	var sDate = $("input[name='startDaytime']").val();
+	    if(sDate.length == 0)
+	    {
+	    judge = false;
+	    mui.alert("请填写开始时间！", "系统提示");
+	   }
+	    return judge;
+	    }  
+function edatelength(){
+	 var judge = true;
+	    var eDate =$("input[name='endTime']").val();
+	    if(eDate.length == 0)
+	    {
+	    judge = false;
+	    mui.alert("请填写结束时间！", "系统提示");
+	   }
+	    return judge;
+	    }  
+	 function actorName(){
+		 var judge=true;
+		 var actorvalue=$("input[name='actor.name']").val();
+		 if(actorvalue.length==0){
+			 judge = false;
+			    mui.alert("请填写发送对象！", "系统提示");
+		 }
+		  return judge;
+	 }   
+</script>
+<style>
+	.table{
+		border:none;
+	}
+	.table > tbody > tr > td{
+		border:none;
+	}
+	.table > tbody > tr > td input{
+		margin-bottom:0;
+	}
+	.table > tbody > tr > td:first-child{
+		font-size:14px;
+		color:#666;
+		width:20%;
+		padding:0;
+	}
+	.table > tbody > tr > td .check .radio-box{
+            float: left;
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+            position: relative;
+            background: #f25d5d;
+            vertical-align: middle;
+            border-radius: 100%;
+            margin-top: 6px ;
+        }
+
+        .table > tbody > tr > td .check .radio-box:nth-of-type(2){
+            background:#fea35b;
+        }
+
+        .table > tbody > tr > td .check .radio-box:nth-of-type(3){
+            background:#fbd051;
+        }
+
+        .table > tbody > tr > td .check label{
+            float: left;
+            color: #666;
+            font-weight: lighter;
+            line-height: 36px;
+            margin-right: 10px;
+        }
+
+        .radio-box input {
+            opacity: 0;
+            position: absolute;
+            top:0;
+            left:0;
+            width: 100%;
+            height:100%;
+            z-index:100;/*使input按钮在span的上一层，不加点击区域会出现不灵敏*/
+        }
+        .radio-box span {
+            display: block;
+            width: 10px;
+            height: 10px;
+            border-radius: 100%;
+            position: absolute;
+            background: #fff;
+            top: 50%;
+            left:50%;
+            margin: -5px 0  0 -5px;
+            z-index:1;
+        }
+        .radio-box input[type="radio"] + span {
+            opacity: 0;
+        }
+        .radio-box input[type="radio"]:checked + span {
+            opacity: 1;
+        }
+        #fruit{
+        	display:none;
+        }
+        .mui-row div{
+        	text-align:center;
+        }
+        .mui-row div input{
+        	height:32px;
+        	line-height:32px;
+        	font-size:16px;
+        	padding:0 18px;
+        	border: 1px solid #12b7f5;
+    		background-color: #12b7f5;
+        }
+        #btnSubmit{
+        	margin-right:25%;
+        }
+        
+</style>
+</head>
+<body>
+	<header class="mui-bar mui-bar-nav">
+		<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		<h1 class="mui-title">新建任务</h1>
+	</header>
+	<div class="mui-content gray-bg">
+	<form:form id="inputForm" modelAttribute="oaPlan" action="${ctx}/m/oa/task/mytasksave" method="post" class="form-horizontal">
+		<form:hidden path="id"/>
+	<div class="divtable divMargin">
+			<table class="table logDeTable mui-row" border="" cellspacing="0" cellpadding="0">
+			<tr>
+				<td class="header"><span id="date" > 开始时间</span></td>
+				<td> 
+				<input name="startDaytime" class="mui-datetime" type="text"
+					readonly="readonly"
+					value='<fmt:formatDate value="${startDaytime}" pattern="yyyy-MM-dd HH:mm"/>' />
+				</td>
+			</tr>
+			<tr>
+				<td class="header"><span id="date" > 期望结束</span></td>
+				<td>
+					<input name="endTime" type="text" class="mui-datetime"
+					readonly="readonly"
+					value='<fmt:formatDate value="${etr}" pattern="yyyy-MM-dd HH:mm"  />' />	
+				</td>
+			</tr>
+			<tr>
+				<td class="header"><span id="date" class="hespan"> 任务名称</span></td>
+				<td>
+					<span id="" class="contentlog">
+						<form:input name="planTitle" path="planTitle" htmlEscape="false" maxlength="200"  class=" input-group"/>
+					</span>
+				</td>
+			</tr>
+			<tr>
+				<td class="header">
+					<span id="problem" class="hespan">任务描述 </span>
+				</td>
+				<td class="">
+					<div class="log-span">
+					<div>  <form:textarea path="content" htmlEscape="false" rows="4" maxlength="2000" cols="45" class="form-control "/></div>
+						</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="header"><span id="date" class="hespan"> 关联项目</span></td>
+				<td> 
+					<c:if test="${empty oaProject.projectName }">
+                                <select class=" selectpicker" data-style="btn-inverse" data-live-search="true"   name="projectid" id="projectid">
+                                	<option value="0" >请选择所关联项目</option>
+									<c:forEach items="${page}" var="oaProject" varStatus="status">
+									<option value="${oaProject.id}" >${oaProject.projectName}</option>
+									</c:forEach>
+                                </select>
+                                </c:if>
+                                    <c:if test="${!empty oaProject.projectName }">
+                                <select class="input-group"   name="projectid" id="projectid">
+									<c:forEach items="${page}" var="oaProject" varStatus="status">
+									<option value="${oaProject.id}" >${oaProject.projectName}</option>
+									</c:forEach>
+                                </select>
+                                </c:if></td>
+			</tr>	
+			<tr>
+				<td class="header"><span id="date" class="hespan"> 优先级</span></td>
+				<td><div id="" class="contentlog input-group check"> 
+								<c:if test="${empty oaPlan.prefer}">
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="hot" 		value="0" checked><span></span></div><label>紧急</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="orange"  value="1"><span></span></div><label>一般</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="yeelow"  value="2"><span></span></div><label>暂缓</label>
+                                </c:if>
+                                 <c:if test="${oaPlan.prefer==0}">
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="hot" 		value="0" checked><span></span></div><label>紧急</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="orange"  value="1"><span></span></div><label>一般</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="yeelow"  value="2"><span></span></div><label>暂缓</label>
+                                </c:if>
+                                 <c:if test="${oaPlan.prefer==1 }">
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="hot" 		value="0" ><span></span></div><label>紧急</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="orange"  value="1" checked><span></span></div><label>一般</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="yeelow"  value="2"><span></span></div><label>暂缓</label>
+                                </c:if>
+                                       <c:if test="${oaPlan.prefer==2 }">
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="hot" 		value="0" ><span></span></div><label>紧急</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="orange"  value="1"><span></span></div><label>一般</label>
+                                    <div class="radio-box"><input class="input-group" type="radio" name="prefer" id="yeelow"  value="2" checked><span></span></div><label>暂缓</label>
+                                </c:if>
+                    </div>
+                </td>
+				</tr>
+				<tr>
+					<td class="header"><span id="date" class="hespan"> 发送对象</span></td>
+					<td>
+					 <sys:treeselect id="actor" name="actor" value="${oaPlan.actor.id}" labelName="actor.name" labelValue="${name}"
+						title="参与者" url="/sys/office/treeData?type=3&isAll=true" cssClass="form-control required" allowClear="true" notAllowSelectParent="true" checked="true" />
+						</td>
+				</tr>   
+			</table>
+			<div class="mui-row">
+			<div class="mui-col-xs-6">
+				<input id="fruit" class="btn btn-keep"  name="Fruit" type="hidden" value="0"  /><input id="btnSubmit1" class="btn col-xs-offset-3 btn-keep" type="submit" value="草 稿"/>
+			</div>
+			<div class="mui-col-xs-6">
+				<input id="btnSubmit" class="btn btn-keep" type="submit" value="保 存"/>
+			</div>		
+			</div>
+	</div>
+	</form:form>
+	</div>
+	 <sys:mui-datetime></sys:mui-datetime>
+	
+</body>
+
+</html>

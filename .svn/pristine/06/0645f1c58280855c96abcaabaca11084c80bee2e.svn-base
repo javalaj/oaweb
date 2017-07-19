@@ -1,0 +1,378 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.fixedassetpurchase;
+
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassetpurchase.ApplyFixedAssets;
+import com.thinkgem.jeesite.modules.oa.dao.fixedassetpurchase.ApplyFixedAssetsDao;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 固定资产申购Service
+ * @author zf
+ * @version 2017-01-09
+ */
+@Service
+@Transactional(readOnly = true)
+public class ApplyFixedAssetsService extends CrudService<ApplyFixedAssetsDao, ApplyFixedAssets> {
+
+	@Autowired
+	private ActTaskService actTaskService;
+	
+	@Autowired
+	private OfficeService officeService;
+	
+	public static final String PROC_DEF_KEY = "apply_fixed_assets";
+	
+	public static final String BUSINESS_TABLE = "apply_fixed_assets";
+
+	public static final String WORKFLOW_URL = "@@proNotify@@/oa/a/oa/fixedassetpurchase/applyFixedAssets/form?id=";
+	
+	public static final String WORKFLOW_NAME = "固定资产申购";
+	
+	public ApplyFixedAssets get(String id) {
+		return super.get(id);
+	}
+	
+	public List<ApplyFixedAssets> findList(ApplyFixedAssets applyFixedAssets) {
+		return super.findList(applyFixedAssets);
+	}
+	
+	public Page<ApplyFixedAssets> findPage(Page<ApplyFixedAssets> page, ApplyFixedAssets applyFixedAssets) {
+		return super.findPage(page, applyFixedAssets);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(ApplyFixedAssets applyFixedAssets) {
+		super.save(applyFixedAssets);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(ApplyFixedAssets applyFixedAssets) {
+		super.delete(applyFixedAssets);
+	}
+	
+	@Transactional(readOnly = false)
+	public String savePurchase(ApplyFixedAssets applyFixedAssets)
+	{
+		if (StringUtils.equals("save", applyFixedAssets.getAct().getFlag())) 
+		{
+			if (!StringUtils.equals("1", applyFixedAssets.getIsStart())) 
+			{
+				applyFixedAssets.setStatus("0");
+				
+				applyFixedAssets.setIsStart("0");
+			}
+			//保存
+			super.save(applyFixedAssets);
+			
+			return "【固定资产申购】【信息保存】操作已完成";
+		}
+		else
+		{
+			if (StringUtils.isBlank(applyFixedAssets.getId())||StringUtils.equals("0", applyFixedAssets.getIsStart())) 
+			{
+				String officeDeputyPersonLoginNameOfUser=WorkflowUtils.getOfficeDeputyPersonLoginNameOfUser();
+				
+				String officePrimaryPersonLoginNameOfUser=WorkflowUtils.getOfficePrimaryPersonLoginNameOfUser();
+				
+				if (StringUtils.isBlank(officePrimaryPersonLoginNameOfUser)) 
+				{
+					try 
+					{
+						throw new Exception("<找不到您所属的部门主负责人>");
+					} 
+					catch (Exception e) 
+					{
+						e.printStackTrace();
+					}
+				}
+				
+				if (StringUtils.isBlank(officeDeputyPersonLoginNameOfUser)) 
+				{
+					try 
+					{
+						throw new Exception("<找不到您所属的部门主管>");
+					} 
+					catch (Exception e) 
+					{
+						e.printStackTrace();
+					}
+				}
+				
+				applyFixedAssets.setStatus("1");
+				
+				applyFixedAssets.setIsStart("1");
+				
+				super.save(applyFixedAssets);
+				
+				String procDefKey = PROC_DEF_KEY;
+				
+				String businessTable = BUSINESS_TABLE;
+				
+				String businessId = applyFixedAssets.getId();
+				
+				String title = titleHandle(WORKFLOW_NAME);
+				
+				String procInsId = actTaskService.startProcess(procDefKey, businessTable, businessId, title);
+				
+				String comment = "【采购申请】";
+				
+				List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+						.processInstanceId(procInsId).list();
+				try
+				{
+					Thread.sleep(1000);
+				} 
+				catch (InterruptedException e)
+				{
+					
+					e.printStackTrace();
+				}
+				
+				if (list.size() > 0) 
+				{
+					String taskId = list.get(0).getId();
+					
+					Map<String, Object> vars = Maps.newHashMap();
+					
+					String userName = UserUtils.getUser().getLoginName();
+					
+					vars.put("apply", userName);
+					
+					vars.put("flag", true);
+					
+					vars.put("deptDirector", officeDeputyPersonLoginNameOfUser);
+					
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+				}
+				return "【固定资产申购】【提交】操作已完成";
+			} 
+			else 
+			{
+				if (!applyFixedAssets.getAct().isFinishTask()) 
+				{
+					
+					Map<String, Object> vars = Maps.newHashMap();
+					
+					vars.put("flag", applyFixedAssets.getAct().getFlag());
+					
+					String taskId = applyFixedAssets.getAct().getTaskId();
+					
+					String procInsId = applyFixedAssets.getAct().getProcInsId();
+					
+					String comment = "default comment";
+					
+					String title = "【" + applyFixedAssets.getApplyName().getName() + "】" + "【固定资产申购】";
+					
+					String taskDefKey = applyFixedAssets.getAct().getTaskDefKey();
+					
+					if ("exam1".equals(taskDefKey)) 
+					{
+						String officeDeputyPersonLoginNameOfUser=WorkflowUtils.getOfficeDeputyPersonLoginNameOfUser();
+						
+						if (StringUtils.isBlank(officeDeputyPersonLoginNameOfUser)) 
+						{
+							try 
+							{
+								throw new Exception("<找不到您所属的部门主管>");
+							} 
+							catch (Exception e) 
+							{
+								e.printStackTrace();
+							}
+						}
+						
+						comment = resultComment(applyFixedAssets, "重新申请", "销毁申请", "");
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("1");
+							
+							vars.put("deptDirector", officeDeputyPersonLoginNameOfUser);
+						}
+						else
+						{
+							applyFixedAssets.setStatus("x");
+						}
+					} 
+					else if ("exam2".equals(taskDefKey)) 
+					{
+						String officePrimaryPersonLoginNameOfUser=WorkflowUtils.getOfficePrimaryPersonLoginNameOfUser();
+						
+						if (StringUtils.isBlank(officePrimaryPersonLoginNameOfUser)) 
+						{
+							try 
+							{
+								throw new Exception("<找不到您所属的部门主负责人>");
+							} 
+							catch (Exception e) 
+							{
+								e.printStackTrace();
+							}
+						}
+						
+						String deptDirectorSuggestion = applyFixedAssets.getDeptDirectorSuggestion();
+						
+						comment = resultComment(applyFixedAssets, "通过", "驳回", deptDirectorSuggestion);
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("2");
+							
+							Office office = officeService.get(applyFixedAssets
+									.getReletiveOffice());
+							
+							String other = WorkflowUtils.getReletiveOfficePrimaryPersonLoginNameOfUser(office);
+							
+							vars.put("other", other);
+						}
+						else
+						{
+							title = retreatHandle(applyFixedAssets, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							applyFixedAssets.setStatus("z");
+						}
+					} 
+					else if ("exam3".equals(taskDefKey)) 
+					{
+						String otherDirectorSuggestion = applyFixedAssets.getOtherDirectorSuggestion();
+						
+						comment = resultComment(applyFixedAssets, "通过", "驳回", otherDirectorSuggestion);
+						
+						vars.put("generalManager", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "generalManager", ""));
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("3");
+						}
+						else
+						{
+							title = retreatHandle(applyFixedAssets, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							applyFixedAssets.setStatus("1");
+						}
+					} 
+					else if ("exam4".equals(taskDefKey)) 
+					{
+						String generalManagerSuggestion = applyFixedAssets.getGeneralManagerSuggestion();
+						
+						comment = resultComment(applyFixedAssets, "通过", "驳回", generalManagerSuggestion);
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("4");
+							
+							vars.put("staff", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "staff", ""));
+						}
+						else
+						{
+							title = retreatHandle(applyFixedAssets, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							applyFixedAssets.setStatus("2");
+						}
+					} 
+					else if ("exam5".equals(taskDefKey)) 
+					{
+						String purchaser = applyFixedAssets.getPurchaser();
+						
+						comment = resultComment(applyFixedAssets, "通过", "驳回", purchaser);
+						
+						vars.put("assetsAdmin", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "assetsAdmin", ""));
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("5");
+						}
+						else
+						{
+							title = retreatHandle(applyFixedAssets, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							applyFixedAssets.setStatus("3");
+						}
+					} 
+					else if ("exam6".equals(taskDefKey)) 
+					{
+						String admin = applyFixedAssets.getAdmin();
+						
+						comment = resultComment(applyFixedAssets, "结案", "驳回", admin);
+						
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							applyFixedAssets.setStatus("y");
+						}
+						else
+						{
+							title = retreatHandle(applyFixedAssets, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							applyFixedAssets.setStatus("4");
+						}
+					} 
+					
+					applyFixedAssets.preUpdate();
+					
+					dao.update(applyFixedAssets);
+					
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+					
+					if ("exam1".equals(taskDefKey)) 
+					{
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")
+								|| StringUtils.equals(applyFixedAssets.getAct().getFlag(), "false")) 
+						{
+							return "【固定资产申购】【重新申请】操作已完成";
+						}
+						else
+						{
+							return "【固定资产申购】【销毁申请】操作已完成";
+						}
+					}
+					else
+					{
+						if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) 
+						{
+							return "【固定资产申购】【通过申请】操作已完成";
+						}
+						else
+						{
+							return "【固定资产申购】【驳回申请】操作已完成";
+						}
+					}
+				}
+			}
+		}
+		return "default message";
+	}
+	
+	public static String resultComment(ApplyFixedAssets applyFixedAssets, String successText, String failText,
+			String comment) {
+		String result = failText;
+		if (StringUtils.equals(applyFixedAssets.getAct().getFlag(), "true")) {
+			result = successText;
+		}
+		result = "[" + result + "]" + comment;
+		return result;
+	}
+
+	public ApplyFixedAssets getByProcInsId(String procInsId)
+	{
+		return dao.getByProcInsId(procInsId);
+	}
+	
+}

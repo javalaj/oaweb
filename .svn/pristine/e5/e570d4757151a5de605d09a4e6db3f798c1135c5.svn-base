@@ -1,0 +1,554 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.staff;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.ProcessEngines;
+import org.activiti.engine.TaskService;
+import org.activiti.engine.task.Task;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.filling.OaFilling;
+import com.thinkgem.jeesite.modules.oa.entity.staff.OaStaffupdated;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.OaReceiveFileService;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.oa.service.filling.OaFillingService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.oa.service.staff.OaStaffupdatedService;
+import com.thinkgem.jeesite.modules.oa.web.util.TaskUtil;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.entity.workflow.SysWorkflowVar;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.service.workflow.SysWorkflowVarService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 人员增补Controller
+ * @author cz
+ * @version 2017-01-12
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/staff/oaStaffupdated")
+public class OaStaffupdatedController extends BaseController {
+
+	// 定义流程引擎
+	ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+	@Autowired
+	ActTaskService actTaskService;
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private OaProVacateService oaProVacateService;
+	@Autowired
+	private OaStaffupdatedService oaStaffupdatedService;
+	@Autowired
+	private OaNotifyService oanotifyservice;// 通告service
+	@Autowired
+	private SysWorkflowVarService sysWorkflowVarService;// 工作流变量service
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回交接操作service
+	@Autowired
+	private OaReceiveFileService oaReceiveFileService;
+	@ModelAttribute
+	public OaStaffupdated get(@RequestParam(required=false) String id) {
+		OaStaffupdated entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = oaStaffupdatedService.get(id);
+		}
+		if (entity == null){
+			entity = new OaStaffupdated();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("oa:staff:oaStaffupdated:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaStaffupdated> page = oaStaffupdatedService.findPage(new Page<OaStaffupdated>(request, response), oaStaffupdated); 
+		model.addAttribute("page", page);
+		return "modules/oa/staff/oaStaffupdatedList";
+	}
+
+//	@RequiresPermissions("oa:staff:oaStaffupdated:view")
+//	@RequestMapping(value = "form")
+//	public String form(OaStaffupdated oaStaffupdated, Model model) {
+//		model.addAttribute("oaStaffupdated", oaStaffupdated);
+//		model.addAttribute("name", oaStaffupdated.getCurrentUser().getName());
+//		model.addAttribute("date", new Date());
+//		return "modules/oa/staff/oaStaffupdatedForm";
+//	}
+	@RequestMapping(value = "form")
+	@Token(save = true)
+	public String form(OaStaffupdated oaStaffupdated, Model model, String flag, RedirectAttributes redirectAttributes) {
+		oaReceiveFileService.addProcDefId("staffupProcess", model);
+		oaStaffupdated = init(oaStaffupdated);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated) && !"view".equals(flag)) {
+			view = "modules/oa/staff/oaStaffupdatedForm";
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		} else {
+			oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		}
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		model.addAttribute("name", oaStaffupdated.getCurrentUser().getName());
+		model.addAttribute("date", new Date());
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+	@RequiresPermissions("oa:staff:oaStaffupdated:edit")
+	@RequestMapping(value = "save")
+	public String save(OaStaffupdated oaStaffupdated, Model model, RedirectAttributes redirectAttributes,HttpServletRequest request) {
+//		if (!beanValidator(model, oaStaffupdated)){
+//			return form(oaStaffupdated, model);
+//		}
+		String examtext=null;
+		oaStaffupdatedService.save(oaStaffupdated);
+	
+		User currentUser = oaStaffupdated.getCurrentUser();		
+		String processDefinitionKey = "staffupProcess";// 流程key
+		Map<String, Object> variables = new HashMap<String, Object>();
+		
+		variables.put("apply", currentUser.getLoginName());
+//		String use = UserUtils.get(currentUser.getOffice().getPrimaryPerson().getId()).getLoginName();
+		variables.put("applyUserIds", ActRouting.getUpper(UserUtils.getUser().getId()));
+		variables.put("flag", true);
+
+		if (StringUtils.isBlank(oaStaffupdated.getProcInsId())) {
+			// 流程关联id为null所以为第一次创建
+			oaStaffupdated.setProcInsId(actTaskService.startProcess(processDefinitionKey, "oa_staffupdated", oaStaffupdated.getId(),
+					  "人员增补申请流程【" +oaStaffupdated.getCurrentUser().getName()+ DateUtils.getDate() + "】", variables));
+			// 线程暂停两秒，使得流程流转信息排序正确，防止开始和申请排序颠倒
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// 执行下一步
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(), "【提交】", null, variables);
+				oaFlowBackService.saveINIT(oaStaffupdated.getProcInsId(), list.get(0),
+						"/oa/staff/oaStaffupdated/form?flag=view&id=" + oaStaffupdated.getId());
+			}
+			addMessage(redirectAttributes, "申请人员增补流程成功");
+		} else {
+			String i = request.getParameter("Fruit");
+			if (i.equals("2")) {
+				variables.put("flag", false);// 流程控制标志位 boolean
+				examtext = "【作废】";
+				//oaStaffupdated.setSignState("4");// 修改状态为废弃
+				addMessage(redirectAttributes, "人员增补流程废弃成功");
+			}else{
+				examtext = "【重新提交】";
+				addMessage(redirectAttributes, "重新申请人员增补流程成功");
+			}
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(), examtext, null, variables);
+				if (i.equals("2")) {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+				} else {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaStaffupdated.getProcInsId(),list.get(0));
+				}
+			}
+		
+		}
+		oaStaffupdatedService.save(oaStaffupdated);
+
+	
+		return "redirect:" + Global.getAdminPath() + "/oa/staff/oaStaffupdated/form?id=" + oaStaffupdated.getId() + "&flag=view";
+	}
+	
+
+
+	
+	
+	
+	@RequiresPermissions("oa:staff:oaStaffupdated:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaStaffupdated oaStaffupdated, RedirectAttributes redirectAttributes) {
+		oaStaffupdatedService.delete(oaStaffupdated);
+		addMessage(redirectAttributes, "删除人员增补成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/staff/oaStaffupdated/?repage";
+	}
+	
+
+	
+	// 驳回页面
+	@RequestMapping(value = "upSign")
+	@Token(save = true)
+	public String upsign(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+			String Fruit) {
+		oaStaffupdated = init(oaStaffupdated);
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated)) {
+			view = "modules/oa/staff/oaStaffMyForm";
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		}
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+
+	// 部门副总审核
+	@RequestMapping(value = "cmform")
+	@Token(save = true)
+	public String cmform(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+			String Fruit) {
+		oaStaffupdated = init(oaStaffupdated);
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated)) {
+			view = "modules/oa/staff/oaStaffDemandForm";
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		}
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+
+	@Autowired
+	TaskService taskService;
+
+	// 人事行政副总审核
+	@RequestMapping(value = "dmform")
+	@Token(save = true)
+	public String dmform(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+			String Fruit) {
+		oaStaffupdated = init(oaStaffupdated);
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated)) {
+			view = "modules/oa/staff/oaStaffPersonForm";
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		}
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+	// 总经理审核
+	@RequestMapping(value = "depform")
+	@Token(save = true)
+	public String deplist(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model) {
+		oaStaffupdated = init(oaStaffupdated);
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated)) {
+			view = "modules/oa/staff/oaStaffBossForm";
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		}
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+	
+	/**
+	 * 归档审核页面
+	 */
+	@RequiresPermissions("oa:staff:oaStaffupdated:view")
+	@RequestMapping(value = "filling")
+	@Token(save = true)
+	public String filling(OaStaffupdated oaStaffupdated, Model model) {
+		oaStaffupdated = init(oaStaffupdated);
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaStaffupdated.getProcInsId()));
+		oaStaffupdated.setCreateBy(systemService.getUser(oaStaffupdated.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaStaffupdated", oaStaffupdated);
+		String view = "modules/oa/staff/oaStaffView";
+		if (oaStaffupdatedService.isDeal(oaStaffupdated)) {
+			view = "modules/oa/staff/oaStaffFilling";
+			oaFlowBackService.saveNULL(oaStaffupdated.getProcInsId());
+		}
+		addTitle(model, oaStaffupdated);
+		addTask(model, oaStaffupdated);
+		return view;
+	}
+	@Autowired
+	private OaFillingService oaFillingService;// 归档表
+	/**
+	 * 人事归档审核意见提交
+	 */
+	@RequestMapping(value = "dealfilling")
+	public String dealFilling(OaStaffupdated oaStaffupdated, Model model, RedirectAttributes redirectAttributes, String exam) {
+		if (!beanValidator(model, oaStaffupdated)) {
+			return filling(oaStaffupdated, model);
+		}
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId()).list();
+		// 认识归档操作代码？？
+		Map<String, Object> vars = new HashMap<String, Object>();
+		OaFilling oaFilling = new OaFilling();
+		oaFilling.setApplyDate(oaStaffupdated.getCreateDate());
+		String applytype="";
+		if(oaStaffupdated.getUpReason().equals("0")){
+			applytype="补缺";
+		}else if(oaStaffupdated.getUpReason().equals("1")){
+			applytype="增加";
+		}else{
+			applytype="储备";
+		}
+		oaFilling.setApplyReason(applytype);
+		oaFilling.setApplyType("人员增补");
+		oaFilling.setHours(oaStaffupdated.getId());
+		// oaFilling.setApplyTypeLit(DictUtils.getDictValue(oaOutwork.getVacatetype(),
+		// "pro_vacate_type", ""));// 通过数据字典去取得然后存中文
+		oaFilling.setApplyUser(oaStaffupdated.getCreateBy());
+		oaFilling.setFillingDate(new Date());
+		oaFilling.setBeginDate(oaStaffupdated.getCreateDate());
+		oaFilling.setEndDate(new Date());
+		oaFillingService.save(oaFilling);
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(),  "【归档】", null,
+					vars);
+			oaFlowBackService.saveNOW(oaStaffupdated.getProcInsId(), list.get(0));
+		}
+		OaNotify oanotify = new OaNotify();
+		oanotify.setTitle("您提交的人员增补流程【"+DateUtils.getDate()+"】已被【"+UserUtils.getUser().getUsername()+"】归档");// 标题
+		oanotify.setType("4");// 设置成协同通知
+		oanotify.setStatus("1");
+		oanotify.setOaNotifyRecordIds(oaStaffupdated.getCreateBy().getId());// 通知
+		oanotify.setContent("@@proNotify@@/oa/a/oa/staff/oaStaffupdated/view?id="+oaStaffupdated.getId());
+		oanotifyservice.save(oanotify);
+		return "redirect:" + Global.getAdminPath() + "/oa/staff/oaStaffupdated/view?id=" + oaStaffupdated.getId();
+	}
+	
+	@Autowired
+	private OfficeService officeService;
+	//部门副总审核页面
+		@RequestMapping(value = "cmsave")
+		public String cmsave(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+				RedirectAttributes redirectAttributes) {
+		
+			Map<String, Object> vars = new HashMap<String, Object>();
+			String i = request.getParameter("Fruit");
+			String examtext = "";			
+			String opinion=oaStaffupdated.getDemandOpinion();
+			if (i.equals("2")) {
+				// 驳回
+				examtext = "【驳回】"+"【"+opinion+"】";
+				vars.put("flag", false);
+				//oaSign.setSignState("3");// 修改状态 为驳回
+				String name = UserUtils.get(oaStaffupdated.getCreateBy().getId()).getLoginName();
+				vars.put("apply",name );
+			} else {
+					examtext = "【通过】"+"【"+opinion+"】";
+					vars.put("flag", true);
+					Office of = officeService.get(officeService.findOfficeIdByName("人事行政部"));
+					String name = UserUtils.get(of.getPrimaryPerson().getId()).getLoginName();
+					vars.put("applyUserIds", name);
+					}
+		
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId()).list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(), examtext, null, vars);
+				oaFlowBackService.saveNOW(oaStaffupdated.getProcInsId(), list.get(0));
+			}
+			
+		 Task ta=TaskUtil.task(oaStaffupdated.getProcInsId());
+			if(i.equals("2")){
+				OaNotify oanotify = new OaNotify();
+				oanotify.setTitle("您提交的人员增补流程【"+DateUtils.getDate()+"】已被【"+UserUtils.getUser().getUsername()+"】驳回");// 标题
+				oanotify.setType("4");// 设置成协同通知
+				oanotify.setStatus("1");
+				oanotify.setOaNotifyRecordIds(oaStaffupdated.getCreateBy().getId());// 通知
+				oanotify.setContent("@@proNotify@@/oa/a/act/task/form?taskId="+ta.getId()+"&taskDefKey="+ta.getTaskDefinitionKey()+"&commid="+ta.getDescription()+"&procInsId="+ta.getProcessInstanceId()+"&procDefId="+ta.getProcessDefinitionId());
+				oanotifyservice.save(oanotify);
+			}
+			oaStaffupdatedService.Deemandupdate(oaStaffupdated);
+			addMessage(redirectAttributes, "人员增补流程审核成功");
+			return "redirect:" + Global.getAdminPath() + "/oa/staff/oaStaffupdated/cmform?id=" + oaStaffupdated.getId();
+		}
+		
+		//人事副总审核页面
+			@RequestMapping(value = "personsave")
+			public String personsave(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+					RedirectAttributes redirectAttributes) {
+				Map<String, Object> vars = new HashMap<String, Object>();
+				String i = request.getParameter("Fruit");
+				String examtext = "";
+				String opinion=oaStaffupdated.getPersonnelmattersOpinion();
+				if (i.equals("2")) {
+					// 驳回
+					examtext = "【驳回】"+"【"+opinion+"】";
+					vars.put("flag", false);
+					//oaSign.setSignState("3");// 修改状态 为驳回
+					String name = UserUtils.get(oaStaffupdated.getCreateBy().getId()).getLoginName();
+					vars.put("apply",name );
+				} else {
+						examtext = "【通过】"+"【"+opinion+"】";
+						vars.put("flag", true);
+						vars.put("applyUserIds","hutao");
+						}
+				List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+						.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId()).list();
+				if (list.size() > 0) {
+					actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(), examtext, null, vars);
+					oaFlowBackService.saveNOW(oaStaffupdated.getProcInsId(), list.get(0));
+				}
+				 Task ta=TaskUtil.task(oaStaffupdated.getProcInsId());
+					if(i.equals("2")){
+						OaNotify oanotify = new OaNotify();
+						oanotify.setTitle("您提交的人员增补流程【"+DateUtils.getDate()+"】已被【"+UserUtils.getUser().getUsername()+"】驳回");// 标题
+						oanotify.setType("4");// 设置成协同通知
+						oanotify.setStatus("1");
+						oanotify.setOaNotifyRecordIds(oaStaffupdated.getCreateBy().getId());// 通知
+						oanotify.setContent("@@proNotify@@/oa/a/act/task/form?taskId="+ta.getId()+"&taskDefKey="+ta.getTaskDefinitionKey()+"&commid="+ta.getDescription()+"&procInsId="+ta.getProcessInstanceId()+"&procDefId="+ta.getProcessDefinitionId());
+						oanotifyservice.save(oanotify);
+					}
+				oaStaffupdatedService.Personnelmattersupdate(oaStaffupdated);
+				addMessage(redirectAttributes, "人员增补流程审核成功");
+				return "redirect:" + Global.getAdminPath() + "/oa/staff/oaStaffupdated/dmform?id=" + oaStaffupdated.getId();
+			}
+			
+			//总经理审核页面
+				@RequestMapping(value = "bosssave")
+				public String bosssave(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+						RedirectAttributes redirectAttributes) {
+					Map<String, Object> vars = new HashMap<String, Object>();
+					String i = request.getParameter("Fruit");
+					String examtext = "";
+					String opinion=oaStaffupdated.getPersonnelmattersOpinion();
+					if (i.equals("2")) {
+						// 驳回
+						examtext = "【驳回】"+"【"+opinion+"】";
+						vars.put("flag", false);
+						//oaSign.setSignState("3");// 修改状态 为驳回
+						String name = UserUtils.get(oaStaffupdated.getCreateBy().getId()).getLoginName();
+						vars.put("apply",name );
+					} else {
+							examtext = "【通过】"+"【"+opinion+"】";
+							vars.put("flag", true);
+							SysWorkflowVar sysWorkflowVar = new SysWorkflowVar();
+							sysWorkflowVar.setWorkflowIdentification("staffupProcess");
+							sysWorkflowVar.setVarName("filling");
+							vars.put("filling", sysWorkflowVarService.findBySignVar(sysWorkflowVar).get(0).getVarValue());// 人力资源登陆名字
+							}
+					List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+							.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaStaffupdated.getProcInsId()).list();
+					if (list.size() > 0) {
+						actTaskService.complete(list.get(0).getId(), oaStaffupdated.getProcInsId(), examtext, null, vars);
+						oaFlowBackService.saveNOW(oaStaffupdated.getProcInsId(), list.get(0));
+					}
+					 Task ta=TaskUtil.task(oaStaffupdated.getProcInsId());
+						if(i.equals("2")){
+							OaNotify oanotify = new OaNotify();
+							oanotify.setTitle("您提交的人员增补流程【"+DateUtils.getDate()+"】已被【"+UserUtils.getUser().getUsername()+"】驳回");// 标题
+							oanotify.setType("4");// 设置成协同通知
+							oanotify.setStatus("1");
+							oanotify.setOaNotifyRecordIds(oaStaffupdated.getCreateBy().getId());// 通知
+							oanotify.setContent("@@proNotify@@/oa/a/act/task/form?taskId="+ta.getId()+"&taskDefKey="+ta.getTaskDefinitionKey()+"&commid="+ta.getDescription()+"&procInsId="+ta.getProcessInstanceId()+"&procDefId="+ta.getProcessDefinitionId());
+							oanotifyservice.save(oanotify);
+						}else{
+									OaNotify oanotify = new OaNotify();
+									oanotify.setTitle("您提交的人员增补流程【"+DateUtils.getDate()+"】已被【"+UserUtils.getUser().getUsername()+"】办结");// 标题
+									oanotify.setType("4");// 设置成协同通知
+									oanotify.setStatus("1");
+									oanotify.setOaNotifyRecordIds(oaStaffupdated.getCreateBy().getId());// 通知
+									oanotify.setContent("@@proNotify@@/oa/a/oa/staff/oaStaffupdated/view?id="+oaStaffupdated.getId());
+									oanotifyservice.save(oanotify);
+						}
+					oaStaffupdatedService.Bossupdate(oaStaffupdated);
+					addMessage(redirectAttributes, "人员增补流程审核成功");
+					return "redirect:" + Global.getAdminPath() + "/oa/staff/oaStaffupdated/depform?id=" + oaStaffupdated.getId();
+				}
+
+	/**
+	 * 审核通过
+	 * */			
+				@RequestMapping(value = "view")
+				public String view(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+						RedirectAttributes redirectAttributes,String id) {
+					model.addAttribute("OaStaffupdated", oaStaffupdatedService.get(id));
+					return "modules/oa/staff/oaStaffView";
+					}
+				@RequestMapping(value = "filligview")
+				public String filligview(OaStaffupdated oaStaffupdated, HttpServletRequest request, HttpServletResponse response, Model model,
+						RedirectAttributes redirectAttributes,String id) {
+					model.addAttribute("OaStaffupdated", oaStaffupdatedService.get(id));
+					model.addAttribute("name", UserUtils.get(oaStaffupdatedService.get(id).getCreateBy().getId()).getName());
+					return "modules/oa/staff/oaStaffFillingLlist";
+					}
+				
+				
+				
+	/** 加入工作台对象，用于显示流程图 */
+	private void addTask(Model model, OaStaffupdated oaStaffupdated) {
+		// 如果流程已启动，给出流程图
+		if (oaStaffupdated.getProcInsId() != null && oaProVacateService.getTaskByProcInsId(oaStaffupdated.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaStaffupdated.getProcInsId()));
+		}
+	}
+	/** 加入流程标题 */
+	private void addTitle(Model model, OaStaffupdated oaStaffupdated) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaStaffupdated.getId())) {
+			name = UserUtils.get(oaStaffupdated.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaStaffupdated.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		model.addAttribute("title", "人员增补申请流程【" + name + " " + date + "】");
+	}
+	
+	/**
+	 * 流程结束后的获取实体对象的方法
+	 * 
+	 */
+	private OaStaffupdated init(OaStaffupdated oaStaffupdated) {
+		if (oaStaffupdated.getAct() != null && StringUtils.isNotBlank(oaStaffupdated.getAct().getProcInsId())) {
+			oaStaffupdated = oaStaffupdatedService.getByProcInsId(oaStaffupdated.getAct().getProcInsId());
+		}
+		return oaStaffupdated;
+	}
+
+
+}

@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.staff.OaStaffupdatedDao">
+    
+	<sql id="oaStaffupdatedColumns">
+		a.id AS "id",
+		a.department AS "department",
+		a.number AS "number",
+		a.up_number AS "upNumber",
+		a.up_postname AS "upPostname",
+		a.trial AS "trial",
+		a.official AS "official",
+		a.up_reason AS "upReason",
+		a.expectation_time AS "expectationTime",
+		a.up_postcontent AS "upPostcontent",
+		a.up_postclaim AS "upPostclaim",
+		a.demand_opinion AS "demandOpinion",
+		a.personnelmatters_opinion AS "personnelmattersOpinion",
+		a.boss_opinion AS "bossOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.del_flag AS "delFlag",
+		a.proc_ins_id AS "procInsId"
+	</sql>
+	
+	<sql id="oaStaffupdatedJoins">
+	</sql>
+    
+	<select id="get" resultType="OaStaffupdated">
+		SELECT 
+			<include refid="oaStaffupdatedColumns"/>
+		FROM oa_staffupdated a
+		<include refid="oaStaffupdatedJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaStaffupdated">
+		SELECT 
+			<include refid="oaStaffupdatedColumns"/>
+		FROM oa_staffupdated a
+		<include refid="oaStaffupdatedJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	   <select id="getByProcInsId" resultType="OaStaffupdated">
+		SELECT
+		<include refid="oaStaffupdatedColumns" />
+		FROM  oa_staffupdated a
+			<include refid="oaStaffupdatedJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="findAllList" resultType="OaStaffupdated">
+		SELECT 
+			<include refid="oaStaffupdatedColumns"/>
+		FROM oa_staffupdated a
+		<include refid="oaStaffupdatedJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_staffupdated(
+			id,
+			department,
+			number,
+			up_number,
+			up_postname,
+			trial,
+			official,
+			up_reason,
+			expectation_time,
+			up_postcontent,
+			up_postclaim,
+			demand_opinion,
+			personnelmatters_opinion,
+			boss_opinion,
+			create_by,
+			create_date,
+			del_flag,
+			proc_ins_id 
+		) VALUES (
+			#{id},
+			#{department},
+			#{number},
+			#{upNumber},
+			#{upPostname},
+			#{trial},
+			#{official},
+			#{upReason},
+			#{expectationTime},
+			#{upPostcontent},
+			#{upPostclaim},
+			#{demandOpinion},
+			#{personnelmattersOpinion},
+			#{bossOpinion},
+			#{createBy.id},
+			#{createDate},
+			#{delFlag},
+			#{procInsId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_staffupdated SET 	
+			department = #{department},
+			number = #{number},
+			up_number = #{upNumber},
+			up_postname = #{upPostname},
+			trial = #{trial},
+			official = #{official},
+			up_reason = #{upReason},
+			expectation_time = #{expectationTime},
+			up_postcontent = #{upPostcontent},
+			up_postclaim = #{upPostclaim},
+			demand_opinion = #{demandOpinion},
+			personnelmatters_opinion = #{personnelmattersOpinion},
+			boss_opinion = #{bossOpinion}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_staffupdated SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+		
+	<update id="Deemandupdate">
+		UPDATE oa_staffupdated SET 	
+			demand_opinion = #{demandOpinion}
+		WHERE id = #{id}
+	</update>
+	
+		
+	<update id="Personnelmattersupdate">
+		UPDATE oa_staffupdated SET 	
+			personnelmatters_opinion = #{personnelmattersOpinion}
+		WHERE id = #{id}
+	</update>
+		
+	<update id="Bossupdate">
+		UPDATE oa_staffupdated SET 	
+			boss_opinion = #{bossOpinion}
+		WHERE id = #{id}
+	</update>
+</mapper>

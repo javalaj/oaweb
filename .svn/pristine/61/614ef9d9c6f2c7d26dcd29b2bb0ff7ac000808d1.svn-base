@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>无标题文档</title>
+<style type="text/css">
+#apDiv1 {
+	position:absolute;
+	width:60px;
+	height:60px;
+	background-color:#F0F;
+	layer-background-color:#F0F;
+	border:1px none #000000;
+	z-index:1;
+	left: 338px;
+	top: 277px;
+}
+</style>
+</head>
+
+<body>
+<div id="apDiv1"></div>
+
+<form action="https://www.baidu.com" method="post">
+   <input type="text"  />
+      <input type="submit"  />
+</form>
+
+
+</body>
+</html>

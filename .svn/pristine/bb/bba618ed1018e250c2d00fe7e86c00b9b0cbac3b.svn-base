@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="keywords" content="jquery,ui,easy,easyui,web">
+<meta name="description"
+	content="easyui help you build your web page easily!">
+<title>Build CRUD DataGrid with jQuery EasyUI - jQuery EasyUI
+	Demo</title>
+<link rel="stylesheet" type="text/css"
+	href="http://www.jeasyui.net/Public/js/easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css"
+	href="http://www.jeasyui.net/Public/js/easyui/themes/icon.css">
+<link rel="stylesheet" type="text/css"
+	href="http://www.jeasyui.net/Public/js/easyui/demo/demo.css">
+<script type="text/javascript"
+	src="http://code.jquery.com/jquery-1.6.min.js"></script>
+<script type="text/javascript"
+	src="http://www.jeasyui.net/Public/js/easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="jquery.edatagrid.js"></script>
+<script type="text/javascript">
+	$(function() {
+		$('#dg').edatagrid({
+			/* url : 'http://192.168.2.162:8081/EmbarrassedCat/du/getAllUserst', */
+			/* saveUrl : 'save_user.php',
+			updateUrl : 'update_user.php',
+			destroyUrl : 'destroy_user.php',
+			queryParams : {
+				name : 'easyui',
+				subject : 'datagrid'
+			} */
+		});
+	});
+</script>
+</head>
+
+
+<body>
+	<h1>Editable DataGrid</h1>
+	<div style="margin-bottom:10px">
+		<a href="#" onclick="javascript:$('#tt').edatagrid('addRow')">AddRow</a>
+		<a href="#" onclick="javascript:$('#tt').edatagrid('saveRow')">SaveRow</a>
+		<a href="#" onclick="javascript:$('#tt').edatagrid('cancelRow')">CancelRow</a>
+		<a href="#" onclick="javascript:$('#tt').edatagrid('destroyRow')">destroyRow</a>
+	</div>
+	<table id="dg" style="width:600px;height:200px"
+			title="Editable DataGrid"
+			url="http://192.168.2.162:8081/EmbarrassedCat/du/getAllUserst"
+			singleSelect="true">
+		<thead>
+			<tr>
+				<th field="itemid" width="100" editor="{type:'validatebox',options:{required:true}}">itemid</th>
+				<th field="status" width="100" editor="text">status</th>
+			</tr>
+		</thead>
+	</table>
+</body>
+
+
+</html>

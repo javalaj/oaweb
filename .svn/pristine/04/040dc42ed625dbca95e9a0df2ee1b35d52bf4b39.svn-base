@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>新建项目</title>
+    <meta name="decorator" content="default"/>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../awesome/4.4/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="../css/myoa.css"/>
+
+</head>
+<body style="padding: 0px"  class="gray-bg">
+    <div class="wrapper wrapper-content">
+        <div class="ibox">
+            <div class="myoa-project-add">
+                <div class="myoa-add-tit">新建项目</div>
+                <div class="myoa-project-form">
+                    <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <label for="projectname" class="col-sm-3 control-label myoa-required">项目名称</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control myoa-form-element" id="projectname" placeholder="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectdescript" class="col-sm-3 control-label">项目描述</label>
+                        <div class="col-sm-9">
+                            <textarea class="form-control myoa-form-element" rows="4" id="projectdescript"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label myoa-required">所属行业</label>
+                        <div class="col-sm-9">
+                            <select class="form-control myoa-form-element">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label myoa-required">项目类型</label>
+                        <div class="col-sm-9">
+                            <select class="form-control myoa-form-element">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="clientname" class="col-sm-3 control-label">客户名称</label>
+                        <div class="col-sm-9">
+                            <input type="text" class="form-control myoa-form-element" id="clientname" placeholder="">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label myoa-required">项目阶段</label>
+                        <div class="col-sm-9">
+                            <select class="form-control myoa-form-element">
+                                <option>1</option>
+                                <option>2</option>
+                                <option>3</option>
+                                <option>4</option>
+                                <option>5</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">项目开始日期</label>
+                        <div class="col-sm-9">
+                            <input type="date" class="form-control myoa-form-element">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">计划完成日期</label>
+                        <div class="col-sm-9">
+                            <input type="date" class="form-control myoa-form-element">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">自动记录时间花销</label>
+                        <div class="col-sm-9">
+                            <input type="radio" name="autotime">&nbsp;是
+                            <input type="radio" name="autotime">&nbsp;否
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-3 col-sm-9">
+                            <button type="submit" class="btn btn-myoa-sec btn-myoa-large">保存</button>
+                            <button type="reset" class="btn btn-myoa btn-myoa-large" style="margin-left: 40px;">取消</button>
+                        </div>
+                    </div>
+                </form>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="../bootstrap/js/jquery.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.coding.OaViewCodingDao">
+
+	<select id="getViewByDeptAndTime" resultType="OaViewCoding">
+		SELECT 
+		    su.NAME AS userName,
+		    su.NO AS userNo,
+		    so.NAME AS deptName,
+		    v1.working_type_√_count AS workingDays,
+		    v2.working_type_E_count AS workingLessDays,
+		    v3.working_type_○_count AS workingMoutDays,
+		    v4.working_type_●_count AS workingAoutDays,
+		    vv1.apply_type_lit_shijia_count as applyTypeLitShijiaCount,
+		    vv2.apply_type_lit_bingjia_count as applyTypeLitBingjiaCount,
+		    vv3.apply_type_lit_nianjia_count as applyTypeLitNianjiaCount,
+		    vv4.apply_type_lit_tiaoxiu_count as applyTypeLitTiaoxiuCount,
+		    vv5.apply_type_lit_sangjia_count as applyTypeLitSangjiaCount,
+		    vv6.apply_type_lit_hunjia_count as applyTypeLitHunjiaCount,
+		    vv7.apply_type_lit_tanqinjia_count as applyTypeLitTanqinjiaCount,
+		    vv8.apply_type_lit_chanjia_count as applyTypeLitChanjiaCount,
+		    vvv1.apply_type_jiaban_count as applyTypeJiabanCount,
+		    vvvv1.apply_type_shangwu_count as applyTypeShangwuCount,
+		    vvvv2.apply_type_xiawu_count as applyTypeXiawuCount,
+		    vvvvv1.apply_type_chuchai_count as applyTypeChuchaiCount,
+		    vvvvvv1.apply_type_waichu_count as applyTypeWaichuCount
+		FROM
+		    sys_user su
+		    <!-- √ -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS working_type_√_count, user_no
+		    FROM
+		        oa_collect_coding
+		    WHERE
+		        DATE_FORMAT(coding_begindate, '%Y-%m') = #{remarks}
+	            AND working_type = '√'
+	            AND del_flag = '0'
+		    GROUP BY user_no) v1 ON v1.user_no = su.no
+		    
+		    <!-- E -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS working_type_E_count, user_no
+		    FROM
+		        oa_collect_coding
+		    WHERE
+		        DATE_FORMAT(coding_begindate, '%Y-%m') = #{remarks}
+	            AND working_type = 'E'
+	            AND del_flag = '0'
+		    GROUP BY user_no) v2 ON v2.user_no = su.no
+		    
+		    <!-- ○ -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS working_type_○_count, user_no
+		    FROM
+		        oa_collect_coding
+		    WHERE
+		        DATE_FORMAT(coding_begindate, '%Y-%m') = #{remarks}
+	            AND working_type = '○'
+	            AND del_flag = '0'
+		    GROUP BY user_no) v3 ON v3.user_no = su.no
+		    
+		    <!-- ● -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS working_type_●_count, user_no
+		    FROM
+		        oa_collect_coding
+		    WHERE
+		        DATE_FORMAT(coding_begindate, '%Y-%m') = #{remarks}
+	            AND working_type = '●'
+	            AND del_flag = '0'
+		    GROUP BY user_no) v4 ON v4.user_no = su.no
+		    
+		    <!-- 请假之 事假-->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_shijia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '事假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv1 ON vv1.apply_user = su.id
+		    
+		    <!-- 请假之 病假-->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_bingjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '病假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv2 ON vv2.apply_user = su.id
+		    
+		    <!-- 请假之 年假-->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_nianjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '年假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv3 ON vv3.apply_user = su.id
+		    
+		    <!-- 请假之 调休-->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_tiaoxiu_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '调休'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv4 ON vv4.apply_user = su.id
+		    
+		    <!-- 请假之 丧假-->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_sangjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '丧假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv5 ON vv5.apply_user = su.id
+		    
+		    <!-- 请假之 婚假 -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_hunjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '婚假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv6 ON vv6.apply_user = su.id
+		    
+		    <!-- 请假之 探亲假 -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_tanqinjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '探亲假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv7 ON vv7.apply_user = su.id
+		    
+		    <!-- 请假之 产假 -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_lit_chanjia_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '请假' 
+		        AND apply_type_lit = '产假'
+		        AND del_flag = '0'
+		    GROUP BY apply_user) vv8 ON vv8.apply_user = su.id
+		    
+			<!-- 加班  -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_jiaban_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '加班'
+		        AND del_flag = '0' 
+		    GROUP BY apply_user) vvv1 ON vvv1.apply_user = su.id
+		    
+		    <!-- 上午未打卡  -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS apply_type_shangwu_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '忘记打卡'
+		        AND apply_type_lit = '0' OR apply_type_lit = '2'
+		        AND del_flag = '0' 
+		    GROUP BY apply_user) vvvv1 ON vvvv1.apply_user = su.id
+		    
+		     <!-- 下午未打卡  -->
+		        LEFT JOIN
+		    (SELECT 
+		        COUNT(*) AS apply_type_xiawu_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '忘记打卡'
+		        AND apply_type_lit = '1' OR apply_type_lit = '2'
+		        AND del_flag = '0' 
+		    GROUP BY apply_user) vvvv2 ON vvvv2.apply_user = su.id
+		    
+		    
+		     <!-- 出差  -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_chuchai_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '出差'
+		        AND del_flag = '0' 
+		    GROUP BY apply_user) vvvvv1 ON vvvvv1.apply_user = su.id
+		    
+   		     <!-- 外出  -->
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(hours) AS apply_type_waichu_count, apply_user
+		    FROM
+		        oa_filling
+		    WHERE
+		        DATE_FORMAT(begin_date, '%Y-%m') = #{remarks}
+		        AND apply_type = '外出'
+		        AND del_flag = '0' 
+		    GROUP BY apply_user) vvvvvv1 ON vvvvvv1.apply_user = su.id
+		    
+		        LEFT JOIN 
+		    sys_office so ON so.id = su.office_id
+		    WHERE su.del_flag = '0'
+		<if test="deptName!=null">
+			AND su.office_id = #{deptName}
+		</if>
+		ORDER BY su.no DESC
+	</select>
+
+	<select id="getDetailViewByUserAndTime" resultType="OaViewCoding">
+		SELECT 
+		    DATE_FORMAT(occ.coding_begindate, '%Y-%m-%d') date,
+		    working_type AS workingType,
+		    time_offset AS timeOffset,
+		    coding_begindate AS codingBegindate,
+		    coding_enddate AS codingEnddate
+		FROM
+		    oa_collect_coding occ
+		WHERE
+		    occ.user_no = #{userNo}
+		        AND DATE_FORMAT(occ.coding_begindate, '%Y-%m') = #{timerec}
+		        AND occ.del_flag = '0'
+		ORDER BY occ.user_no
+	</select>
+
+</mapper>

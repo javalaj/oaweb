@@ -1,0 +1,292 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>数据选择</title>
+	<meta name="decorator" content="blank"/>
+	<%@include file="/WEB-INF/views/include/treeview.jsp" %>
+	<style type="text/css">
+	
+	
+	
+	
+	
+		
+	.ztree * {padding:0; margin:0; font-size:16px; font-family: Verdana, Arial, Helvetica, AppleGothic, sans-serif}
+	.ztree {margin:0; padding:5px; color:#333;margin-left: -30px;}
+	.ztree li{padding:0; margin:0; list-style:none; line-height:21px; text-align:left; white-space:nowrap; outline:0;margin: 4px 7px 0 25px;}
+	.ztree li ul{ margin:0; padding:0 0 0 18px}
+	.ztree li ul.line{ background:url(${ctxStatic}/jquery-ztree/3.5.12/css/zTreeStyle/img/line_conn.png) 7px 0 repeat-y;}
+	
+	.ztree li a {padding-right:3px; margin:0; cursor:pointer; height:21px; color:#333; background-color: transparent; text-decoration:none; display: inline-block}
+	.ztree li a:hover {text-decoration:underline}
+	.ztree li a.curSelectedNode {padding-top:0px; background-color:#e5e5e5; color:black; height:21px; opacity:0.8;}
+	.ztree li a.curSelectedNode_Edit {padding-top:0px; background-color:#e5e5e5; color:black; height:21px; border:1px #666 solid; opacity:0.8;}
+	.ztree li a.tmpTargetNode_inner {padding-top:0px; background-color:#aaa; color:white; height:21px; border:1px #666 solid;
+	    opacity:0.8; filter:alpha(opacity=80)}
+	.ztree li a.tmpTargetNode_prev {}
+	.ztree li a.tmpTargetNode_next {}
+	.ztree li a input.rename {height:14px; width:80px; padding:0; margin:0;
+	    font-size:12px; border:1px #7EC4CC solid; *border:0px}
+	.ztree li span {line-height:21px; margin-right:2px}
+	.ztree li span.button {line-height:0; margin:0; width:21px; height:21px; display: inline-block; vertical-align:middle;
+	    border:0 none; cursor: pointer;outline:none;
+	    background-color:transparent; background-repeat:no-repeat; background-attachment: scroll;
+	    background-image:url("${ctxStatic}/jquery-ztree/3.5.12/css/zTreeStyle/img/metro.png");; *background-image:url("./img/metro.gif")}
+	
+	
+	.ztree li span.button.chk {width:13px; height:13px; margin:0 2px; cursor: auto}
+	
+	.ztree li span.button {  width:25px; height:25px;background-image:url("${ctxStatic}/jquery-ztree/3.5.12/css/zTreeStyle/img/mobile/metro.png"); }/* new */
+	.ztree li span.button.chk {width:40px; height:40px; margin:0 4px; cursor: auto}/* new */
+	
+	
+	.ztree li span.button.chk.checkbox_false_full {background-position: -0px -9px;}/* new */
+	.ztree li span.button.chk.checkbox_false_full_focus {background-position: -0px -9px;}/* new */
+	.ztree li span.button.chk.checkbox_false_part {background-position: -5px -48px;}
+	.ztree li span.button.chk.checkbox_false_part_focus {background-position: -5px -68px;}
+	.ztree li span.button.chk.checkbox_false_disable {background-position: -5px -89px;}
+	.ztree li span.button.chk.checkbox_true_full {background-position: -66px -9px;}/* new */
+	.ztree li span.button.chk.checkbox_true_full_focus {background-position: -66px -9px;}/* new */
+	.ztree li span.button.chk.checkbox_true_part {background-position: -65px -136px;}/* new */
+	.ztree li span.button.chk.checkbox_true_part_focus {background-position: -65px -21px;}/* new */
+	.ztree li span.button.chk.checkbox_true_disable {background-position: -26px -89px;}
+	.ztree li span.button.chk.radio_false_full {background-position: -47px -5px;}
+	.ztree li span.button.chk.radio_false_full_focus {background-position: -47px -26px;}
+	.ztree li span.button.chk.radio_false_part {background-position: -47px -47px;}
+	.ztree li span.button.chk.radio_false_part_focus {background-position: -47px -68px;}
+	.ztree li span.button.chk.radio_false_disable {background-position: -47px -89px;}
+	.ztree li span.button.chk.radio_true_full {background-position: -68px -5px;}
+	.ztree li span.button.chk.radio_true_full_focus {background-position: -68px -26px;}
+	.ztree li span.button.chk.radio_true_part {background-position: -68px -47px;}
+	.ztree li span.button.chk.radio_true_part_focus {background-position: -68px -68px;}
+	.ztree li span.button.chk.radio_true_disable {background-position: -68px -89px;}
+	
+	.ztree li span.button.switch {width:21px; height:21px}
+	.ztree li span.button.switch {width:39px; height:39px} /* new */
+	.ztree li span.button.root_open{background-position:-318px -258px}/* new */
+	.ztree li span.button.root_close{background-position:-381px -258px}/* new */
+	.ztree li span.button.roots_open{background-position: -105px 0;}
+	.ztree li span.button.roots_close{background-position: -126px 0;}
+	.ztree li span.button.center_open{background-position: -310px -70px;}/* new */
+	.ztree li span.button.center_close{background-position: -372px -70px;}/* new */
+	.ztree li span.button.bottom_open{background-position: -105px -42px;}
+	.ztree li span.button.bottom_close{background-position: -126px -42px;}
+	.ztree li span.button.noline_open{background-position: -126px -84px;}
+	.ztree li span.button.noline_close{background-position: -105px -84px;}
+	.ztree li span.button.root_docu{ background:none;}
+	.ztree li span.button.roots_docu{background-position: -84px 0;}
+	.ztree li span.button.center_docu{background-position: -248px -70px;}
+	.ztree li span.button.bottom_docu{background-position: -248px -136px;}
+	.ztree li span.button.noline_docu{ background:none;}
+	
+	.ztree li span.button.ico_open{background-size:303px auto;margin-right:2px; background-position: -218px -6px; vertical-align:top; *vertical-align:middle}/* new */
+	.ztree li span.button.ico_close{background-size:303px auto;margin-right:2px; margin-right:2px; background-position: -218px -36px; vertical-align:top; *vertical-align:middle}/* new */
+	.ztree li span.button.ico_docu{background-size:303px auto;margin-right:2px; background-position: -218px -67px; vertical-align:top; *vertical-align:middle}
+	.ztree li span.button.edit {margin-left:2px; margin-right: -1px; background-position: -189px -21px; vertical-align:top; *vertical-align:middle}
+	.ztree li span.button.edit:hover {
+	  background-position: -168px -21px;
+	}
+	.ztree li span.button.remove {margin-left:2px; margin-right: -1px; background-position: -189px -42px; vertical-align:top; *vertical-align:middle}
+	.ztree li span.button.remove:hover {
+	  background-position: -168px -42px;
+	}
+	.ztree li span.button.add {margin-left:2px; margin-right: -1px; background-position: -189px 0; vertical-align:top; *vertical-align:middle}
+	.ztree li span.button.add:hover {
+	  background-position: -168px 0;
+	}
+	.ztree li span.button.ico_loading{margin-right:2px; background:url(./img/loading.gif) no-repeat scroll 0 0 transparent; vertical-align:top; *vertical-align:middle}
+	
+	ul.tmpTargetzTree {background-color:#FFE6B0; opacity:0.8; filter:alpha(opacity=80)}
+	
+	span.tmpzTreeMove_arrow {width:16px; height:21px; display: inline-block; padding:0; margin:2px 0 0 1px; border:0 none; position:absolute;
+	    background-color:transparent; background-repeat:no-repeat; background-attachment: scroll;
+	    background-position:-168px -84px; background-image:url("./img/metro.png"); *background-image:url("./img/metro.gif")}
+	
+	ul.ztree.zTreeDragUL {margin:0; padding:0; position:absolute; width:auto; height:auto;overflow:hidden; background-color:#cfcfcf; border:1px #00B83F dotted; opacity:0.8; filter:alpha(opacity=80)}
+	.zTreeMask {z-index:10000; background-color:#cfcfcf; opacity:0.0; filter:alpha(opacity=0); position:absolute}
+	</style>
+	<script type="text/javascript">
+		var key, lastValue = "", nodeList = [], type = getQueryString("type", "${url}");
+		var tree, setting = {view:{selectedMulti:false,dblClickExpand:false},check:{enable:"${checked}",nocheckInherit:true},
+				async:{enable:(type==3),url:"${ctx}/sys/user/treeData",autoParam:["id=officeId"]},
+				data:{simpleData:{enable:true}},callback:{<%--
+					beforeClick: function(treeId, treeNode){
+						if("${checked}" == "true"){
+							//tree.checkNode(treeNode, !node.checked, true, true);
+							tree.expandNode(treeNode, true, false, false);
+						}
+					}, --%>
+					onClick:function(event, treeId, treeNode){
+						tree.expandNode(treeNode);
+					},onCheck: function(e, treeId, treeNode){
+						var nodes = tree.getCheckedNodes(true);
+						for (var i=0, l=nodes.length; i<l; i++) {
+							tree.expandNode(nodes[i], true, false, false);
+						}
+						return false;
+					},onAsyncSuccess: function(event, treeId, treeNode, msg){
+						var nodes = tree.getNodesByParam("pId", treeNode.id, null);
+						for (var i=0, l=nodes.length; i<l; i++) {
+							try{tree.checkNode(nodes[i], treeNode.checked, true);}catch(e){}
+							//tree.selectNode(nodes[i], false);
+						}
+						selectCheckNode();
+					},onDblClick: function(){//<c:if test="${!checked}">
+						top.$.jBox.getBox().find("button[value='ok']").trigger("click");
+						//$("input[type='text']", top.mainFrame.document).focus();//</c:if>
+					}
+				}
+			};
+		function expandNodes(nodes) {
+			if (!nodes) return;
+			for (var i=0, l=nodes.length; i<l; i++) {
+				tree.expandNode(nodes[i], true, false, false);
+				if (nodes[i].isParent && nodes[i].zAsync) {
+					expandNodes(nodes[i].children);
+				}
+			}
+		}
+		$(document).ready(function(){
+			$.get("${ctx}${url}${fn:indexOf(url,'?')==-1?'?':'&'}&extId=${extId}&isAll=${isAll}&module=${module}&t="
+					+ new Date().getTime(), function(zNodes){
+				// 初始化树结构
+				tree = $.fn.zTree.init($("#tree"), setting, zNodes);
+				
+				// 默认展开一级节点
+				var nodes = tree.getNodesByParam("level", 0);
+				for(var i=0; i<nodes.length; i++) {
+					tree.expandNode(nodes[i], true, false, false);
+				}
+				//异步加载子节点（加载用户）
+				var nodesOne = tree.getNodesByParam("isParent", true);
+				for(var j=0; j<nodesOne.length; j++) {
+					tree.reAsyncChildNodes(nodesOne[j],"!refresh",true);
+				}
+				selectCheckNode();
+			});
+			key = $("#key");
+			key.bind("focus", focusKey).bind("blur", blurKey).bind("change cut input propertychange", searchNode);
+			key.bind('keydown', function (e){if(e.which == 13){searchNode();}});
+			setTimeout("search();", "300");
+		});
+		
+		// 默认选择节点
+		function selectCheckNode(){
+			var ids = "${selectIds}".split(",");
+			for(var i=0; i<ids.length; i++) {
+				var node = tree.getNodeByParam("id", (type==3?"u_":"")+ids[i]);
+				if("${checked}" == "true"){
+					try{tree.checkNode(node, true, true);}catch(e){}
+					tree.selectNode(node, false);
+				}else{
+					tree.selectNode(node, true);
+				}
+			}
+		}
+	  	function focusKey(e) {
+			if (key.hasClass("empty")) {
+				key.removeClass("empty");
+			}
+		}
+		function blurKey(e) {
+			if (key.get(0).value === "") {
+				key.addClass("empty");
+			}
+			searchNode(e);
+		}
+		
+		//搜索节点
+		function searchNode() {
+			// 取得输入的关键字的值
+			var value = $.trim(key.get(0).value);
+			
+			// 按名字查询
+			var keyType = "name";<%--
+			if (key.hasClass("empty")) {
+				value = "";
+			}--%>
+			
+			// 如果和上次一次，就退出不查了。
+			if (lastValue === value) {
+				return;
+			}
+			
+			// 保存最后一次
+			lastValue = value;
+			
+			var nodes = tree.getNodes();
+			// 如果要查空字串，就退出不查了。
+			if (value == "") {
+				showAllNode(nodes);
+				return;
+			}
+			hideAllNode(nodes);
+			nodeList = tree.getNodesByParamFuzzy(keyType, value);
+			updateNodes(nodeList);
+		}
+		
+		//隐藏所有节点
+		function hideAllNode(nodes){			
+			nodes = tree.transformToArray(nodes);
+			for(var i=nodes.length-1; i>=0; i--) {
+				tree.hideNode(nodes[i]);
+			}
+		}
+		
+		//显示所有节点
+		function showAllNode(nodes){			
+			nodes = tree.transformToArray(nodes);
+			for(var i=nodes.length-1; i>=0; i--) {
+				/* if(!nodes[i].isParent){
+					tree.showNode(nodes[i]);
+				}else{ */
+					if(nodes[i].getParentNode()!=null){
+						tree.expandNode(nodes[i],false,false,false,false);
+					}else{
+						tree.expandNode(nodes[i],true,true,false,false);
+					}
+					tree.showNode(nodes[i]);
+					showAllNode(nodes[i].children);
+				/* } */
+			}
+		}
+		
+		//更新节点状态
+		function updateNodes(nodeList) {
+			tree.showNodes(nodeList);
+			for(var i=0, l=nodeList.length; i<l; i++) {
+				
+				//展开当前节点的父节点
+				tree.showNode(nodeList[i].getParentNode()); 
+				//tree.expandNode(nodeList[i].getParentNode(), true, false, false);
+				//显示展开符合条件节点的父节点
+				while(nodeList[i].getParentNode()!=null){
+					tree.expandNode(nodeList[i].getParentNode(), true, false, false);
+					nodeList[i] = nodeList[i].getParentNode();
+					tree.showNode(nodeList[i].getParentNode());
+				}
+				//显示根节点
+				tree.showNode(nodeList[i].getParentNode());
+				//展开根节点
+				tree.expandNode(nodeList[i].getParentNode(), true, false, false);
+			}
+		}
+		
+		// 开始搜索
+		function search() {
+			$("#search").slideToggle(200);
+			//$("#txt").toggle();
+			$("#key").focus();
+		}
+		
+	</script>
+</head>
+<body>
+	<div id="" class="form-search " style="padding:10px 0 0 13px;">
+		<label for="key" class="control-label" style="padding:5px 5px 3px 0; font-size:13px">关键字：</label>
+		<input type="text" class="form-control empty" id="key" name="key" maxlength="50" style="width:110px;height:30px">
+		<!-- <button class="btn" id="btn" onclick="searchNode()">搜索</button> -->
+	</div>
+<div id="tree" class="ztree" style="padding:15px 20px;"></div> 
+</body>

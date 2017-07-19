@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserWorkrecordDao">
+
+	<sql id="userWorkrecordColumns">
+		a.id AS "id",
+		a.begintime AS "begintime",
+		a.endtime AS
+		"endtime",
+		a.content AS "content",a.remarks AS "remarks",
+		a.isdone AS
+		"isdone",
+		a.type AS "type",
+		a.worklog_id AS
+		"worklogId",
+		a.del_flag AS
+		"delFlag"
+	</sql>
+
+	<sql id="userWorkrecordJoins">
+	</sql>
+
+	<select id="get" resultType="UserWorkrecord">
+		SELECT
+		<include refid="userWorkrecordColumns" />
+		FROM user_workrecord a
+		<include refid="userWorkrecordJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="UserWorkrecord">
+		SELECT
+		<include refid="userWorkrecordColumns" />
+		FROM user_workrecord a
+		<include refid="userWorkrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.worklog_id=#{worklogId}
+			ORDER BY
+			begintime ASC,endtime ASC
+		</where>
+	</select>
+
+	<select id="findListForWorkColumn" parameterType="String"
+		resultMap="UserWorklogResult">
+		SELECT
+		t1.id,
+		t1.workdate,
+		t2.remarks
+		FROM
+		user_worklog t1,
+		user_workrecord t2
+		WHERE
+		t1.id = t2.worklog_id
+		AND t2.type = '0'
+		AND
+		t2.isdone = '1'
+		AND t1.isdraft = '1'
+		AND t1.create_by = #{userId}
+		AND
+		t1.del_flag = '0'
+		ORDER BY
+		t1.workdate
+	</select>
+
+	<resultMap type="com.thinkgem.jeesite.modules.user.entity.UserWorklogVo"
+		id="UserWorklogResult">
+		<result property="id" column="id" />
+		<result property="workdate" column="workdate" />
+		<result property="remarks" column="remarks" />
+	</resultMap>
+
+	<select id="findAllList" resultType="UserWorkrecord">
+		SELECT
+		<include refid="userWorkrecordColumns" />
+		FROM user_workrecord a
+		<include refid="userWorkrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_workrecord(
+		id,
+		begintime,
+		endtime,
+		content,
+		isdone,type,remarks,
+		worklog_id,
+		del_flag
+		) VALUES (
+		#{id},
+		#{begintime},
+		#{endtime},
+		#{content},
+		#{isdone},#{type},#{remarks},
+		#{worklogId},
+		#{delFlag}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_workrecord SET
+		begintime = #{begintime},
+		endtime = #{endtime},
+		content = #{content},
+		isdone = #{isdone},
+		type =
+		#{type},
+		worklog_id = #{worklogId},remarks = #{remarks},
+		del_flag=#{delFlag}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE user_workrecord SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<update id="deleteAllById">
+		UPDATE user_workrecord SET
+		del_flag = 1
+		WHERE
+		worklog_id
+		= #{id}
+	</update>
+
+	<update id="done">
+		UPDATE user_workrecord SET
+		isdone = 0
+		WHERE id = #{id}
+	</update>
+</mapper>

@@ -1,0 +1,237 @@
+body {
+	min-width: 320px;
+	margin: 0 auto;
+	overflow: hidden;
+}
+
+/* #divheader {
+	box-sizing: border-box;
+	padding: 8px 15px;
+} */
+
+.divheader>div {
+	float: left;
+	width: 20%;
+	margin: 0px;
+	padding: 0px;
+}
+
+.adiv {
+	width: 100%;
+	height: 46px;
+}
+
+.thisadiv {
+	width: 100%;
+	height: 46px;
+	border-bottom: 3px solid #12b7f5;
+}
+
+a>div>span {
+	line-height: 43px;
+	font-size: 16px;
+	color: #333;
+}
+
+.thisadiv>span {
+	line-height: 43px;
+	font-size: 16px;
+	color: #333;
+}
+
+.titlediv {
+	width: 100%;
+	height: 46px;
+	overflow: hidden;
+	padding-left: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+	background: #EEEEEE;
+	text-align: center;
+}
+
+.titlediv>img {
+	height: 16px;
+	margin-top: 10px;
+	float: left;
+}
+
+.titlediv>span {
+	line-height: 36px;
+	font-size: 16px;
+	font-family: "微软雅黑";
+	color: #57B2E9;
+}
+
+.xieul {
+	list-style: none;
+	overflow: hidden;
+}
+
+.xieul li {
+	display: list-item;
+	float: left;
+	width: 100%;
+	border-bottom: 1px solid #F6F6F6;
+}
+
+.linkmandiv {
+	width: 100%;
+	height: 56px;
+	overflow: hidden;
+	padding-left: 10px;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.linkmandiv>span {
+	line-height: 56px;
+	font-size: 16px;
+	font-family: "微软雅黑";
+	color: #333333;
+}
+
+#divimg2 {
+	float: right;
+	width: 10%;
+	height: 68px;
+	line-height: 68px;
+}
+
+.Syerngy-item {
+	width: 100%;
+	overflow: hidden;
+	float: left;
+	display: inline-block;
+}
+
+.synercontent {
+	width: 80%;
+	margin-left: 10px;
+	margin-bottom: 10px;
+	overflow: hidden;
+	float: left;
+}
+
+.syner2>span {
+	display: inline-block;
+	padding-top: 10px;
+	font-size: 16px;
+	font-family: "微软雅黑";
+	color: #000;
+}
+
+.divtime {
+	width: 100%;
+	font-size: 15px;
+	margin-top: 4px;
+	font-family: "微软雅黑";
+	color: #858585;
+}
+
+.log-item {
+	width: 100%;
+	margin: 0 auto;
+	min-width: 320px;
+	max-width: 640px;
+	overflow: hidden;
+}
+
+.synername {
+	margin-right: 20px;
+}
+
+.log-item> .log-date>.date-span {
+	display: inline-block;
+	margin-left: 10px;
+	padding-top: 10px;
+	line-height: 20px;
+	font-size: 12px;
+	font-family: "微软雅黑";
+	color: #57B2E9;
+}
+
+.state {
+	display: inline-block;
+	font-size: 12px;
+	font-family: "微软雅黑";
+	color: #000000;
+	float: right;
+	padding-right: 10px;
+	padding-top: 10px;
+	line-height: 20px;
+}
+
+.divcon {
+	padding-left: 10px;
+	padding-right: 10px;
+	margin-bottom: 10px;
+	font-size: 14px;
+	font-family: "微软雅黑";
+	color: #858585;
+}
+
+
+/*任务*/
+
+.divtask {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 0px 10px 10px 10px;
+	overflow: hidden;
+}
+
+#name {
+	color: #57B2E9;
+	margin-right: 10px;
+}
+
+#date {
+	color: #858585;
+	margin-left: 10px;
+}
+
+.taskmain {
+	font-size: 14px;
+	font-family: "微软雅黑";
+	float: left;
+	display: inline-block;
+	width: 100%;
+	height: 90px;
+	padding-top: 10px;
+}
+
+#taskleft {
+	width: 60%;
+	position: absolute;
+}
+
+.taskcon {
+	font-size: 16px;
+	color: #333333;
+}
+
+.divtaskcon {
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+#taskright {
+	height: 70px;
+	margin-left: 70%;
+	border: 1px solid #F6F6F6;
+	padding-top: 10px;
+}
+
+.taskimg {
+	margin-top: 10px;
+}
+
+#taskright>div>span {
+	font-size: 16px;
+	color: #333333;
+}
+
+#spanrightdate {
+	margin-right: 5px;
+}

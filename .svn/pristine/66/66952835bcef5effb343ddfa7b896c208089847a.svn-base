@@ -1,0 +1,560 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.sys.web;
+
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.activiti.engine.TaskService;
+import org.activiti.engine.task.TaskQuery;
+import org.apache.shiro.authz.UnauthorizedException;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.apache.shiro.web.util.WebUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.security.shiro.session.SessionDAO;
+import com.thinkgem.jeesite.common.servlet.ValidateCodeServlet;
+import com.thinkgem.jeesite.common.utils.CacheUtils;
+import com.thinkgem.jeesite.common.utils.CookieUtils;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.utils.UserAgentUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.mobile.modules.oa.web.notify.util.NotifyUtil;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.doc.OaDoc;
+import com.thinkgem.jeesite.modules.oa.entity.mytask.OaPlan;
+import com.thinkgem.jeesite.modules.oa.entity.project.OaProject;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.doc.OaDocService;
+import com.thinkgem.jeesite.modules.oa.service.mytask.OaPlanService;
+import com.thinkgem.jeesite.modules.oa.service.project.OaProjectService;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.security.FormAuthenticationFilter;
+import com.thinkgem.jeesite.modules.sys.security.SystemAuthorizingRealm.Principal;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.entity.UserMonthrecord;
+import com.thinkgem.jeesite.modules.user.entity.UserMonthsum;
+import com.thinkgem.jeesite.modules.user.entity.UserWeekplan;
+import com.thinkgem.jeesite.modules.user.entity.UserWeekrecord;
+import com.thinkgem.jeesite.modules.user.service.UserWeekplanService;
+import com.thinkgem.jeesite.modules.user.service.UserWeekrecordService;
+
+/**
+ * 登录Controller
+ * @author ThinkGem
+ * @version 2013-5-31
+ */
+@Controller
+public class LoginController extends BaseController{
+	@Autowired
+	private OaNotifyService oaNotifyService;
+	@Autowired
+	private SessionDAO sessionDAO;
+	/**
+	 * 管理登录
+	 */
+	@RequestMapping(value = "${adminPath}/login", method = RequestMethod.GET)
+	public String login(HttpServletRequest request, HttpServletResponse response, Model model) {
+		Principal principal = UserUtils.getPrincipal();
+
+//		// 默认页签模式
+//		String tabmode = CookieUtils.getCookie(request, "tabmode");
+//		if (tabmode == null){
+//			CookieUtils.setCookie(response, "tabmode", "1");
+//		}
+		
+		if (logger.isDebugEnabled()){
+			logger.debug("login, active session size: {}", sessionDAO.getActiveSessions(false).size());
+		}
+		
+		// 如果已登录，再次访问主页，则退出原账号。
+		if (Global.TRUE.equals(Global.getConfig("notAllowRefreshIndex"))){
+			CookieUtils.setCookie(response, "LOGINED", "false");
+		}
+		
+		// 如果已经登录，则跳转到管理首页
+		if(principal != null && !principal.isMobileLogin()){
+			String url="redirect:" + adminPath;
+			return url;
+		}
+//		String view;
+//		view = "/WEB-INF/views/modules/sys/sysLogin.jsp";
+//		view = "classpath:";
+//		view += "jar:file:/D:/GitHub/jeesite/src/main/webapp/WEB-INF/lib/jeesite.jar!";
+//		view += "/"+getClass().getName().replaceAll("\\.", "/").replace(getClass().getSimpleName(), "")+"view/sysLogin";
+//		view += ".jsp";
+		String url="modules/sys/sysLogin";
+		if(Global.isDebugMode()||UserAgentUtils.isMobileOrTablet(request)){
+			url="mobile/modules/sys/sysLogin";
+		}
+		return url;
+	}
+
+	/**
+	 * 登录失败，真正登录的POST请求由Filter完成
+	 */
+	@RequestMapping(value = "${adminPath}/login", method = RequestMethod.POST)
+	public String loginFail(HttpServletRequest request, HttpServletResponse response, Model model) {
+		Principal principal = UserUtils.getPrincipal();
+		
+		// 如果已经登录，则跳转到管理首页
+		if(principal != null){
+			return "redirect:" + adminPath;
+		}
+
+		String username = WebUtils.getCleanParam(request, FormAuthenticationFilter.DEFAULT_USERNAME_PARAM);
+		boolean rememberMe = WebUtils.isTrue(request, FormAuthenticationFilter.DEFAULT_REMEMBER_ME_PARAM);
+		boolean mobile = WebUtils.isTrue(request, FormAuthenticationFilter.DEFAULT_MOBILE_PARAM);
+		String exception = (String)request.getAttribute(FormAuthenticationFilter.DEFAULT_ERROR_KEY_ATTRIBUTE_NAME);
+		String message = (String)request.getAttribute(FormAuthenticationFilter.DEFAULT_MESSAGE_PARAM);
+		
+		if (StringUtils.isBlank(message) || StringUtils.equals(message, "null")){
+			message = "用户或密码错误, 请重试.";
+		}
+
+		model.addAttribute(FormAuthenticationFilter.DEFAULT_USERNAME_PARAM, username);
+		model.addAttribute(FormAuthenticationFilter.DEFAULT_REMEMBER_ME_PARAM, rememberMe);
+		model.addAttribute(FormAuthenticationFilter.DEFAULT_MOBILE_PARAM, mobile);
+		model.addAttribute(FormAuthenticationFilter.DEFAULT_ERROR_KEY_ATTRIBUTE_NAME, exception);
+		model.addAttribute(FormAuthenticationFilter.DEFAULT_MESSAGE_PARAM, message);
+		
+		if (logger.isDebugEnabled()){
+			logger.debug("login fail, active session size: {}, message: {}, exception: {}", 
+					sessionDAO.getActiveSessions(false).size(), message, exception);
+		}
+		
+		// 非授权异常，登录失败，验证码加1。
+		if (!UnauthorizedException.class.getName().equals(exception)){
+			model.addAttribute("isValidateCodeLogin", isValidateCodeLogin(username, true, false));
+		}
+		
+		// 验证失败清空验证码
+		request.getSession().setAttribute(ValidateCodeServlet.VALIDATE_CODE, IdGen.uuid());
+		
+		// 如果是手机登录，则返回JSON字符串
+		/*if (mobile){
+	        return renderString(response, model);
+		}*/
+		String url="modules/sys/sysLogin";
+		if(Global.isDebugMode()||UserAgentUtils.isMobileOrTablet(request)){
+			url="mobile/modules/sys/sysLogin";
+		}
+		return url;
+	}
+
+	/**
+	 * 登录成功，进入管理首页
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "${adminPath}")
+	public String index(OaNotify oaNotify,HttpServletRequest request, HttpServletResponse response,Model model,Act act) {
+		Principal principal = UserUtils.getPrincipal();
+
+		// 登录成功后，验证码计算器清零
+		isValidateCodeLogin(principal.getLoginName(), false, true);
+		
+		if (logger.isDebugEnabled()){
+			logger.debug("show index, active session size: {}", sessionDAO.getActiveSessions(false).size());
+		}
+		
+		// 如果已登录，再次访问主页，则退出原账号。
+		if (Global.TRUE.equals(Global.getConfig("notAllowRefreshIndex"))){
+			String logined = CookieUtils.getCookie(request, "LOGINED");
+			if (StringUtils.isBlank(logined) || "false".equals(logined)){
+				CookieUtils.setCookie(response, "LOGINED", "true");
+			}else if (StringUtils.equals(logined, "true")){
+				UserUtils.getSubject().logout();
+				return "redirect:" + adminPath + "/login";
+			}
+		}
+		
+		// 如果是手机登录，则返回JSON字符串
+		if (principal.isMobileLogin()){
+			/*if (request.getParameter("login") != null){
+				return renderString(response, principal);
+			}*/
+			if (request.getParameter("index") != null){				
+				
+				String url="modules/sys/sysIndex";
+				if(Global.isDebugMode()||UserAgentUtils.isMobileOrTablet(request)){
+					OaPlan oaPlan=new OaPlan();
+					Map<String, String> mapCount = oaPlanService.unfinishedCount(oaPlan.getCurrentUser().getId());
+					Integer num = NotifyUtil.getMyNotifyNum();
+					model.addAttribute("notifyCount", num);
+					model.addAttribute("mapCount", mapCount);
+					List<Act> list = actTaskService.todoList(act);
+					model.addAttribute("todoCount", list.size());
+					OaDoc oaDoc=new OaDoc();
+					oaDoc.setIsPublic(OaDoc.DOC_TYPE_PUBLIC);
+					oaDoc.setLoanUserId(UserUtils.getUser().getId());
+					Integer countPublic=oaDocService.getOaDocListCount(oaDoc);
+					model.addAttribute("docCount", countPublic);
+					url="mobile/modules/sys/index";
+				}
+				return url;
+			}
+			return "redirect:" + adminPath + "/login";
+		}
+		
+//		// 登录成功后，获取上次登录的当前站点ID
+//		UserUtils.putCache("siteId", StringUtils.toLong(CookieUtils.getCookie(request, "siteId")));
+
+//		System.out.println("==========================a");
+//		try {
+//			byte[] bytes = com.thinkgem.jeesite.common.utils.FileUtils.readFileToByteArray(
+//					com.thinkgem.jeesite.common.utils.FileUtils.getFile("c:\\sxt.dmp"));
+//			UserUtils.getSession().setAttribute("kkk", bytes);
+//			UserUtils.getSession().setAttribute("kkk2", bytes);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
+////		for (int i=0; i<1000000; i++){
+////			//UserUtils.getSession().setAttribute("a", "a");
+////			request.getSession().setAttribute("aaa", "aa");
+////		}
+//		System.out.println("==========================b");
+		oaNotify.setSelf(true);		
+		Page<OaNotify> page = oaNotifyService.findMyList(new Page<OaNotify>(request, response), oaNotify);
+	
+		List<OaNotify> list=new ArrayList<OaNotify>();
+		for(int i=0;i<page.getList().size();i++){
+		  if(i<3){
+		    list.add(page.getList().get(i));
+		  }else{
+		    break;
+		  }
+			
+		}
+		page.setList(list);
+		model.addAttribute("page", page);
+		String url="modules/sys/sysIndex";
+		if(Global.isDebugMode()||UserAgentUtils.isMobileOrTablet(request)){
+			OaPlan oaPlan=new OaPlan();
+			Map<String, String> mapCount = oaPlanService.unfinishedCount(oaPlan.getCurrentUser().getId());
+			Integer num = NotifyUtil.getMyNotifyNum();
+			model.addAttribute("notifyCount", num);
+			model.addAttribute("mapCount", mapCount);
+			List<Act> actlist = actTaskService.todoList(act);
+			model.addAttribute("todoCount", actlist.size());
+			OaDoc oaDoc=new OaDoc();
+			oaDoc.setIsPublic(OaDoc.DOC_TYPE_PUBLIC);
+			oaDoc.setLoanUserId(UserUtils.getUser().getId());
+			Integer countPublic=oaDocService.getOaDocListCount(oaDoc);
+			model.addAttribute("docCount", countPublic);
+			url="mobile/modules/sys/index";
+		}
+		return url;
+	}
+	
+	/**
+	 * 获取主题方案
+	 */
+	@RequestMapping(value = "/theme/{theme}")
+	public String getThemeInCookie(@PathVariable String theme, HttpServletRequest request, HttpServletResponse response){
+		if (StringUtils.isNotBlank(theme)){
+			CookieUtils.setCookie(response, "theme", theme);
+		}else{
+			theme = CookieUtils.getCookie(request, "theme");
+		}
+		return "redirect:"+request.getParameter("url");
+	}
+	
+	/**
+	 * 是否是验证码登录
+	 * @param useruame 用户名
+	 * @param isFail 计数加1
+	 * @param clean 计数清零
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public static boolean isValidateCodeLogin(String useruame, boolean isFail, boolean clean){
+		Map<String, Integer> loginFailMap = (Map<String, Integer>)CacheUtils.get("loginFailMap");
+		if (loginFailMap==null){
+			loginFailMap = Maps.newHashMap();
+			CacheUtils.put("loginFailMap", loginFailMap);
+		}
+		Integer loginFailNum = loginFailMap.get(useruame);
+		if (loginFailNum==null){
+			loginFailNum = 0;
+		}
+		if (isFail){
+			loginFailNum++;
+			loginFailMap.put(useruame, loginFailNum);
+		}
+		if (clean){
+			loginFailMap.remove(useruame);
+		}
+		return loginFailNum >= 3;
+	}
+	/**
+	 * 首页
+	 * 
+	 * @throws IOException
+	 */
+	@RequestMapping(value = "${adminPath}/home")
+	public String home(HttpServletRequest request,
+			HttpServletResponse response, Model model,Act act,UserWeekplan userWeekplan, UserWeekrecord userWeekrecord, UserMonthsum userMonthsum,
+			UserMonthrecord userMonthrecord, Date plandate,OaPlan oaPlan,OaProject oaProject,OaDoc oaDoc) throws IOException {
+		UserUtils.clearCache();
+		initTodo(request, response, model,act);
+		initPlan(userWeekplan, userWeekrecord, userMonthsum, userMonthrecord, plandate, model,request, response);
+		initTask(oaPlan, request, response, model);
+		histoGram(oaPlan, request, response, model, oaProject,oaDoc);
+		return "modules/sys/index";
+
+	}
+	@Autowired
+	private ActTaskService actTaskService;
+	@Autowired
+	private UserWeekplanService userWeekplanService;
+	@Autowired
+	private UserWeekrecordService userWeekrecordService;
+	@Autowired
+	private OaPlanService oaPlanService;
+	/**
+	 * 计算时间(小时)
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public long date(Date createDate) {
+		long between = 0;
+		Date  begin =createDate;
+        Date end = new Date();
+        between = (end.getTime() - begin.getTime());// 得到两者的毫秒数
+       // long day = between / (24 * 60 * 60 * 1000);
+        long hour = (between / (60 * 60 * 1000));
+        return hour;
+	}
+	/**
+	 * 计算时间(tian)
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public long dateDay(Date createDate) {
+		long between = 0;
+		Date  begin =createDate;
+        Date end = new Date();
+        between = (end.getTime() - begin.getTime());// 得到两者的毫秒数
+        long day = between / (24 * 60 * 60 * 1000);
+        return day;
+	}
+	
+	/**
+	 * 初始化代办事项
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initTodo(HttpServletRequest request, HttpServletResponse response, Model model,Act act) {
+		List<Act> actlist = actTaskService.todoList(act);
+		List<Act> list=new ArrayList<Act>();
+		if(actlist.size()>5){
+		for(int i=0;i<6;i++){
+			if(date(actlist.get(i).getTaskCreateDate())>24){
+				actlist.get(i).setHour(String.valueOf(date(actlist.get(i).getTaskCreateDate())/24)+"天前");
+			}else{
+			actlist.get(i).setHour(String.valueOf(date(actlist.get(i).getTaskCreateDate()))+"小时前");
+			}
+			list.add(actlist.get(i));
+		}
+		}else{
+			for(int i=0;i<actlist.size();i++){
+				if(date(actlist.get(i).getTaskCreateDate())>24){
+					actlist.get(i).setHour(String.valueOf(date(actlist.get(i).getTaskCreateDate())/24)+"天前");
+				}else{
+				actlist.get(i).setHour(String.valueOf(date(actlist.get(i).getTaskCreateDate()))+"小时前");
+				}
+				list.add(actlist.get(i));
+			}
+		}
+		model.addAttribute("list", list);
+	}
+	/**
+	 * 初始化周计划
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initPlan(UserWeekplan userWeekplan, UserWeekrecord userWeekrecord, UserMonthsum userMonthsum,
+			UserMonthrecord userMonthrecord, Date plandate, Model model,HttpServletRequest request, HttpServletResponse response) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(new Date());
+		int weekOfMonth = calendar.get(Calendar.WEEK_OF_MONTH);
+		model.addAttribute("weekOfMonth", weekOfMonth);
+		model.addAttribute("Date", 	new Date());
+		userWeekplan.setCreateBy(userWeekplan.getCurrentUser());
+		userWeekplan.setWeeksign(String.valueOf(weekOfMonth));
+		SimpleDateFormat sfd = new SimpleDateFormat("yyyy-MM");
+		String end=sfd.format(new Date())+"-01";
+		
+		userWeekplan.setDate(end);
+		List<UserWeekplan>	uw=userWeekplanService.indexGetId(userWeekplan);
+		if(uw.size()>0){
+		userWeekrecord.setWeekplanId(uw.get(0).getId());
+		List<UserWeekrecord> list=userWeekrecordService.indexGetList(userWeekrecord);
+		model.addAttribute("UserWeekrecordlist", list);
+			}
+		}
+	/**
+	 * 初始化我的任务
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initTask(OaPlan oaPlan, HttpServletRequest request, HttpServletResponse response, Model model){
+		oaPlan.setCreateBy(oaPlan.getCurrentUser());
+		List<OaPlan> taskList=new ArrayList<OaPlan>();
+		Page<OaPlan> page = oaPlanService.relist(new Page<OaPlan>(request, response), oaPlan);
+		List<OaPlan> list=page.getList();
+		SimpleDateFormat dfs = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		try {
+		if(list.size()>5){
+		for(int i=0;i<6;i++){
+				list.get(i).setIndexDay(dateDay(dfs.parse(list.get(i).getEndTime())));
+				list.get(i).setIndexDayi(String.valueOf(dateDay(dfs.parse(list.get(i).getEndTime()))).substring(1, String.valueOf(dateDay(dfs.parse(list.get(i).getEndTime()))).length()));
+				taskList.add(list.get(i));
+		}
+		}else{
+			for(int i=0;i<list.size();i++){
+				list.get(i).setIndexDay(dateDay(dfs.parse(list.get(i).getEndTime())));
+				list.get(i).setIndexDayi(String.valueOf(dateDay(dfs.parse(list.get(i).getEndTime()))).substring(1, String.valueOf(dateDay(dfs.parse(list.get(i).getEndTime()))).length()));
+				taskList.add(list.get(i));
+				
+			}
+		}
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		model.addAttribute("taskList", taskList);
+	}
+	
+	@Autowired
+	private OaProjectService oaProjectService;
+	@Autowired
+	private OfficeService officeService;// 组织机构service
+	@Autowired
+	private SystemService systemService;// 系统功能相关service
+	@Autowired
+	private TaskService taskService;
+	@Autowired
+	private OaDocService oaDocService;
+	/**
+	 * 初始化柱状图
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	 public void histoGram(OaPlan oaPlan, HttpServletRequest request, HttpServletResponse response, Model model,OaProject oaProject,OaDoc oaDoc){
+		 /*                         项目统计 												*/
+		 Page<OaProject> page = oaProjectService.findPageBySearchUserId(new Page<OaProject>(request, response), oaProject); 
+		 Page<OaProject> companyPage=oaProjectService.findPage(new Page<OaProject>(request, response), oaProject);
+		 List<Office> offices = officeService.findWeekList(UserUtils.getUser().getOffice());
+			List<List<User>> users = new ArrayList<List<User>>();
+			List<List<Integer>> submits = new ArrayList<List<Integer>>();
+			List<User> usersTemp = new ArrayList<User>();
+			for (Office office : offices) {
+				List<Integer> submitsTemp = new ArrayList<Integer>();
+				usersTemp = systemService.findUserByOfficeId(office.getId());
+				users.add(usersTemp);
+				submits.add(submitsTemp);
+			}
+			int sum = 0;
+			 for(int i=0;i<usersTemp.size();i++){
+				  User ue=	  usersTemp.get(i);
+				  oaProject.setCreateBy(ue);
+				long count=  oaProjectService.indexfindPageBySearchUserId(new Page<OaProject>(request, response), oaProject).getCount(); 
+				sum=sum+(int)count;
+				  }
+		 model.addAttribute("oaProjectMyListCount", page.getCount());//我的项目
+		 model.addAttribute("oaProjectCompanyListCount", companyPage.getCount());//全部项目
+		 model.addAttribute("oaProjectDivisionListCount", sum);//部门项目
+		 /*                         协同统计												*/
+		 String userid=UserUtils.getUser().getLoginName();
+		 TaskQuery todoTaskQuery = taskService.createTaskQuery()
+					.taskAssignee(userid).active().includeProcessVariables()
+					.orderByTaskCreateTime().desc();
+			long myTodoTaskQuery=todoTaskQuery.count();
+			int sumTask = 0;
+			 for(int i=0;i<usersTemp.size();i++){
+				  User ue=	  usersTemp.get(i);
+				  TaskQuery todoTaskQuery1 = taskService.createTaskQuery()
+							.taskAssignee(ue.getLoginName()).active().includeProcessVariables()
+							.orderByTaskCreateTime().desc();
+					long divisionTodoTaskQuery=todoTaskQuery1.count();
+					sumTask=sumTask+(int)divisionTodoTaskQuery;
+				  }
+				model.addAttribute("myTodoTaskQueryCount", myTodoTaskQuery);//我的代办事项
+			 model.addAttribute("divisionTodoTaskQueryCount", sumTask);//部门代办事项
+			 model.addAttribute("companyTodoTaskQueryCount", taskService.createTaskQuery()
+						.active().includeProcessVariables()
+						.orderByTaskCreateTime().desc());//全部代办事项
+			 
+			 
+			 /*                         文档												*/
+				if (!UserUtils.hasRole(Global.getConfig("docManagerRoleEnname"))) {
+					oaDoc.setCurrentUserId(UserUtils.getUser().getId());
+				}
+				Page<OaDoc> pageDoc = oaDocService.findPage(new Page<OaDoc>(request, response), oaDoc); 
+				model.addAttribute("myDocCount", pageDoc.getCount());//我的文档
+				oaDoc=new OaDoc();
+				oaDoc.setIsPublic("0");
+				oaDoc.setOffice(UserUtils.getUser().getOffice());
+				oaDoc.setLoanUserId(UserUtils.getUser().getId());
+				Page<OaDoc> pageDivision = oaDocService.findPage(new Page<OaDoc>(request, response), oaDoc); 
+				model.addAttribute("divisionDocCount", pageDivision.getCount());
+				OaDoc companyoaDoc=new OaDoc();
+				List <OaDoc> pageCompany = oaDocService.findList( companyoaDoc); 
+				model.addAttribute("companyDocCount", pageCompany.size());
+				
+				 /*                         任务											*/
+				oaPlan.setCreateBy(oaPlan.getCurrentUser());
+				Page<OaPlan> myPlanCount = oaPlanService.findListTask(new Page<OaPlan>(request, response), oaPlan);
+				model.addAttribute("myPlanCount", myPlanCount.getCount());//我的任务
+				int sumPlan = 0;
+				 for(int i=0;i<usersTemp.size();i++){
+					 	oaPlan=new OaPlan();
+					  User ue=	  usersTemp.get(i);
+					  oaPlan.setCreateBy(ue);
+						Page<OaPlan> divisionPlan = oaPlanService.findListTask(new Page<OaPlan>(request, response), oaPlan);
+						long divisionPlanCount=divisionPlan.getCount();
+						sumPlan=sumPlan+(int)divisionPlanCount;
+					  }
+				 model.addAttribute("divisionPlanCount", sumPlan);//部门任务
+				 oaPlan=new OaPlan();
+				 List<OaPlan> companyPlan = oaPlanService.indexfindListTask();
+				 model.addAttribute("companyPlanCount", companyPlan.size());//公司任务
+	 }
+}

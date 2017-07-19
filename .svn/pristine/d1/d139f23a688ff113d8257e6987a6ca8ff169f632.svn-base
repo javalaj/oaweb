@@ -1,0 +1,45 @@
+.main{
+	width: 100%;
+	height: 500px;
+}
+     
+.lunbo.ws_images{
+	width: 100%;
+}
+ .ws_images img{
+ 	width: 100%;
+ }
+    
+   /*.menu{
+	  	width: 100%;
+	  	position: fixed;
+	  	z-index:999;left:0;right:0;bottom:0;
+    }*/
+.indexitem {
+	overflow: hidden;
+}
+.indexitem ul li {
+
+	box-sizing: border-box;
+	width: 25%;
+	padding-top: 6px;
+	float: left;
+}
+.indexitem ul li a {
+	display: block;
+	width: 90%;
+	margin: 0 auto; 
+	color: #666;
+	padding-top: 2px;
+	padding-bottom: 2px;
+	box-sizing: border-box;
+	text-align: center;
+	font-size: 1.2rem;
+}
+.indexitem ul li a img {
+	width: 70%;
+}
+
+.indexitem ul li a:hover {
+	background: #eee;
+}

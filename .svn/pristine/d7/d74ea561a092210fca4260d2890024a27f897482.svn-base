@@ -1,0 +1,446 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>${fns:getConfig('productName')}</title>
+<meta name="decorator" content="default"/>
+<!-- 即时聊天插件  开始-->
+<script type="text/javascript">
+	var currentLoginName = '${fns:getUser().loginName}';
+	var currentId = '${fns:getUser().id}';
+	var currentName = '${fns:getUser().name}';
+	var currentFace = '${fns:getUser().photo}';
+	var url = "${ctx}";
+	var wsServer = 'ws://'+window.document.domain+':8668';
+</script>
+<script type="text/javascript" src="${ctxStatic}/common/iim.js"></script>
+<script>
+	layui.use('layim', function(layim) {
+		init();
+		//基础配置
+		layim.config({
+			//获取主面板列表信息
+			init : {
+				url : '${ctx}/iim/contact/friend' //接口地址（返回的数据格式见下文）
+				,
+				type : 'post' //默认get，一般可不填
+				,
+				data : {}
+			//额外参数
+			}
+
+			//获取群员接口（返回的数据格式见下文）
+			,
+			members : {
+				url : '${ctx}/iim/contact/group' //接口地址（返回的数据格式见下文）
+				,
+				type : 'get' //默认get，一般可不填
+				,
+				data : {}
+			//额外参数
+			}
+
+			//上传图片接口（返回的数据格式见下文），若不开启图片上传，剔除该项即可
+			,
+			uploadImage : {
+				url : '${ctx}/iim/contact/image' //接口地址
+				,
+				type : 'post' //默认post
+			}
+
+			//上传文件接口（返回的数据格式见下文），若不开启文件上传，剔除该项即可
+			,
+			uploadFile : {
+				url : '${ctx}/iim/contact/file' //接口地址
+				,
+				type : 'post' //默认post
+			}
+			//扩展工具栏，下文会做进一步介绍（如果无需扩展，剔除该项即可）
+			//,tool: [{
+			//  alias: 'code' //工具别名
+			//  ,title: '代码' //工具名称
+			//  ,icon: '&#xe64e;' //工具图标，参考图标文档
+			//}]
+			,
+			title :'在线沟通'
+			,
+			voice : 'iPhone.mp3'
+			,
+			copyright:true
+			,
+			//,
+			//msgbox : layui.cache.dir + 'css/modules/layim/html/msgbox.html' //消息盒子页面地址，若不开启，剔除该项即可
+		    find: '${ctx}/iim/contact/findGroup'
+			//find : layui.cache.dir + 'css/modules/layim/html/find.html' //发现页面地址，若不开启，剔除该项即可
+			,
+			chatLog : '${ctx}/iim/chatHistory' //聊天记录页面地址，若不开启，剔除该项即可
+		});
+
+		layim.on('setSkin', function(filename, src) {
+			console.log(filename); //获得文件名，如：1.jpg
+			console.log(src); //获得背景路径，如：http://res.layui.com/layui/src/css/modules/layim/skin/1.jpg
+		});
+
+		layim.on('sign', function(value) {
+			console.log(value); //获得新的签名
+			//此时，你就可以通过Ajax将新的签名同步到数据库中了。
+			$.ajax({
+				type : "POST",
+				url : "${ctx}/iim/contact/updateSign",
+				data : {
+					'sign' : value,
+					'username' : currentLoginName
+				},
+				success : function(date) {
+					$("#layim-friend"+currentId+" p").html(value);
+				}
+
+			})
+		});
+
+		layim.on('sendMessage', function(res) {
+			console.info(res);
+			//var mine = res.mine; //包含我发送的消息及我的信息
+			var to = res.to; //对方的信息
+			//监听到上述消息后，就可以轻松地发送socket了，如：
+			if(to.type=='friend')
+			  {
+				waitForConnection(function() {// 连接建立才能发送消息
+					webSocket.send("_msg_" + JSON.stringify(res));
+				}, 0);
+		      }else if(to.type=='group'){
+		    	  waitForConnection(function() {// 连接建立才能发送消息
+						webSocket.send("_groupmsg_" + JSON.stringify(res));
+					}, 0);
+		      }
+		
+		});
+
+		webSocket.onmessage = function(event) {
+			var data = event.data;
+			if (data.indexOf('_online_user_') >= 0) {//通知好友上线
+				layim.setFriendStatus(data.replace('_online_user_', ''),
+						'online'); //设置指定好友在线，即头像取消置灰
+			} else if (data.indexOf('_leave_user_') >= 0) {//通知好友离线
+				layim.setFriendStatus(data.replace('_leave_user_', ''),
+						'offline'); //设置指定好友在线，即头像置灰
+			} else {
+				var event2 = eval("(" + data + ")");
+				console.info(event2);
+				if (event2.emit === 'chatMessage') {
+					layim.getMessage(event2.data);
+				} else if (event2.emit === 'sysMessage') {
+					layim.getMessage(event2.data);
+				}
+			}
+		}
+
+		//监听在线状态的切换事件
+		layim.on('online', function(status) {
+			//console.log(status); //获得online或者hide
+			waitForConnection(function() {// 连接建立才能发送消息
+				if (status === 'online') {
+					webSocket.send("_online_user_" + currentLoginName);
+				} else if (status === 'hide') {
+					webSocket.send("_leave_user_" + currentLoginName);
+				}
+			}, 0);
+		});
+
+		layim.on('chatChange', function(obj) {
+			
+		});
+
+	});
+</script> 
+<!--即时通讯结束  --> 
+	<script type="text/javascript">
+		$(document).ready(function() {
+		     WinMove();
+		  // 绑定菜单单击事件
+			 $("#side-menu a.menu").click(function(){
+				$("#side-menu li.J_menuItem1").removeClass("active");
+				$(this).parent().addClass("active");});		
+		  
+			 $('#myinfo').mouseover(function(){
+					$('#myinfo>a').css({"background":"rgb(239,244,248)"});
+					$('#myinfo>a').css("color","#35a5e7");
+				});
+			 $('#myinfo').mouseout(function(){
+					$('#myinfo a').css("color","#434f66");
+				})
+		});
+	</script>
+<script src="${ctxStatic}/common/inspinia.js?v=3.2.0"></script>
+	<script src="${ctxStatic}/common/contabs.js"></script>
+    <script type="text/javascript">
+	$(document).ready(function() {
+		
+		 if('默认主题' == '天蓝主题'){
+			    // 蓝色主题
+			        $("body").removeClass("skin-2");
+			        $("body").removeClass("skin-3");
+			        $("body").addClass("skin-1");
+		 }else  if('默认主题' == '橙色主题'){
+			    // 黄色主题
+			        $("body").removeClass("skin-1");
+			        $("body").removeClass("skin-2");
+			        $("body").addClass("skin-3");
+		 }else {
+			 // 默认主题
+			        $("body").removeClass("skin-2");
+			        $("body").removeClass("skin-3");
+			        $("body").removeClass("skin-1");
+		 };
+		 function getNotifyNum(){
+				$.get("${ctx}/oa/oaNotify/self/count?updateSession=0&t="+new Date().getTime(),function(data){
+					var num = parseFloat(data);
+					if (num >=0){
+						$("#notifyNum").html(num);
+						/* 消息提醒-有消息颜色改变 */
+						$('.infi-icon').css("color","#35a5e7");
+						$("#notifyNum").css("background","#f25d5d");
+					}else{
+						$('#notifyNum').css("display","none");
+					}
+				});
+			}
+			getNotifyNum();
+			setInterval(getNotifyNum,1000); 
+			
+			
+			
+	});
+	
+	
+	</script>
+	
+	<!-- 通知公告滚动 -->
+	<script src="${ctxStatic}/jquery-tickerNews/jquery.tickerNews.min.js"></script>
+	<script type="text/javascript">
+	$(function(){
+		/* 通知公告初始化 */
+		_Ticker = $(".TickerNews").newsTicker();
+		/* $(".TickerNews").newsTicker({
+			base: {
+		        width: 2100,
+		        time: 90000
+		    }
+		}); */
+		
+		 /* $('.TickerNews').hover(
+			 function(){
+				 $('.ti_content').stop(true,false);
+			 },
+			 function(){
+				$(".TickerNews").start();
+			 }); */
+	});
+	</script>
+	<%-- <link href="${ctxStatic}/jquery-tickerNews/styles/ticker-style.css" rel="stylesheet" type="text/css" />
+	<script src="${ctxStatic}/jquery-tickerNews/includes/jquery.ticker.js" type="text/javascript"></script>
+	<script type="text/javascript">
+	    $(function () {
+	        $('#js-news').ticker();
+	    });
+	</script> --%>
+	
+	<link type="text/css" href="${ctxStatic}/rest/rest.css" rel="stylesheet">
+	<style>
+		.sidebar-collapse .nav li:last-child i{font-size:18px;position:relative;top:2px;}
+		.nav > li:hover .dropdown-menu {display: block;}
+	</style>
+	
+</head>
+
+<body class="fixed-sidebar full-height-layout gray-bg rest-index">
+    <div id="wrapper">
+        <!--左侧导航开始-->
+        <nav class="navbar-default navbar-static-side" role="navigation">
+            <div class="nav-close"><i class="fa fa-times-circle"></i>
+            </div>
+            
+            <div class="sidebar-collapse" >
+                <ul class="nav" id="side-menu">
+                 <t:menu  menu="${fns:getTopMenu()}"></t:menu>                             
+                </ul>
+            </div>
+        </nav>
+        <!--左侧导航结束-->
+        <!--右侧部分开始-->
+        <div id="page-wrapper" class="gray-bg dashbard-1">
+            <div class="row border-bottom">
+                <nav class="navbar navbar-static-top" role="navigation" style="margin-bottom:0;height:60px;">
+                	
+                		<a  class="dropdown-toggle" href="${ctx }/login">
+                                <span class="login-panel">楚誉OA办公系统</span></a>
+                    <div class="navbar-header "><a class="navbar-minimalize minimalize-styl-2 btn btn-primary " href="#"><i class="fa fa-bars"></i> </a>
+					<!-- <marquee behavior="scroll" contenteditable="true" onstart="this.firstChild.innerHTML+=this.firstChild.innerHTML;" scrollamount="3" class=" control-txt" name="top-notice" id="top-notice inputGroupSuccess1" onmouseover="this.stop();" onmouseout="this.start();">
+                                    2017年2月27日清日结表交纳情况通报：截止2017年2月28日8:30公司全体同事均已提交日清日结，请大家保持噢！！！
+                                </marquee> -->
+                                <div class="TickerNews" id="example">
+                                <div class="leftside">
+                                    <span class="glyphicon glyphicon-volume-up"></span>
+                                </div>
+                                <%-- <div class="ti_wrapper">
+                                    <div class="ti_slide">
+                                        <div class="ti_content">
+                                         <c:forEach items="${page.list}" var="oaNotify"> <div class="ti_news"><a href="${ctx}/oa/oaNotify/view?id=${oaNotify.id}"><fmt:formatDate value="${oaNotify.updateDate}" pattern="yyyy-MM-dd HH:mm:ss"/> ${fns:abbr(oaNotify.title,50)}</a></div></c:forEach>                                                                      
+                                        </div>
+                                    </div>
+                                </div> --%>
+                                <marquee direction=left onmouseover=this.stop() onmouseout=this.start() scrollamount="2">
+								    <c:forEach items="${page.list}" var="oaNotify"><a  onclick="openTab('${ctx}/oa/oaNotify/view?id=${oaNotify.id}','通告详情',false)" ><fmt:formatDate value="${oaNotify.updateDate}" pattern="yyyy-MM-dd HH:mm:ss"/> ${fns:abbr(oaNotify.title,50)}</a></c:forEach>
+								</marquee>
+                            </div>
+                            <!-- <ul id="js-news" class="js-hidden">
+							    <li class="news-item"><a href="#">This is the 1st latest news item.sdfsefsefesfsefsefsefsefsefsefsefsegfsgstfsefesfsefse</a></li>
+							    <li class="news-item"><a href="#">This is the 2nd latest news item.</a></li>
+							    <li class="news-item"><a href="#">This is the 3rd latest news item.</a></li>
+							    <li class="news-item"><a href="#">This is the 4th latest news item.</a></li>
+							</ul> -->
+                    </div>
+                    <ul class="nav navbar-top-links navbar-right">
+                    <li class="dropdown divider">
+                            <a class="dropdown-toggle count-info infi-icon J_menuItem"  onclick="openTab('${ctx}/oa/oaNotify/self','消息中心',false)">
+                                <i class="fa fa-bell"></i> <span class="label label-primary" id="notifyNum"></span>
+                            </a>
+                             <%-- <ul class="dropdown-menu dropdown-alerts">
+                                <li class="divider"></li>
+                                <li>
+                                    <div class="text-center link-block">
+                                     <a class="J_menuItem" href="${ctx}/oa/oaNotify/self ">
+                                     <strong  id="notifyNum2">消息中心</strong>
+                                            <i class="fa fa-angle-right"></i>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>  --%>
+                        </li>
+                        <li class="dropdown" id="myinfo">
+                            <a style="height:60px" class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                                <span><img alt=""  class="img-circle" style="height:30px;width:30px;" title="头像"  onerror="javascript:this.src='${ctxStatic}/images/ph-index.png'" src="${fns:getUser().photo}" /></span>${fns:getUser().name}&nbsp;&nbsp;${fns:getUser().office.name}</a>
+                            <ul class="dropdown-menu dropdown-messages"  style="width:140px;" >
+                                <li><a class="J_menuItem"  href="${ctx}/sys/user/info">个人信息</a>
+                                </li>
+                                <li><a class="J_menuItem" href="${ctx}/user/userFavorite">我的收藏</a>
+                                </li>
+                                <li><a class="J_menuItem" href="${ctx}/oa/mytask/oaPlan">我的日程</a>
+                                </li>
+                                <li><a class="J_menuItem" href="${ctx}/oa/project/oaProject/myList">我的项目</a>
+                                </li>
+                                 <li><a class="J_menuItem" href="${ctx}/oa/mytask/myTask">我的任务</a>
+                                </li>
+                            </ul>
+                        </li>
+
+                       <%--  <li class="dropdown">
+                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                                <i class="fa fa-envelope"></i> <span class="label label-warning">0</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-messages">
+
+                         <li class="dropdown"> -->
+                            <a class="dropdown-toggle count-info" data-toggle="dropdown" href="#">
+                                 <i class="fa fa-envelope"></i> <span class="label label-warning">0</span> 
+                             </a> -->
+                             <ul class="dropdown-menu dropdown-messages"> -->
+
+                                <li>
+                                    <div class="text-center link-block">
+                                        <a class="J_menuItem" href="${ctx}/iim/mailBox/list?orderBy=sendtime desc">
+                                            <i class="fa fa-envelope"></i> <strong> 查看所有邮件</strong>
+                                        </a>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li> --%>                                                                  
+
+                    </ul>                                     
+                </nav>
+            </div>
+            <div class="row content-tabs">
+                <button class="roll-nav roll-left J_tabLeft"><i class="fa fa-backward"></i>
+                </button>
+                <nav class="page-tabs J_menuTabs">
+                    <div class="page-tabs-content">
+                        <a href="javascript:;" class="active J_menuTab" data-id="${ctx}/home">首页</a>
+                    </div>
+                </nav>
+                <button class="roll-nav roll-right J_tabRight"><i class="fa fa-forward"></i>
+                </button>
+                <div class="btn-group roll-nav roll-right">
+                    <button class="dropdown J_tabClose"  data-toggle="dropdown">关闭操作<span class="caret"></span>
+
+                    </button>
+                    <ul role="menu" class="dropdown-menu dropdown-menu-right">
+                        <li class="J_tabShowActive"><a>定位当前选项卡</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li class="J_tabCloseAll"><a>关闭全部选项卡</a>
+                        </li>
+                        <li class="J_tabCloseOther"><a>关闭其他选项卡</a>
+                        </li>
+                    </ul>
+                </div>
+                <a href="${ctx}/logout" class="roll-nav roll-right J_tabExit"><i class="fa fa fa-sign-out"></i> 退出</a>
+            </div>
+            <div class="row J_mainContent" id="content-main">
+                <iframe class="J_iframe" name="iframe0" width="100%" height="100%" src="${ctx}/home" frameborder="0" data-id="${ctx}/home" seamless></iframe>
+            </div>
+            <div class="footer" style="padding:0px 20px;">
+                <div class="pull-left"  >
+                	<span style="float:left;margin-left: 10px;line-height:37px;"> Copyright &copy; 2016-2017  武汉楚誉科技股份有限公司 </span>
+              	</div>
+              	<div class="pull-right"  >
+                 	<table:addRow url="${ctx}/oa/emp/oaEmpOpinion/form" title="用户意见" label="意见反馈"  height="380px" width="450px"></table:addRow>
+              	</div>
+            </div>
+        </div>
+        <!--右侧部分结束-->
+       
+    </div>
+</body>
+
+<!-- 语言切换插件，为国际化功能预留插件 -->
+<script type="text/javascript">
+
+$(document).ready(function(){
+	$("a.lang-select").click(function(){
+		$(".lang-selected").find(".lang-flag").attr("src",$(this).find(".lang-flag").attr("src"));
+		$(".lang-selected").find(".lang-flag").attr("alt",$(this).find(".lang-flag").attr("alt"));
+		$(".lang-selected").find(".lang-id").text($(this).find(".lang-id").text());
+		$(".lang-selected").find(".lang-name").text($(this).find(".lang-name").text());
+
+	});
+});
+
+function changeStyle(){
+   $.get('/jeesite/theme/ace?url='+window.top.location.href,function(result){   window.location.reload();});
+}
+
+
+</script>
+<style>
+/*签名样式*/
+.layim-sign-box{
+	width:95%
+}
+.layim-sign-hide{
+  border:none;background-color:#F5F5F5;
+}
+
+.nav .dropdown:hover ul.dropdown-menu{
+	display:block;
+}
+#myinfo:hover{
+	backgroud:rgb(239,244,248);
+}
+
+.btn.btn-white.btn-sm{
+	padding:4px 10px;
+	margin-top:2px;
+}
+
+</style>
+</html>

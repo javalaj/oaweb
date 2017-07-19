@@ -1,0 +1,66 @@
+package com.thinkgem.jeesite.modules.oa.web.mytask.utis;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+
+
+
+public class Timeru {
+
+	 private static OaNotifyService oanotifyservice;//通告service
+	public  void setOanotifyservice(OaNotifyService oanotifyservice) {
+		this.oanotifyservice = oanotifyservice;
+	}
+	// 定时器
+	public static void autoExe(String tt,String title,String cruse,String count) {
+
+		final String titlei=title;
+		final String crusei=cruse;	
+		final String counti=count;
+		// 一天总毫秒数
+		long daySpan = 1000 * 60 * 60 * 24;
+		// 规定运行时间
+		final SimpleDateFormat sdf = new SimpleDateFormat(tt);
+		// 首次运行时间
+		Date startTime;
+		try{
+			startTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(sdf
+					.format(new Date()));
+			// 如果今天的已经过了 首次运行时间就改为明天
+			if (System.currentTimeMillis() > startTime.getTime())
+				startTime = new Date(startTime.getTime() + daySpan);
+			final Timer t = new Timer();
+			TimerTask task = new TimerTask() {
+				@Override
+				// 需要运行的方法
+				public void run() {
+					OaNotify oanotify=new OaNotify();
+					oanotify.setTitle(titlei);
+					oanotify.setOaNotifyRecordIds(crusei);
+					oanotify.setContent(counti);
+					oanotify.setType("1");//设置成会议通告
+					oanotify.setStatus("1");
+					oanotifyservice.save(oanotify);
+				}
+
+			};
+			// 以每24小时执行一次
+			t.scheduleAtFixedRate(task, startTime, daySpan);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block e.printStackTrace();
+		}
+	}
+
+
+//	public static void main(String[] args) {
+//	String tt="2016-12-07 16:42:00";
+//		autoExe(tt);
+//	}
+
+}

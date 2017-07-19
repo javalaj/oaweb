@@ -1,0 +1,32 @@
+<%@ tag language="java" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<%@ attribute name="isMobile" type="java.lang.String" required="false"
+	description="是否为手机端的撤回操作"%>
+<%-- attribute name="procInsId" type="java.lang.String" required="true"
+	description="流程业务id，后台单独model传递，为空标示无权撤回的意思"--%>
+<c:choose>
+	<c:when test="${isMobile}">
+		<input id="xin_m_msg" value="${message}" type="hidden">
+
+		<script>
+			$(function() {
+				if ($("#xin_m_msg").val() != "") {
+					//提示语句
+					mui.alert($("#xin_m_msg").val() + " !", "系统提示");
+					$("#xin_m_msg").val("");
+				}
+			});
+		</script>
+	</c:when>
+	<c:otherwise>
+
+		<script>
+			$(function() {
+				if ('${message}' != "") {
+					top.layer.msg('${message}');
+				}
+				//alert(123);top.layer.msg("流程撤回成功");
+			});
+		</script>
+	</c:otherwise>
+</c:choose>

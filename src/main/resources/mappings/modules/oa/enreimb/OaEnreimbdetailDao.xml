@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.enreimb.OaEnreimbdetailDao">
+    
+	<sql id="oaEnreimbdetailColumns">
+		a.id AS "id",
+		a.oa_enr_id AS "oaEnrId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.date AS "date",
+		a.currentunit AS "currentunit",
+		a.reason AS "reason",
+		a.meals AS "meals",
+		a.alcoholtobacco AS "alcoholtobacco",
+		a.num_our AS "numOur",
+		a.num_customers AS "numCustomers",
+		a.ispriorapproval AS "ispriorapproval"
+	</sql>
+	
+	<sql id="oaEnreimbdetailJoins">
+	</sql>
+    	
+	
+	<select id="get" resultType="OaEnreimbdetail">
+		SELECT 
+			<include refid="oaEnreimbdetailColumns"/>
+		FROM oa_enreimbdetail a
+		<include refid="oaEnreimbdetailJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaEnreimbdetail">
+		SELECT 
+			<include refid="oaEnreimbdetailColumns"/>
+		FROM oa_enreimbdetail a
+		<include refid="oaEnreimbdetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.oa_enr_id = #{oaEnrId}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaEnreimbdetail">
+		SELECT 
+			<include refid="oaEnreimbdetailColumns"/>
+		FROM oa_enreimbdetail a
+		<include refid="oaEnreimbdetailJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_enreimbdetail(
+			id,
+			oa_enr_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			date,
+			currentunit,
+			reason,
+			meals,
+			alcoholtobacco,
+			num_our,
+			num_customers,
+			ispriorapproval
+		) VALUES (
+			#{id},
+			#{oaEnrId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{date},
+			#{currentunit},
+			#{reason},
+			#{meals},
+			#{alcoholtobacco},
+			#{numOur},
+			#{numCustomers},
+			#{ispriorapproval}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_enreimbdetail SET 	
+			oa_enr_id = #{oaEnrId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			date = #{date},
+			currentunit = #{currentunit},
+			reason = #{reason},
+			meals = #{meals},
+			alcoholtobacco = #{alcoholtobacco},
+			num_our = #{numOur},
+			num_customers = #{numCustomers},
+			ispriorapproval = #{ispriorapproval}
+		WHERE id = #{id}
+	</update>
+	
+	<!--物理删除-->
+	<update id="delete">
+		DELETE FROM oa_enreimbdetail
+		WHERE id = #{id}
+	</update>
+	
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+
+		UPDATE oa_enreimbdetail SET 
+			del_flag = #{DEL_FLAG_DELETE}
+
+
+
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

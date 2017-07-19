@@ -1,0 +1,219 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.mytask;
+
+import java.util.List;
+import java.util.Map;
+
+import org.apache.ibatis.annotations.Param;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.oa.entity.OaTaskRecord;
+import com.thinkgem.jeesite.modules.oa.entity.mytask.OaPlan;
+import com.thinkgem.jeesite.modules.oa.dao.OaTaskRecordDao;
+import com.thinkgem.jeesite.modules.oa.dao.mytask.OaPlanDao;
+
+/**
+ * 日程任務Service
+ * 
+ * @author chenzhang
+ * @version 2016-12-01
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaPlanService extends CrudService<OaPlanDao, OaPlan> {
+
+	@Autowired
+	OaPlanDao dao;
+
+	@Autowired
+	OaTaskRecordDao redao;
+
+	public OaPlan get(String id) {
+		return super.get(id);
+	}
+
+	public List<OaPlan> findList(OaPlan oaPlan) {
+		return super.findList(oaPlan);
+	}
+	
+	public Page<OaPlan> pagefindList(Page<OaPlan> page, OaPlan oaPlan) {
+		oaPlan.setPage(page);
+		page.setPageSize(10);
+		page.setList(dao.pagefindList(oaPlan));
+		return page;
+
+	}
+	public List<OaPlan> listhuiyipu(OaPlan oaPlan){
+		return dao.listhuiyi(oaPlan);
+	}
+	
+	public List<OaPlan> getChild(String  id){
+		return dao.getChild(id);
+	}
+
+	public Page<OaPlan> findPage(Page<OaPlan> page, OaPlan oaPlan) {
+		return super.findPage(page, oaPlan);
+	}
+
+	@Transactional(readOnly = false)
+	public void save(OaPlan oaPlan) {
+		super.save(oaPlan);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OaPlan oaPlan) {
+		super.delete(oaPlan);
+	}
+
+	public List<OaPlan> selectDate(OaPlan oaPlan) {
+		return dao.selectDate(oaPlan);
+	}
+	public List<OaPlan> getparlist(OaPlan oaPlan) {
+		return dao.getparlist(oaPlan);
+	}
+	public List<OaPlan> indexfindListTask(){
+		return dao.indexfindListTask();
+	}
+	public Page<OaPlan> findListTask(Page<OaPlan> page, OaPlan oaPlan) {
+		oaPlan.setPage(page);
+		page.setPageSize(20);
+		page.setList(dao.findListTask(oaPlan));
+		return page;
+
+	}
+	public Page<OaPlan> myfindListTask(Page<OaPlan> page, OaPlan oaPlan) {
+		page.setPageSize(20);
+		oaPlan.setPage(page);
+		page.setList(dao.myfindListTask(oaPlan));
+		return page;
+
+	}
+
+	
+	
+	
+	public Map<String, String> cnmylist(OaPlan oaPlan) {
+		return dao.cnmylist(oaPlan);
+	}
+
+	// record 我接受的任务
+	public Map<String, String> recnmylist(String userid) {
+		return redao.recnmylist(userid);
+	}
+
+	public Page<OaPlan> relist(Page<OaPlan> page, OaPlan oaPlan) {
+		page.setPageSize(20);
+		oaPlan.setPage(page);
+		page.setList(dao.relist(oaPlan));
+		return page;
+
+	}
+
+	public Page<OaPlan> statelist(Page<OaPlan> page, OaPlan oaPlan) {
+		page.setPageSize(20);
+		oaPlan.setPage(page);
+		page.setList(dao.statelist(oaPlan));
+		return page;
+
+	}
+	@Transactional(readOnly = false)
+	public void upisback(String id) {
+		dao.upisback(id);
+	}
+	public Map<String, String> statea(OaPlan oaPlan) {
+		return dao.statea(oaPlan);
+	}
+
+	public Map<String, String> stateb(OaPlan oaPlan) {
+		return dao.stateb(oaPlan);
+	}
+
+	public Map<String, String> statec(OaPlan oaPlan) {
+		return dao.statec(oaPlan);
+	}
+
+	@Transactional(readOnly = false)
+	public void up(OaPlan oaPlan) {
+		dao.up(oaPlan);
+	}
+
+	public List<OaPlan> ListTask(OaPlan oaPlan) {
+		return dao.ListTask(oaPlan);
+	}
+
+	@Transactional(readOnly = false)
+	public void upi(String id) {
+		dao.upi(id);
+	}
+	@Transactional(readOnly = false)
+	public void uphuiyi(String id) {
+		dao.uphuiyi(id);
+	}
+
+	@Transactional(readOnly = false)
+	public void insertAll(OaTaskRecord oaTaskRecord) {
+		redao.insertAll(oaTaskRecord);
+	}
+
+	public List<OaTaskRecord> geti(OaTaskRecord oaTaskRecord) {
+		return redao.geti(oaTaskRecord);
+	}
+
+	@Transactional(readOnly = false)
+	public void updateuser(String userId, String oaTaskId) {
+		redao.updateuser(userId, oaTaskId);
+	}
+
+	public Map<String, String> mystatea(String cruserid) {
+		return dao.mystatea(cruserid);
+	}
+
+	public Map<String, String> mystateb(String cruserid) {
+		return dao.mystateb(cruserid);
+	}
+
+	public Map<String, String> mystatec(String cruserid) {
+		return dao.mystatec(cruserid);
+	}
+
+	public Page<OaPlan> mystatelist(Page<OaPlan> page, OaPlan oaPlan) {
+		oaPlan.setPage(page);
+		page.setList(dao.mystatelist(oaPlan));
+		return page;
+
+	}
+	
+	@Transactional(readOnly = false)
+	public void deleteByOaTaskId(String oaTaskId) {
+		redao.deleteByOaTaskId(oaTaskId);
+	}
+	@Transactional(readOnly = false)
+	public void UpTaksRemarks(OaPlan oaPlan) {
+		dao.UpTaksRemarks(oaPlan);
+	}
+	
+	
+	
+	
+	//手机端
+	
+//修改任务
+	@Transactional(readOnly = false)
+	public void mobileUpTaks(OaPlan oaPlan){
+		dao.mobileUpTaks(oaPlan);
+	}
+	
+	
+	
+	@Transactional(readOnly = false)
+	public void mobileUpChildTaks(OaPlan oaPlan){
+		dao.mobileUpChildTaks(oaPlan);
+	}
+
+}

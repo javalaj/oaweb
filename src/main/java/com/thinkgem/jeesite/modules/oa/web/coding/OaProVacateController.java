@@ -1,0 +1,329 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.coding;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.oa.entity.coding.OaProVacate;
+import com.thinkgem.jeesite.modules.oa.service.OaReceiveFileService;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 请假流程Controller
+ * 
+ * @author lzx
+ * @version 2016-11-10
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/coding/oaProVacate")
+public class OaProVacateController extends BaseController {
+
+	@Autowired
+	private OaProVacateService oaProVacateService;
+	// @Autowired
+	// private OaOvertimeService oaOvertimeService;// 加班service，查询剩余调休时间
+	@Autowired
+	private SystemService systemService;// 用户调休时长修改
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回交接操作service
+	@Autowired
+	private OaReceiveFileService oaReceiveFileService;
+
+	@ModelAttribute
+	public OaProVacate get(@RequestParam(required = false) String id) {
+		OaProVacate entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaProVacateService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaProVacate();
+		}
+		return entity;
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaProVacate oaProVacate, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaProVacate> page = oaProVacateService.findPage(new Page<OaProVacate>(request, response), oaProVacate);
+		model.addAttribute("page", page);
+
+		return "modules/oa/coding/oaProVacateList";
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = "form")
+	// @Token(save = true)
+	public String form(OaProVacate oaProVacate, Model model) {
+		oaReceiveFileService.addProcDefId("oaProVacate", model);
+		if ("2".equals(oaProVacate.getVacatetype())) {
+			// 调休
+			return formTX(oaProVacate, model);
+
+		} else {
+			// 若任务已结束请在实体类中加入一个act的实体，实体中的以下参数仍能拿到
+			// System.out.println(oaProVacate.getAct().getProcInsId());
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+			if (oaProVacate.getId() != null && !"".equals(oaProVacate.getId())) {
+				oaProVacate = oaProVacateService.get(oaProVacate.getId());
+			} else if (oaProVacate.getAct() != null && oaProVacate.getAct().getProcInsId() != null
+					&& !"".equals(oaProVacate.getAct().getProcInsId())) {
+				oaProVacate = oaProVacateService.getByProcInsId(oaProVacate.getAct().getProcInsId());
+			}
+			// 流程撤回按钮需要的procInsId 的model属性
+			model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaProVacate.getProcInsId()));
+			// 给出标题
+			if (oaProVacate.getVacateTitle() == null) {
+				oaProVacate
+						.setVacateTitle("请假申请流程【" + UserUtils.getUser().getName() + " " + sdf.format(new Date()) + "】");
+			}
+			// 给出默认申请时间
+			if (oaProVacate.getApplydate() == null) {
+				oaProVacate.setApplydate(new Date());
+			}
+			// 如果流程已启动，给出流程图
+			if (oaProVacate.getProcInsId() != null
+					&& oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()) != null) {
+				model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+			}
+			// 判断是否为该人员应该操作
+			String str = "modules/oa/coding/oaProVacateView";
+			if (oaProVacateService.isDeal(oaProVacate)) {
+				str = "modules/oa/coding/oaProVacateForm";
+				// 流程撤回权交接操作
+				oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+				// --liuxin 剩余调休时间
+				if (StringUtils.isNotBlank(oaProVacate.getId()) && oaProVacate.getVacatetype().equals("2")) {
+					model.addAttribute("restTime", systemService.selectResttime(UserUtils.getUser().getId()));
+				}
+			}
+			model.addAttribute("oaProVacate", oaProVacate);
+			model.addAttribute("isTX", false);
+			// addMessage(model, "背景框颜色");
+			return str;
+		}
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = "tx")
+	// @Token(save = true)
+	public String formTX(OaProVacate oaProVacate, Model model) {
+		oaReceiveFileService.addProcDefId("oaProVacate", model);
+		// 若任务已结束请在实体类中加入一个act的实体，实体中的以下参数仍能拿到
+		// System.out.println(oaProVacate.getAct().getProcInsId());
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		if (oaProVacate.getId() != null && !"".equals(oaProVacate.getId())) {
+			oaProVacate = oaProVacateService.get(oaProVacate.getId());
+		} else if (oaProVacate.getAct() != null && oaProVacate.getAct().getProcInsId() != null
+				&& !"".equals(oaProVacate.getAct().getProcInsId())) {
+			oaProVacate = oaProVacateService.getByProcInsId(oaProVacate.getAct().getProcInsId());
+		}
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaProVacate.getProcInsId()));
+		// 给出标题
+		if (oaProVacate.getVacateTitle() == null) {
+			oaProVacate.setVacateTitle("调休申请流程【" + UserUtils.getUser().getName() + " " + sdf.format(new Date()) + "】");
+		}
+		// 给出默认申请时间
+		if (oaProVacate.getApplydate() == null) {
+			oaProVacate.setApplydate(new Date());
+
+		}
+		// 如果流程已启动，给出流程图
+		if (oaProVacate.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+		}
+		// 判断是否为该人员应该操作
+		String str = "modules/oa/coding/oaProVacateView";
+		if (oaProVacateService.isDeal(oaProVacate)) {
+			str = "modules/oa/coding/oaProVacateForm";
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+		}
+		model.addAttribute("oaProVacate", oaProVacate);
+		model.addAttribute("isTX", true);
+		// addMessage(model, "背景框颜色");
+
+		// --liuxin 剩余调休时间
+		model.addAttribute("restTime", systemService.selectResttime(UserUtils.getUser().getId()));
+
+		return str;
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = "exam")
+	@Token(save = true)
+	public String exam(OaProVacate oaProVacate, Model model, Act act) {
+		System.out.println(act.getProcInsId());
+		if (act.getProcInsId() != null && !"".equals(act.getProcInsId())) {
+			oaProVacate = oaProVacateService.get(oaProVacate.getId());
+		} else if (oaProVacate.getAct() != null && oaProVacate.getAct().getProcInsId() != null) {
+			oaProVacate = oaProVacateService.getByProcInsId(oaProVacate.getAct().getProcInsId());
+		}
+		model.addAttribute("oaProVacate", oaProVacate);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaProVacate.getProcInsId()));
+		// 判断是否为该人员应该操作
+		String str = "modules/oa/coding/oaProVacateView";
+		if (oaProVacateService.isDeal(oaProVacate)) {
+			str = "modules/oa/coding/oaProVacateExam";
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+		}
+		// 如果流程已启动，给出流程图
+		if (oaProVacate.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+		}
+		return str;
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = "filling")
+	@Token(save = true)
+	public String filling(OaProVacate oaProVacate, Model model) {
+		if (oaProVacate.getId() != null && !"".equals(oaProVacate.getId())) {
+			oaProVacate = oaProVacateService.get(oaProVacate.getId());
+		} else if (oaProVacate.getAct() != null && oaProVacate.getAct().getProcInsId() != null) {
+			oaProVacate = oaProVacateService.getByProcInsId(oaProVacate.getAct().getProcInsId());
+		}
+		model.addAttribute("oaProVacate", oaProVacate);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaProVacate.getProcInsId()));
+		// 判断是否为该人员应该操作
+		String str = "modules/oa/coding/oaProVacateView";
+		if (oaProVacateService.isDeal(oaProVacate)) {
+			str = "modules/oa/coding/oaProVacateFilling";
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+		}
+		// 如果流程已启动，给出流程图
+		if (oaProVacate.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+		}
+		return str;
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:view")
+	@RequestMapping(value = "view")
+	public String view(OaProVacate oaProVacate, Model model) {
+		if (oaProVacate.getId() != null) {
+			oaProVacate = oaProVacateService.get(oaProVacate.getId());
+		} else if (oaProVacate.getProcInsId() != null) {
+			oaProVacate = oaProVacateService.getByProcInsId(oaProVacate.getProcInsId());
+		}
+		model.addAttribute("oaProVacate", oaProVacate);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaProVacate.getProcInsId()));
+		System.out.println(oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+		// 如果流程已启动，给出流程图
+		if (oaProVacate.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaProVacate.getProcInsId()));
+		}
+		return "modules/oa/coding/oaProVacateView";
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:edit")
+	@RequestMapping(value = "save")
+	// @Token(remove = true)
+	public String save(OaProVacate oaProVacate, Model model, String exam, String toSendMessageUserid,
+			RedirectAttributes redirectAttributes, boolean isTX, boolean realGo) {
+		if (oaProVacateService.getByTime(oaProVacate) && !realGo && "1".equals(exam)) {
+			// 一个时段，同一个人的有效请假只能有一次
+			if (isTX) {
+				// 调休
+				addMessage(redirectAttributes, "申请调休失败");
+				model.addAttribute("oaProVacate", oaProVacate);
+				model.addAttribute("isTX", true);
+				model.addAttribute("warn", true);
+				// --liuxin 剩余调休时间
+				model.addAttribute("restTime", systemService.selectResttime(UserUtils.getUser().getId()));
+				return "modules/oa/coding/oaProVacateForm";
+			} else {
+				// 请假
+				addMessage(redirectAttributes, "申请请假失败");
+				model.addAttribute("oaProVacate", oaProVacate);
+				model.addAttribute("isTX", false);
+				model.addAttribute("warn", true);
+				return "modules/oa/coding/oaProVacateForm";
+			}
+		} else {
+			if (!beanValidator(model, oaProVacate)) {
+				return form(oaProVacate, model);
+			}
+			if ("1".equals(exam)) {
+				oaProVacateService.save(oaProVacate, true, toSendMessageUserid);
+			} else {
+				oaProVacateService.save(oaProVacate, false, toSendMessageUserid);
+			}
+			addMessage(redirectAttributes, "提交成功");
+			return "redirect:" + Global.getAdminPath() + "/oa/coding/oaProVacate/view?id=" + oaProVacate.getId();
+		}
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:edit")
+	@RequestMapping(value = "dealExam")
+	@Token(remove = true)
+	public String dealExam(OaProVacate oaProVacate, Model model, RedirectAttributes redirectAttributes, String exam,
+			String examOpinion, String toSendMessageUserid) {
+		if (!beanValidator(model, oaProVacate)) {
+			return form(oaProVacate, model);
+		}
+		if ("1".equals(exam)) {
+			oaProVacateService.dealExam(oaProVacate, true, toSendMessageUserid, examOpinion);
+		} else {
+			oaProVacateService.dealExam(oaProVacate, false, toSendMessageUserid, examOpinion);
+		}
+		addMessage(redirectAttributes, "审核成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/coding/oaProVacate/view?id=" + oaProVacate.getId();
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:edit")
+	@RequestMapping(value = "dealFilling")
+	@Token(remove = true)
+	public String dealFilling(OaProVacate oaProVacate, Model model, RedirectAttributes redirectAttributes, String exam,
+			String ftext, String toSendMessageUserid) {
+		if (!beanValidator(model, oaProVacate)) {
+			return form(oaProVacate, model);
+		}
+		// 归档操作
+		oaProVacateService.dealFilling(oaProVacate, toSendMessageUserid, exam, ftext);
+		// 归档操作完成
+		addMessage(redirectAttributes, "归档成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/coding/oaProVacate/view?id=" + oaProVacate.getId();
+	}
+
+	@RequiresPermissions("oa:coding:oaProVacate:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaProVacate oaProVacate, RedirectAttributes redirectAttributes) {
+		oaProVacateService.delete(oaProVacate);
+		addMessage(redirectAttributes, "删除成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/coding/oaProVacate/?repage";
+	}
+
+}

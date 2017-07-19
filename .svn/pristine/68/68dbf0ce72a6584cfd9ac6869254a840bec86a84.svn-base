@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.salarybillsend.OaSalaryBillDao">
+    
+	<sql id="oaSalaryBillColumns">
+		a.id AS "id",
+		a.salary_month AS "salaryMonth",
+		a.success_count AS "successCount",
+		a.fail_count AS "failCount",
+		a.create_by AS "createBy.id",
+		a.update_by AS "updateBy.id",
+		a.create_date AS "createDate",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="oaSalaryBillJoins">
+	</sql>
+    	
+	
+	<select id="get" resultType="OaSalaryBill">
+		SELECT 
+			<include refid="oaSalaryBillColumns"/>
+		FROM oa_salary_bill a
+		<include refid="oaSalaryBillJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaSalaryBill">
+		SELECT 
+			<include refid="oaSalaryBillColumns"/>
+		FROM oa_salary_bill a
+		<include refid="oaSalaryBillJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<!-- <if test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+				AND a.create_date BETWEEN #{beginCreateDate} AND date_add(#{endCreateDate},interval '23 59' HOUR_MINUTE)
+			</if> -->
+			
+			<choose>
+				<when test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+					AND a.create_date BETWEEN #{beginCreateDate} AND date_add(#{endCreateDate},interval '23 59' HOUR_MINUTE)
+				</when>	
+				<when test="endCreateDate != null and endCreateDate != ''">
+					and a.create_date <![CDATA[<=]]> #{endCreateDate}
+				</when>
+				<when test="beginCreateDate != null and beginCreateDate != ''">
+					and a.create_date <![CDATA[>=]]> #{beginCreateDate}
+				</when>	
+				<otherwise>
+				
+				</otherwise>	
+			</choose>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaSalaryBill">
+		SELECT 
+			<include refid="oaSalaryBillColumns"/>
+		FROM oa_salary_bill a
+		<include refid="oaSalaryBillJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_salary_bill(
+			id,
+			salary_month,
+			success_count,
+			fail_count,
+			create_by,
+			update_by,
+			create_date,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{salaryMonth},
+			#{successCount},
+			#{failCount},
+			#{createBy.id},
+			#{updateBy.id},
+			#{createDate},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_salary_bill SET 	
+			salary_month = #{salaryMonth},
+			success_count = #{successCount},
+			fail_count = #{failCount},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<!--物理删除-->
+	<update id="delete">
+		DELETE FROM oa_salary_bill
+		WHERE id = #{id}
+	</update>
+	
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+
+		UPDATE oa_salary_bill SET 
+			del_flag = #{DEL_FLAG_DELETE}
+
+
+
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

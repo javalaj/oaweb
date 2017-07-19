@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.AssetsSerialDao">
+    
+	<sql id="assetsSerialColumns">
+		a.id AS "id",
+		a.serial_number AS "serialNumber",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.proc_ins_id AS "procInsId",
+		a.del_flag AS "delFlag",
+		a.title AS "title",
+		a.type AS "type"
+	</sql>
+	
+	<sql id="assetsSerialJoins">
+	</sql>
+    
+     <select id="getByProcInsId" resultType="AssetsSerial">
+		SELECT 
+		<include refid="assetsSerialColumns"/>
+		FROM assets_serial a
+		<include refid="assetsSerialJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+    
+	<select id="get" resultType="AssetsSerial">
+		SELECT 
+			<include refid="assetsSerialColumns"/>
+		FROM assets_serial a
+		<include refid="assetsSerialJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findApply" parameterType="String" resultMap="applyListResult">
+		select t2.id,t2.fixed_id,t2.equ_id,t3.assets_name assetsName,t2.account amount,
+		t3.photo,t3.brand,t3.model,
+		t3.unit_price unitPrice,t3.unit
+		from fixed_assets t3 right join 
+		(select id,fixed_id,account,equ_id from fixed_assets_apply t
+		where t.serial_number in (
+		select t1.serial_number from assets_serial t1
+		where id = #{id} and del_flag = 0
+		))t2 on t2.fixed_id = t3.id
+	
+	</select>
+	
+	<resultMap type="com.thinkgem.jeesite.modules.oa.entity.fixedassets.ApplyVo" id="applyListResult">
+		<result property="id" column="id"/>
+		<result property="assetsName" column="assetsName"/>
+		<result property="photo" column="photo"/>
+		<result property="unit" column="unit"/>
+		<result property="brand" column="brand"/>
+		<result property="unitPrice" column="unitPrice"/>
+		<result property="amount" column="amount"/>
+		<result property="model" column="model"/>
+		<result property="fixed_id" column="fixed_id"/>
+		<result property="equId" column="equ_id"/>
+	</resultMap> 
+	
+	<select id="findList" resultType="AssetsSerial">
+		SELECT 
+			<include refid="assetsSerialColumns"/>
+		FROM assets_serial a
+		<include refid="assetsSerialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AssetsSerial">
+		SELECT 
+			<include refid="assetsSerialColumns"/>
+		FROM assets_serial a
+		<include refid="assetsSerialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO assets_serial(
+			id,
+			serial_number,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			proc_ins_id,
+			del_flag,
+			title,
+			type
+		) VALUES (
+			#{id},
+			#{serialNumber},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{remarks},
+			#{updateDate},
+			#{procInsId},
+			#{delFlag},
+			#{title},
+			#{type}
+		)
+	</insert>
+	
+	<update id="updateApply">
+		update fixed_assets_apply t 
+		set t.account = #{0} where id = #{1}
+	</update>
+	
+	<update id="updateRemarks">
+		UPDATE assets_serial SET 	
+			remarks = #{0}
+		WHERE id = #{1}
+	</update>
+	
+	<update id="update">
+		UPDATE assets_serial SET 	
+			serial_number = #{serialNumber},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate},
+			title = #{title},
+			type = #{type}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE assets_serial SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

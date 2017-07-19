@@ -1,0 +1,319 @@
+/*----------------------个人办公-----------------------*/
+
+html,body{margin:0 outo;margin:0;padding:0;scrolling="no";font-size:16px;}
+
+
+
+.menu{
+	width:100%;
+	height:auto;
+}
+
+.nav{
+	background:url(../images/bj-1.jpg) no-repeat;
+	width:1119px;
+	height:165px;
+	position:relative;
+}
+.nav_1{
+	background:#f5f5f5;
+	width:1119px;
+	height:120px;
+	position:relative;
+	display:block;
+}
+
+.head_1{
+	width:109px;
+	height:109px;
+	position:absolute;
+	top:3px;
+	left:45%;
+}
+.btn_one{
+	width:50%;
+	height:8%;
+	position:relative;
+	top:-38px;
+}
+.btn_two{
+	width:50%;
+	height:8%;
+	position:relative;
+	top:-108px;
+}
+.btn_1{
+	width:97px;
+	height:28px;
+	position:absolute;
+
+	left:369px;
+	background:url(../images/btn_a.png) no-repeat;
+	text-align:center;
+	line-height:28px;
+
+}
+.btn_2{
+	width:97px;
+	height:28px;
+	position:absolute;
+
+	left:507px;
+	background:url(../images/btn_a.png) no-repeat;
+	text-align:center;
+	line-height:28px;
+
+}
+.btn_3{
+	width:97px;
+	height:28px;
+	position:absolute;
+	left:642px;
+	background:url(../images/btn_a.png) no-repeat;
+	text-align:center;
+	line-height:28px;
+
+}
+.btn_4{
+	width:97px;
+	height:28px;
+	position:absolute;
+
+	left:369px;
+	background:url(../images/btn_a.png) no-repeat;
+	text-align:center;
+	line-height:28px;
+
+}
+.btn_5{
+	width:97px;
+	height:28px;
+	position:absolute;
+
+	left:507px;
+	background:url(../images/btn_a.png) no-repeat;
+	text-align:center;
+	line-height:28px;
+
+}
+
+.txt{
+	width:1119px;
+	position:relative;
+	top:20px;	
+}
+.bod_1{
+	position:relative;
+	height:40px;
+	line-height:40px;
+	border-top:2px solid #3388cb;
+	border-left:1px solid #d2d2d2;
+	border-right:1px solid #d2d2d2;
+	border-bottom:1px solid #d2d2d2;
+}
+.bod_2{
+	position:relative;	
+	height:500px;
+	border-left:1px solid #d2d2d2;
+	border-right:1px solid #d2d2d2;
+	border-bottom:1px solid #d2d2d2;
+}
+.fam_1{
+	position:relative;
+	left:10px;
+}
+.fam_2{
+	position:relative;
+	left:50px;
+	top:30px;
+}
+.fam_3{
+	position:relative;
+	left:50px;
+	top:40px;
+}
+.fam_4{
+	position:relative;
+	left:50px;
+	top:50px;
+}
+.fam_5{
+	position:relative;
+	left:50px;
+	top:60px;
+}
+.fam_6{
+	position:relative;
+	left:50px;
+	top:70px;
+}
+.fam_7{
+	position:relative;
+	left:50px;
+	top:80px;
+}
+.fam_8{
+	position:relative;
+	left:50px;
+	top:90px;
+}
+.fam_9{
+	position:relative;
+	left:-175px;
+	top:50px;
+}
+.TextBox{
+	height:24px;
+	position:relative;
+	left:50px;
+	top:50px;
+}
+.TextBox_1{
+	height:24px;
+	position:relative;
+	left:50px;
+	top:60px;
+}
+.TextBox_2{
+	height:24px;
+	width:220px;
+	position:relative;
+	left:50px;
+	top:70px;
+}
+.TextBox_3{
+	height:24px;
+	width:220px;
+	position:relative;
+	left:50px;
+	top:80px;
+}
+.TextBox_4{
+	height:24px;
+	width:220px;
+	position:relative;
+	left:50px;
+	top:90px;
+}
+.TextBox_5{
+	height:24px;
+	width:220px;
+	position:relative;
+	left:139px;
+	top:20px;
+}
+.TextBox_6{
+	height:24px;
+	position:relative;
+	left:-174px;
+	top:50px;
+}
+.line{
+	position:relative;
+	left:120px;
+}
+.line_1{
+	position:relative;
+	left:120px;
+	top:70px;
+}
+.line_2{
+	position:relative;
+	left:-90px;
+}
+.box{
+	position:relative;
+	top:120px;
+	left:-174px;
+}
+.box_a{
+	position:relative;
+	top:150px;
+	left:-368px;
+}
+.box_1{
+	position:relative;
+	top:120px;
+	left:-174px;
+}
+.box_2{
+	position:relative;
+	top:150px;
+	left:-368px;
+}
+.box_3{
+	position:absolute;
+	top:221px;
+	left:-53px;
+}
+
+.table_1{
+	position:absolute;
+	top:20px;
+	left:0px;
+	width:1119px;
+}
+.task{
+	background:url(../images/task.png) no-repeat;
+	width:24px;
+	height:24px;
+	position:relative;
+	top:20px;
+	left:50px;
+}
+.text{
+	position:relative;
+	top:-3px;
+	left:80px;
+}
+.task_1{
+	background:url(../images/task.png) no-repeat;
+	width:100px;
+	height:100px;
+	position:relative;
+	top:-27px;
+	left:217px;
+}
+.text_1{
+	position:relative;
+	display:none;
+	top:12px;
+	left:0px;
+}
+.text_2{
+	position:relative;
+	top:-151px;
+	left:422px;
+}
+.task_2{
+	background:url(../images/task.png) no-repeat;
+	width:24px;
+	height:24px;
+	position:relative;
+	top:-127px;
+	left:390px;
+}
+.task_3{
+	background:url(../images/task.png) no-repeat;
+	width:96px;
+	height:24px;
+	position:relative;
+	top:-174px;
+	left:558px;
+}
+.task_4{
+	background:url(../images/task.png) no-repeat;
+	width:96px;
+	height:24px;
+	position:relative;
+	top:-198px;
+	left:710px;
+}
+.task_5{
+	background:url(../images/task.png) no-repeat;
+	width:96px;
+	height:24px;
+	position:relative;
+	top:-222px;
+	left:854px;
+}

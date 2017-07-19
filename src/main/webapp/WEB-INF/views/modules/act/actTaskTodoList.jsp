@@ -1,0 +1,281 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>待办任务</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document).ready(function() {
+
+	});
+	/**
+	 * 签收任务
+	 */
+	function claim(taskId) {
+		$.get('${ctx}/act/task/claim', {
+			taskId : taskId
+		}, function(data) {
+			if (data == 'true') {
+				top.layer.msg("签收完成");
+				//top.$.jBox.tip('签收完成');
+				location = '${ctx}/act/task/todo/';
+			} else {
+				top.layer.msg("签收完成");
+				//top.$.jBox.tip('签收失败');
+			}
+		});
+	}
+</script>
+</head>
+<body class="gray-bg">
+	<%-- <ul class="nav nav-tabs">
+		<li class="active"><a href="${ctx}/act/task/todo/">待办任务</a>
+		</li>
+		<li><a href="${ctx}/act/task/historic/">已办任务</a>
+		</li>
+		<li><a href="${ctx}/act/task/tosend/">已发任务</a>
+		</li>
+		<li><a href="${ctx}/act/task/process/">新建任务</a>
+		</li>
+	</ul>  --%>
+	<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5><a href="${ctx}/act/task/todo/">待办事项列表</a> </h5>
+		<div class="ibox-tools">
+			<!-- <a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			<ul class="dropdown-menu dropdown-user">
+				<li><a href="#">选项1</a>
+				</li>
+				<li><a href="#">选项2</a>
+				</li>
+			</ul>
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a> -->
+		</div>
+	</div>
+    
+    <div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<!-- 查询条件 -->
+	<div class="row">
+	<div class="col-sm-12">
+	<form:form id="searchForm" modelAttribute="act"
+		action="${ctx}/act/task/todo/" method="get"
+		class="form-inline">
+		<div class="form-group">
+			<span>流程类型：&nbsp;</span>
+			<form:select path="procDefKey" class="selectpicker " data-style="btn-inverse" data-live-search="true" id="procDefKey">
+				<form:option value="" label="全部流程" />
+				<form:options items="${fns:getDictList('act_type')}"
+					itemLabel="label" itemValue="value" htmlEscape="false" />
+			</form:select>
+			<span>创建时间：</span> <input id="beginDate" name="beginDate"
+				type="text" readonly="readonly" maxlength="20"
+				class="laydate-icon form-control layer-date input-sm" value="<fmt:formatDate value="${act.beginDate}" pattern="yyyy-MM-dd"/>"
+				onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" /> -- <input
+				id="endDate" name="endDate" type="text" readonly="readonly"
+				maxlength="20" class="laydate-icon form-control layer-date input-sm" value="<fmt:formatDate value="${act.endDate}" pattern="yyyy-MM-dd"/>"
+				onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" /> 
+		</div>
+	</form:form>
+	<br/>
+	</div>
+	</div>
+		<!-- 工具栏 -->
+	<div class="row">
+	<div class="col-sm-12">
+	<div class="pull-left">
+	<%--	<button class="btn btn-white btn-sm " data-toggle="tooltip"
+ 						data-placement="left" onclick="location.href='${ctx}/act/task/historic/'" title="已办任务">
+						<i class="fa fa-history"></i>&nbsp;已办任务
+					</button>
+					<a  class="btn btn-white btn-sm " 
+						href="${ctx}/act/task/tosend/" title="已发任务">
+						<i class="fa fa-location-arrow"></i>&nbsp;已发任务
+					</a>		
+<button class="btn btn-white btn-sm " data-toggle="tooltip"
+						data-placement="left" onclick="location.href='${ctx}/act/task/process/'" title="新建任务">
+						<i class="fa fa-tag"></i>&nbsp;新建任务
+					</button>								
+					<button class="btn btn-white btn-sm " data-toggle="tooltip"
+						data-placement="left" onclick="sortOrRefresh()" title="刷新">
+						<i class="glyphicon glyphicon-repeat"></i>&nbsp;刷新
+					</button> --%>
+			</div>
+		<div class="pull-right">
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="search()" ><i class="fa fa-search"></i> 查询</button>
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="reset()" ><i class="fa fa-refresh"></i> 重置</button>
+		</div>
+	</div>
+	</div>
+	<table id="contentTable"
+		class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+		<thead>
+			<tr>
+				<th>标题</th>
+				<th>所属环节</th>
+				<%--
+				<th>任务内容</th> --%>
+				<th>申请人</th>
+				<th>申请部门</th>
+				<th>流程名称</th>
+				<!-- <th>流程版本</th> -->
+				<th>创建时间</th>
+				<th>操作</th>
+			</tr>
+		</thead>
+		<tbody>
+			<c:forEach items="${list}" var="act">
+				<c:set var="task" value="${act.task}" />
+				<c:set var="vars" value="${act.vars}" />
+				<c:set var="procDef" value="${act.procDef}" />
+				<%--
+				<c:set var="procExecUrl" value="${act.procExecUrl}" /> --%>
+				<c:set var="status" value="${act.status}" />
+				<tr>
+					<td>
+					<c:choose>
+						<c:when test="${empty task.assignee}">
+							<a href="javascript:claim('${task.id}');" title="签收任务">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}</a>
+						</c:when> 
+						 <c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='提交申请'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/rejected?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when> 
+						<c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='测试部门打分'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/test?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='部门副总打分'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/vicePresident?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='报销人'}">
+							   <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/form?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='部门负责人'}">
+							   <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='总经理'}">
+							  <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam1?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}</a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='财务审核'}">
+							  <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam2?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>	
+						<c:when test="${procDef.name=='周计划评价'}">
+							  <a href="${ctx}/user/userWeekplan/viewMonthsum?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='周计划评价'}">
+							  <a href="${ctx}/user/userWeekplan/viewMonthsum?sameid=${task.description}">${fns:abbr(not
+								empty act.vars.map.title ? act.vars.map.title : task.id, 60)}
+							</a>
+						</c:when>
+					<c:otherwise>
+							 <a
+								href="${ctx}/act/task/form?taskId=${task.id}&taskName=${fns:urlEncode(task.name)}&taskDefKey=${task.taskDefinitionKey}&commid=${fns:urlEncode(task.description)}&procInsId=${task.processInstanceId}&procDefId=${task.processDefinitionId}&status=${status}">${fns:abbr(not
+								empty vars.map.title ? vars.map.title : task.id, 60)}</a>
+						</c:otherwise>
+						</c:choose>
+						
+						</td>
+					<td><a target="_blank"
+						href="${ctx}/act/task/trace/photo/${task.processDefinitionId}/${task.executionId}">${task.name}</a>
+
+						<%--<a target="_blank" href="${pageContext.request.contextPath}/act/diagram-viewer?processDefinitionId=${task.processDefinitionId}&processInstanceId=${task.processInstanceId}">${task.name}</a> --%>
+					</td>
+					<%--
+					<td>${task.description}</td> --%>
+					<td>${act.assignee}</td>
+					<td>${act.assigneeName}</td>
+					<td>${procDef.name}</td>
+					<%-- <td><b title='流程版本号'>V: ${procDef.version}</b> --%>
+
+					<td><fmt:formatDate value="${task.createTime}" type="both" /></td>
+					<td><c:if test="${empty task.assignee}">
+							<a href="javascript:claim('${task.id}');" class="btn btn-success btn-xs"><i class="fa fa-hand-lizard-o"></i> 签收任务</a>
+						</c:if>
+						<c:if test="${not empty task.assignee}">
+							<%--
+							<a href="${ctx}${procExecUrl}/exec/${task.taskDefinitionKey}?procInsId=${task.processInstanceId}&act.taskId=${task.id}">办理</a> --%>
+							<c:choose>
+						<c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='提交申请'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/rejected?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when> 
+						<c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='测试部门打分'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/test?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='月绩效打分流程'and act.task.name=='部门副总打分'}">
+							<a href="${ctx}/oa/cyTspOaMonthlyPlan/vicePresident?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when>
+								<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='部门负责人'}" >
+							   <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='总经理'}">
+							  <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam1?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							  </a>
+						</c:when>
+						<c:when test="${procDef.name=='招待费报销申请流程' and act.task.name=='财务审核'}">
+							  <a href="${ctx}/oa/entertainmentr/oaEntertainmentReimbursement/exam2?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when>
+							<c:when test="${procDef.name=='周计划评价'}">
+							  <a href="${ctx}/user/userWeekplan/viewMonthsum?sameid=${task.description}" class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理
+							</a>
+						</c:when>
+						<c:otherwise >
+						   	 <a
+								href="${ctx}/act/task/form?taskId=${task.id}&taskName=${fns:urlEncode(task.name)}&taskDefKey=${task.taskDefinitionKey}&procInsId=${task.processInstanceId}&procDefId=${task.processDefinitionId}&status=${status}"class="btn btn-success btn-xs"><i class="fa  fa-institution "></i> 任务办理</a>
+								
+							
+						</c:otherwise>
+						</c:choose>
+							<%-- <a
+								href="${ctx}/act/task/form?taskId=${task.id}&taskName=${fns:urlEncode(task.name)}&taskDefKey=${task.taskDefinitionKey}&procInsId=${task.processInstanceId}&procDefId=${task.processDefinitionId}&status=${status}">任务办理</a> --%>
+						</c:if> <shiro:hasPermission name="act:process:edit">
+							<c:if test="${empty task.executionId}">
+								<a href="${ctx}/act/task/deleteTask?taskId=${task.id}&reason="
+									onclick="return promptx('删除任务','删除原因',this.href);"class="btn btn-danger btn-xs"><i class="fa fa-trash"></i> 删除任务</a>
+							</c:if>
+						</shiro:hasPermission> <%--<a target="_blank" href="${pageContext.request.contextPath}/act/diagram-viewer?processDefinitionId=${task.processDefinitionId}&processInstanceId=${task.processInstanceId}">跟踪</a> --%>
+						
+						
+						<button 
+						onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn btn-primary btn-xs"><i class="fa fa-leaf"></i> 跟踪</button>
+						<%--<a target="_blank" href="${ctx}/act/task/trace/info/${task.processInstanceId}">跟踪信息</a>--%>
+					</td>
+				</tr>
+			</c:forEach>
+		</tbody>
+	</table>
+	<br/>
+	<br/>
+	</div>
+	</div>
+</div>
+</body>
+</html>

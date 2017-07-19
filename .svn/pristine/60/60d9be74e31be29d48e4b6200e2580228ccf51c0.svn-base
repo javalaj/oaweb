@@ -1,0 +1,234 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.fixedassets;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.mapper.JsonMapper;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsClaim;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsEquipment;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.FixedAssets;
+import com.thinkgem.jeesite.modules.oa.service.SupmanagementService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsClaimService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsEquipmentService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 资产设备Controller
+ * @author zf
+ * @version 2016-11-28
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/fixedassets/assetsEquipment")
+public class AssetsEquipmentController extends BaseController {
+
+	@Autowired
+	private AssetsEquipmentService assetsEquipmentService;
+	
+	@ModelAttribute
+	public AssetsEquipment get(@RequestParam(required=false) String id) {
+		AssetsEquipment entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = assetsEquipmentService.get(id);
+		}
+		if (entity == null){
+			entity = new AssetsEquipment();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("fixedassets:fixedAssets:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(AssetsEquipment assetsEquipment, 
+			HttpServletRequest request, 
+			HttpServletResponse response, Model model) 
+	{
+		Page<AssetsEquipment> page = assetsEquipmentService
+				.findPage(new Page<AssetsEquipment>(request, response), assetsEquipment); 
+		
+		model.addAttribute("page", page);
+		
+		return "modules/fixedassets/assetsAllList";
+	}
+
+	@RequiresPermissions("fixedassets:fixedAssets:view")
+	@RequestMapping(value = "form")
+	public String form(AssetsEquipment assetsEquipment, Model model) 
+	{
+		FixedAssets obj = assetsEquipment.getFixedAssets();
+		
+		obj.setSupplier(supmanagementService.get(obj.getSupplier())
+				.getSupName());
+		
+		assetsEquipment.setFixedAssets(obj);
+		
+		//查询历史记录
+		List<AssetsClaim> list = assetsClaimService
+				.findHistoryBydevice(assetsEquipment.getSerialNumber());
+		
+		model.addAttribute("AssetsEquipment", assetsEquipment);
+		
+		model.addAttribute("list", list);
+		
+		return "modules/fixedassets/assetsClaimForm";
+	}
+
+	@RequiresPermissions("assetsequiment:assetsEquipment:edit")
+	@RequestMapping(value = "save")
+	public String save(AssetsEquipment assetsEquipment, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, assetsEquipment)){
+			return form(assetsEquipment, model);
+		}
+		assetsEquipmentService.save(assetsEquipment);
+		addMessage(redirectAttributes, "保存资产设备成功");
+		return "redirect:"+Global.getAdminPath()+"/assetsequiment/assetsEquipment/?repage";
+	}
+	
+	@RequiresPermissions("assetsequiment:assetsEquipment:edit")
+	@RequestMapping(value = "delete")
+	public String delete(AssetsEquipment assetsEquipment, RedirectAttributes redirectAttributes) {
+		assetsEquipmentService.delete(assetsEquipment);
+		addMessage(redirectAttributes, "删除资产设备成功");
+		return "redirect:"+Global.getAdminPath()+"/assetsequiment/assetsEquipment/?repage";
+	}
+
+	//绑定对象属性
+	@InitBinder("assetsEquipment")
+	public void initBinder(WebDataBinder binder)
+	{
+		binder.setFieldDefaultPrefix("assetsEquipment.");
+	}
+	
+	/**
+	 * 资产使用情况展示
+	 * @param assetsClaim
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @param type
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:fixedAssets:view")
+	@RequestMapping(value = {"claimList"})
+	public String claimList(AssetsEquipment assetsEquipment, 
+			HttpServletRequest request, 
+			HttpServletResponse response, Model model) 
+	{
+		String view = "";
+		
+		String condition = assetsEquipment.getCondition();
+		
+		if ("3".equals(condition))
+		{
+			assetsEquipment.setCondition("领用");
+			
+			view = "assetsClaimList";
+		}
+		else if ("2".equals(condition))
+		{
+			assetsEquipment.setCondition("外借");
+			
+			view = "borrowList";
+		}
+		else if ("4".equals(condition))
+		{
+			assetsEquipment.setCondition("报废");
+			
+			view = "scrapList";
+		}
+		else if ("1".equals(condition))
+		{
+			assetsEquipment.setCondition("在库");
+			
+			view = "fixedAssetsList";
+		}
+		else if ("5".equals(condition))
+		{
+			assetsEquipment.setCondition("报废申请中");
+			
+			view = "scrapingList";
+		}
+		
+		Page<AssetsEquipment> page = assetsEquipmentService
+				.findPage(new Page<AssetsEquipment>(request, response), assetsEquipment);
+		
+		model.addAttribute("page", page);
+		
+		
+		return "modules/fixedassets/" + view;
+	}
+	
+	/**
+	 * 调拨
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:fixedAssets:edit")
+	@RequestMapping(value = "allocation")
+	@ResponseBody
+	public String allocation(HttpServletRequest request,
+			HttpServletResponse response)
+	{
+		String id = request.getParameter("id");
+		
+		String userId = request.getParameter("userId");
+		
+		assetsEquipmentService.allocation(id, userId);
+		
+		//新增一条调拨记录
+		AssetsClaim claim = new AssetsClaim();
+		
+		AssetsEquipment assetsEquipment = get(id);
+		
+		//--------------------添加历史记录-------------------------
+		//领用人
+		claim.setClaimant(UserUtils.get(userId).getName());
+		
+		claim.setFixedAssets(assetsEquipment.getFixedAssets());
+		
+		//经办人
+		claim.setOperator(UserUtils.getUser().getId());
+		
+		claim.setClaimTime(new Date());
+		
+		claim.setClaimNumber(assetsEquipment.getSerialNumber());
+		
+		claim.setType("调拨");
+		
+		claim.setRemarks("");
+		
+		assetsClaimService.saveClaim(claim);
+		
+		//--------------------添加历史记录-------------------------
+		
+		return JsonMapper.getInstance().toJson(true);
+	}
+	
+	@Autowired
+	private SupmanagementService supmanagementService;
+	
+	@Autowired
+	private AssetsClaimService assetsClaimService;
+}

@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserWeekrecordDao">
+
+	<sql id="userWeekrecordColumns">
+		a.id AS "id",
+		a.beginday AS "beginday",
+		a.endday AS "endday",
+		a.content AS "content",
+		a.del_flag AS "delFlag",
+		a.weekplan_id AS
+		"weekplanId",
+		a.deliverables AS "deliverables",
+		a.important AS
+		"important",
+		a.schedule AS "schedule",
+		a.commonid AS "commonid",
+		a.proc_ins_id AS "procInsId",
+		a.procins_flag AS "procinsFlag",
+		a.pre_commonid AS "preCommonid",
+		a.proc_ins_id_pre AS "procInsIdPre",
+		a.quality_score AS "qualityScore"
+	</sql>
+
+	<sql id="userWeekrecordJoins">
+	</sql>
+
+
+	<select id="indexGetList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a
+		<include refid="userWeekrecordJoins" />
+		WHERE a.weekplan_id = #{weekplanId}
+	</select>
+
+	<select id="getweekPlanList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a
+		<include refid="userWeekrecordJoins" />
+		WHERE a.weekplan_id = #{weekplanId}
+	</select>
+
+	<select id="get" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a
+		<include refid="userWeekrecordJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a
+		<include refid="userWeekrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.weekplan_id=#{weekplanId}
+			order by
+			beginday asc
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a
+		<include refid="userWeekrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+
+
+	<insert id="insert">
+		INSERT INTO user_weekrecord(
+		id,
+		beginday,
+		endday,
+		content,
+		del_flag,
+		weekplan_id,
+		deliverables,
+		important,
+		schedule,
+		commonid,
+		proc_ins_id,
+		procins_flag
+		) VALUES (
+		#{id},
+		#{beginday},
+		#{endday},
+		#{content},
+		#{delFlag},
+		#{weekplanId},
+		#{deliverables},
+		#{important},
+		#{schedule},
+		#{commonid},
+		#{procInsId},
+		#{procinsFlag}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_weekrecord SET
+		beginday = #{beginday},
+		endday = #{endday},
+		content = #{content},
+		deliverables=#{deliverables},
+		weekplan_id = #{weekplanId},
+		commonid=#{commonid},
+		proc_ins_id=
+		#{procInsId},
+		del_flag=#{delFlag}
+		WHERE id = #{id}
+	</update>
+
+	<update id="UPschedule">
+		UPDATE user_weekrecord SET
+		schedule =
+		#{schedule}
+		WHERE
+		id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE user_weekrecord SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	<update id="upweek">
+		UPDATE user_weekrecord SET
+		important =
+		#{important},
+		schedule=#{schedule},
+		procins_flag=#{procinsFlag}
+		WHERE id = #{id}
+	</update>
+	<select id="comList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a where a.commonid= #{sameid} ORDER BY a.beginday
+	</select>
+	<select id="precomList" resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumns" />
+		FROM user_weekrecord a where a.pre_commonid= #{sameid} ORDER BY
+		a.beginday
+	</select>
+	<!-- 审核过程中产生唯一的id -->
+	<update id="upPrecomid">
+		UPDATE user_weekrecord SET
+		pre_commonid =
+		#{preCommonid},
+		proc_ins_id_pre=#{procInsIdPre},
+		to_procinsFlag=#{toProcinsFlag}
+		WHERE id = #{id}
+	</update>
+	<!-- 修改质量分 -->
+	<update id="upqualityscore">
+		UPDATE user_weekrecord SET
+		quality_score=#{qualityScore},
+		test_score = #{testScore}
+		WHERE id =
+		#{id}
+	</update>
+	<update id="upturndownId">
+		UPDATE user_weekrecord SET
+		turndown_flag=#{turndownFlag}
+		WHERE id = #{id}
+	</update>
+	<update id="upturndownflag">
+		UPDATE user_weekrecord SET
+		turndown_flag='0'
+		WHERE id = #{id}
+	</update>
+	<sql id="userWeekrecordColumnss">
+		a.id AS "id",
+		a.beginday AS "beginday",
+		a.endday AS "endday",
+		a.content AS "content",
+		a.del_flag AS "delFlag",
+		a.weekplan_id AS
+		"weekplanId",
+		a.deliverables AS "deliverables",
+		a.important AS
+		"important",
+		a.schedule AS "schedule",
+		a.commonid AS "commonid",
+		a.proc_ins_id AS "procInsId",
+		a.procins_flag AS "procinsFlag",
+		c.plandate AS "plandate",
+		c.weeksign AS
+		"weeksign",
+		a.to_procinsFlag AS "toProcinsFlag"
+	</sql>
+
+	<sql id="userWeekrecordJoinss">
+		JOIN user_weekplan c ON c.id = a.weekplan_id
+	</sql>
+
+
+	<!-- 查询当前部门下的所有人员的周计划 -->
+	<select id='grouplist' resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumnss" />
+		FROM
+		user_weekrecord a
+		<include refid="userWeekrecordJoinss" />
+		WHERE c.create_by = #{createid}
+		AND a.procins_flag='1' AND a.proc_ins_id_pre is null order by c.weeksign
+		asc
+	</select>
+	<sql id="userWeekrecordColumnsPre">
+		a.id AS "id",
+		a.beginday AS "beginday",
+		a.endday AS "endday",
+		a.content AS "content",
+		a.del_flag AS "delFlag",
+		a.weekplan_id AS
+		"weekplanId",
+		a.deliverables AS "deliverables",
+		a.important AS
+		"important",
+		a.schedule AS "schedule",
+		a.commonid AS "commonid",
+		a.proc_ins_id AS "procInsId",
+		a.procins_flag AS "procinsFlag",
+		a.pre_commonid AS "preCommonid",
+		a.proc_ins_id_pre AS "procInsIdPre",
+		c.plandate AS "plandate",
+		c.weeksign AS
+		"weeksign",
+		c.create_by AS
+		"createByid",
+		a.quality_score AS "qualityScore",
+		a.test_score AS
+		"testScore",
+		a.turndown_flag AS "turndownFlag"
+
+	</sql>
+
+	<select id='precomidList' resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumnsPre" />
+		FROM
+		user_weekrecord a
+		<include refid="userWeekrecordJoinss" />
+		WHERE a.pre_commonid = #{preCommonid}
+		AND a.procins_flag='1' order by c.weeksign and c.create_by asc
+	</select>
+	<select id='turnprecomidList' resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumnsPre" />
+		FROM
+		user_weekrecord a
+		<include refid="userWeekrecordJoinss" />
+		WHERE a.pre_commonid = #{preCommonid} AND a.turndown_flag='1'
+		AND a.procins_flag='1' order by c.weeksign and c.create_by asc
+	</select>
+	<select id='getprecomidListID' resultType="UserWeekrecord">
+		SELECT
+		<include refid="userWeekrecordColumnsPre" />
+		FROM
+		user_weekrecord a
+		<include refid="userWeekrecordJoinss" />
+		WHERE a.id = #{id}
+		AND a.procins_flag='1' order by c.weeksign asc
+	</select>
+
+	<!-- 统计一个人的周总分 -->
+	<select id='sum' resultMap="stoMap">
+		SELECT
+		SUM(a.test_score)AS sum,
+		c.weeksign AS week,
+		c.create_by AS nameid
+		FROM
+		user_weekrecord a
+		<include refid="userWeekrecordJoinss" />
+		WHERE c.weeksign=#{weeksign} AND a.pre_commonid=#{preCommonid}
+		GROUP BY c.create_by
+	</select>
+	<resultMap type="Map" id="stoMap">
+		<result property="sum" column="sum"></result>
+		<result property="week" column="week"></result>
+		<result property="nameid" column="nameid"></result>
+	</resultMap>
+
+	<sql id="alluserWeekrecordColumnsPre">
+		a.id AS "id",
+		a.beginday AS "beginday",
+		a.endday AS "endday",
+		a.content AS "content",
+		a.del_flag AS "delFlag",
+		a.weekplan_id AS
+		"weekplanId",
+		a.deliverables AS "deliverables",
+		a.important AS
+		"important",
+		a.schedule AS "schedule",
+		a.commonid AS "commonid",
+		a.proc_ins_id AS "procInsId",
+		a.procins_flag AS "procinsFlag",
+		a.pre_commonid AS "preCommonid",
+		a.proc_ins_id_pre AS "procInsIdPre",
+		a.quality_score AS "qualityScore",
+		a.test_score AS "testScore",
+		a.turndown_flag AS "turndownFlag"
+
+	</sql>
+
+	<select id='allWeekPlanWeekid' resultType="UserWeekrecord">
+		SELECT
+		<include refid="alluserWeekrecordColumnsPre" />
+		FROM
+		user_weekrecord a
+		WHERE a.weekplan_id = #{weekplanId} and a.to_procinsFlag='2'
+	</select>
+
+<!-- 审核完成修改审核状态 -->
+	<update id="upProcinsFlag">
+		UPDATE user_weekrecord SET
+		to_procinsFlag ='2'
+		WHERE id = #{id}
+	</update>
+
+
+
+	<!-- <select id="weeklySum" resultMap="weekMap" > SELECT sum(a.test_score) 
+		as weeksum FROM <include refid="userWeekrecordJoinss" /> WHERE a.weekplan_id 
+		= b.id AND a.pre_commonid =#{preCommonid} GROUP BY c.weeksign </select> <resultMap 
+		type="Map" id="weekMap"> <result property="weeksum" column="weeksum"></result> 
+		</resultMap> -->
+
+
+
+
+
+</mapper>

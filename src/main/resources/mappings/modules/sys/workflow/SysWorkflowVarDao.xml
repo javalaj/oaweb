@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.thinkgem.jeesite.modules.sys.dao.workflow.SysWorkflowVarDao">
+
+	<sql id="sysWorkflowVarColumns">
+		a.id AS "id",
+		a.workflow_name AS "workflowName",
+		a.workflow_identification AS "workflowIdentification",
+		a.var_name AS "varName",
+		a.var_description AS "varDescription",
+		a.var_value AS "varValue",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.var_type AS "varType",
+		a.var_value_user_id AS "varValueUser.id",
+		su.login_name AS "varValueUser.loginName",
+		su.name AS "varValueUser.name",
+		a.var_value_role_id AS "varValueRole.id",
+		sr.enname AS "varValueRole.enname",
+		sr.name AS "varValueRole.name"
+	</sql>
+
+	<sql id="sysWorkflowVarJoins">
+		LEFT JOIN sys_user su ON su.id = a.var_value_user_id
+		LEFT JOIN sys_role sr ON sr.id = a.var_value_role_id
+	</sql>
+
+	<select id="get" resultType="SysWorkflowVar">
+		SELECT
+		<include refid="sysWorkflowVarColumns" />
+		FROM sys_workflow_var a
+		<include refid="sysWorkflowVarJoins" />
+		WHERE a.id = #{id}
+		AND a.del_flag = '0'
+	</select>
+
+	<select id="getSysWorkflowVarByWorkflowIdentificationAndVarName"
+		resultType="SysWorkflowVar">
+		SELECT
+		<include refid="sysWorkflowVarColumns" />
+		FROM sys_workflow_var a
+		<include refid="sysWorkflowVarJoins" />
+		WHERE a.workflow_identification = #{0}
+		AND a.var_name = #{1}
+		AND a.del_flag = '0'
+	</select>
+
+	<select id="findBySignVar" resultType="SysWorkflowVar">
+		SELECT
+		<include refid="sysWorkflowVarColumns" />
+		FROM sys_workflow_var a
+		<include refid="sysWorkflowVarJoins" />
+		WHERE a.workflow_identification = #{workflowIdentification}
+		AND
+		a.var_name = #{varName} AND
+		a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+
+	<select id="findList" resultType="SysWorkflowVar">
+		SELECT
+		<include refid="sysWorkflowVarColumns" />
+		FROM sys_workflow_var a
+		<include refid="sysWorkflowVarJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="workflowName != null and workflowName != ''">
+				AND a.workflow_name LIKE
+				<if test="dbName == 'oracle'">'%'||#{workflowName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{workflowName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{workflowName},'%')</if>
+			</if>
+			<if test="workflowIdentification != null and workflowIdentification != ''">
+				AND a.workflow_identification = #{workflowIdentification}
+			</if>
+			<if test="varType != null and varType != ''">
+				AND a.var_type = #{varType}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.workflow_identification ASC,a.create_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="SysWorkflowVar">
+		SELECT
+		<include refid="sysWorkflowVarColumns" />
+		FROM sys_workflow_var a
+		<include refid="sysWorkflowVarJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO sys_workflow_var(
+		id,
+		workflow_name,
+		workflow_identification,
+		var_name,
+		var_description,
+		var_value,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		var_type,
+		var_value_user_id,
+		var_value_role_id
+		) VALUES (
+		#{id},
+		#{workflowName},
+		#{workflowIdentification},
+		#{varName},
+		#{varDescription},
+		#{varValue},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{varType},
+		#{varValueUser.id},
+		#{varValueRole.id}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE sys_workflow_var SET
+		workflow_name =
+		#{workflowName},
+		workflow_identification = #{workflowIdentification},
+		var_name = #{varName},
+		var_description = #{varDescription},
+		var_value =
+		#{varValue},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		var_type = #{varType},
+		var_value_user_id = #{varValueUser.id},
+		var_value_role_id = #{varValueRole.id}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE sys_workflow_var SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

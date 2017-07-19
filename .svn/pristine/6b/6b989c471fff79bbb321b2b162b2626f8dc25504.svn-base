@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserMonthrecordDao">
+
+	<sql id="userMonthrecordColumns">
+		a.id AS "id",
+		a.del_flag AS "delFlag",
+		a.finish AS "finish",
+		a.unfinish AS "unfinish",
+		a.monthsum_id AS "monthsumId"
+	</sql>
+
+	<sql id="userMonthrecordJoins">
+	</sql>
+
+	<select id="get" resultType="UserMonthrecord">
+		SELECT
+		<include refid="userMonthrecordColumns" />
+		FROM user_monthrecord a
+		<include refid="userMonthrecordJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="UserMonthrecord">
+		SELECT
+		<include refid="userMonthrecordColumns" />
+		FROM user_monthrecord a
+		<include refid="userMonthrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.monthsum_id=#{monthsumId}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			ORDER BY a.create_date
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="UserMonthrecord">
+		SELECT
+		<include refid="userMonthrecordColumns" />
+		FROM user_monthrecord a
+		<include refid="userMonthrecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_monthrecord(
+		id,
+		del_flag,
+		finish,
+		unfinish,
+		create_date, 
+		monthsum_id
+		) VALUES (
+		#{id},
+		#{delFlag},
+		#{finish},
+		#{unfinish},
+		#{createDate}, 
+		#{monthsumId}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_monthrecord SET
+		finish = #{finish},
+		unfinish = #{unfinish},
+		monthsum_id = #{monthsumId},
+		del_flag =
+		#{delFlag}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE user_monthrecord SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

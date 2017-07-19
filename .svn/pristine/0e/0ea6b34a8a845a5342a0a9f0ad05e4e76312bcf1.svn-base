@@ -1,0 +1,131 @@
+a {text-decoration:none;}
+
+.ul{border: 1px solid #DDDDDD;width:97%;margin:0 auto;padding-top:10px;}
+
+#scrollable {
+    background-color:#fff;
+   /*  border:1px solid #ddd; */
+    padding:0px 15px;
+    width:50%;
+    height:210px;
+
+}
+
+#scrollable2 {
+    background-color:#fff;
+   /*  border:1px solid #ddd; */
+    padding:0px 15px;
+    width:50%;
+    height:210px;
+
+}
+
+#scrollable_1 {
+    background-color:#fff;
+   /*  border:1px solid #ddd; */
+    padding:20px 15px 20px 15px;
+    width:50%;
+    height:244px;
+	vertical-align:middle;
+
+}
+
+div.items {
+    height:66px;    
+    margin-left:0px;
+    float:left;
+    width:529.5px; !important;
+    overflow: hidden;
+}
+
+div.items2 {
+    height:66px;    
+    margin-left:0px;
+    float:left;
+    width:529.5px; !important;
+    overflow: hidden;
+} 
+ 
+div.items a {
+    display:block;
+    float:left;
+    margin-right:8px;
+    margin-top:60px;
+    width:82px;
+    height:50px;
+    font-size:14px;
+    color:#333;
+    line-height:16px;
+    text-decoration:none;
+    text-align:center;
+    cursor:pointer;
+}
+
+div.items2 a {
+    display:block;
+    float:left;
+    margin-right:8px;
+    margin-top:60px;
+    width:82px;
+    height:210px;
+    font-size:14px;
+    color:#333;
+    line-height:16px;
+    text-decoration:none;
+    text-align:center;
+    cursor:pointer;
+}
+ 
+div.items a:hover {
+    color:#999;    
+}
+ 
+div.items a.active {
+    background-position:-174px 0;        
+    color:#555;
+    cursor:default;
+}
+ 
+ 
+a.prev, a.next {
+    background:url(left.png) no-repeat 0 0;
+    display:block;
+    width:18px;
+    height:18px;
+    float:left;    
+    margin:22px 0 0 0;
+    cursor:pointer;
+}
+ 
+a.next {
+    background-image:url(right.png)        
+}
+ 
+a.prev:hover {
+    background-position:0 -18px;        
+}
+ 
+a.next:hover {
+    background-position:0 -18px;        
+}
+
+.tab{
+	width:600px;
+	position:relative; 
+	top:70%;
+	left:-8%;
+}
+
+.am-icon-plus{ 
+  	.am-icon-font; 
+  	content: @fa-var-plus;
+
+  	
+}
+
+.btn_1{
+  	position:relative; 
+	top:-70px;
+	left:87.5%;
+}
+

@@ -1,0 +1,80 @@
+package com.thinkgem.jeesite.mobile.modules.oa.web.sign;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.sign.OaSign;
+import com.thinkgem.jeesite.modules.oa.service.sign.OaSignService;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+@Controller("mOaSignController")
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/sign/oaSign")
+public class OaSignController extends BaseController {
+	@Autowired
+	private OaSignService oaSignService;
+
+	@ModelAttribute
+	public OaSign get(@RequestParam(required = false) String id) {
+		OaSign entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaSignService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaSign();
+		}
+		return entity;
+	}
+
+	@RequiresPermissions("oa:sign:oaSign:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaSign oaSign, HttpServletRequest request, HttpServletResponse response, Model model) {
+		oaSign.setCreateBy(UserUtils.getUser());
+		Page<OaSign> pagei = oaSignService.findPage(new Page<OaSign>(request, response), oaSign);
+		Page<OaSign> page = oaSignService.findPage(new Page<OaSign>(request, response), oaSign);
+		List<OaSign> list = page.getList();
+		for (int i = 0; i < list.size(); i++) {
+			String uid = list.get(i).getCreateBy().getId();
+			User createBy = UserUtils.get(uid);// 通过用户id获取用户信息
+			list.get(i).setCreateBy(createBy);
+		}
+		pagei.setList(list);
+		model.addAttribute("page", pagei);
+		return "mobile/modules/oa/sign/signList";
+	}
+
+	@RequiresPermissions("oa:sign:oaSign:view")
+	@RequestMapping(value = "form")
+	public String form(OaSign oaSign, Model model) {
+		String ofName = oaSign.getCurrentUser().getOffice().getName();// 拟稿部门
+
+		String crName = UserUtils.get(oaSign.getCurrentUser().getId()).getName();// 拟稿人
+		model.addAttribute("oaSign", oaSign);
+		model.addAttribute("crName", crName);
+		model.addAttribute("ofName", ofName);
+
+		return "modules/oa/sign/oaSignForm";
+	}
+	@RequestMapping(value = "completelist")
+	public String completelist(OaSign oaSign, Model model) {
+		model.addAttribute("oaSign", oaSign);
+		model.addAttribute("text", 	StringEscapeUtils.unescapeHtml(oaSign.getSignText()));
+		model.addAttribute("ofName", UserUtils.get(oaSign.getCreateBy().getId()).getOffice().getName());
+		model.addAttribute("crName", UserUtils.get(oaSign.getCreateBy().getId()).getName());
+		return "mobile/modules/oa/sign/signView";
+	}
+}

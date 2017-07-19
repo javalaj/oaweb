@@ -1,0 +1,238 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.oa.web.spacialLoan;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.entity.OaSpacialLoan;
+import com.thinkgem.jeesite.modules.oa.service.OaSpacialLoanService;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.oa.service.loan.OaLoanMainService;
+import com.thinkgem.jeesite.modules.oa.service.loan.OaLoanRepaymentService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.service.UserFavoriteService;
+
+/**
+ * 专项借支流程业务表Controller
+ * 
+ * @author liuxin
+ * @version 2016-12-08
+ */
+@Controller
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/oaSpacialLoan")
+public class OaSpacialLoanControllerMobile extends BaseController {
+
+	@Autowired
+	private OaSpacialLoanService oaSpacialLoanService;
+	@Autowired
+	private OaProVacateService oaProVacateService;
+	@Autowired
+	private OaLoanMainService oaLoanMainService;// 未归还金额带出
+	@Autowired
+	private OaLoanRepaymentService oaLoanRepaymentService;// 已归还金额带出
+	@Autowired
+	private ActTaskService actTaskService;// 流程流转信息获取的业务类
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回交接操作service
+
+	@ModelAttribute
+	public OaSpacialLoan get(@RequestParam(required = false) String id) {
+		OaSpacialLoan entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaSpacialLoanService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaSpacialLoan();
+		}
+		return entity;
+	}
+
+	@RequiresPermissions("oa:oaSpacialLoan:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaSpacialLoan oaSpacialLoan, HttpServletRequest request, HttpServletResponse response,
+			Model model) {
+		Page<OaSpacialLoan> page = oaSpacialLoanService.findPage(new Page<OaSpacialLoan>(request, response),
+				oaSpacialLoan);
+		model.addAttribute("page", page);
+		return "mobile/modules/oa/spacialLoan/oaSpacialLoanList";
+	}
+
+	@RequiresPermissions("oa:oaSpacialLoan:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaSpacialLoan oaSpacialLoan, RedirectAttributes redirectAttributes) {
+		oaSpacialLoanService.delete(oaSpacialLoan);
+		addMessage(redirectAttributes, "删除成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/oaSpacialLoan/?repage";
+	}
+
+	/**
+	 * 新建，打回，页面
+	 */
+	@RequiresPermissions("oa:oaSpacialLoan:view")
+	@RequestMapping(value = "form")
+	@Token(save = true)
+	public String form(OaSpacialLoan oaSpacialLoan, Model model, String flag, RedirectAttributes redirectAttributes) {
+		oaSpacialLoan = init(oaSpacialLoan);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaSpacialLoan.getProcInsId()));
+		String view = "mobile/modules/oa/spacialLoan/oaSpacialLoanView";// 默认去查看页面
+		if (oaSpacialLoanService.isDeal(oaSpacialLoan) && !"view".equals(flag)) {
+			view = "mobile/modules/oa/spacialLoan/oaSpacialLoanForm";// 有权限的人去修改页面
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaSpacialLoan.getProcInsId());
+		} else {
+			oaSpacialLoan.setCreateBy(UserUtils.get(oaSpacialLoan.getCreateBy().getId()));// 为页面查询出申请人的名字
+		}
+		model.addAttribute("oaSpacialLoan", oaSpacialLoan);
+		model.addAttribute("sumLoanMoney", oaLoanMainService.getSumLoanMoney(UserUtils.getUser().getId())
+				- oaLoanRepaymentService.getSumRepaymentMoney(UserUtils.getUser().getId()));
+		addTitle(model, oaSpacialLoan);
+		addTask(model, oaSpacialLoan);
+		addShoucang(oaSpacialLoan.getId(), model);
+		addHistory(oaSpacialLoan.getProcInsId(), model);// 装载流转信息
+		return view;
+	}
+
+	/**
+	 * 新建提交，打回修改提交
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 */
+	@RequiresPermissions("oa:oaSpacialLoan:edit")
+	@RequestMapping(value = "save")
+	@Token(remove = true)
+	public String save(OaSpacialLoan oaSpacialLoan, Model model, RedirectAttributes redirectAttributes, String flag) {
+		if (!beanValidator(model, oaSpacialLoan)) {
+			return form(oaSpacialLoan, model, "", redirectAttributes);
+		}
+		oaSpacialLoanService.save(oaSpacialLoan, flag);
+		addMessage(redirectAttributes, "提交成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/oaSpacialLoan/form?id="
+				+ oaSpacialLoan.getId() + "&flag=view";
+	}
+
+	/**
+	 * 上级审核页面
+	 * 
+	 * num页面后缀编号
+	 */
+	@RequiresPermissions("oa:oaSpacialLoan:view")
+	@RequestMapping(value = "exam")
+	@Token(save = true)
+	public String exam(OaSpacialLoan oaSpacialLoan, Model model, int num) {
+		oaSpacialLoan = init(oaSpacialLoan);
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaSpacialLoan.getProcInsId()));
+		oaSpacialLoan.setCreateBy(UserUtils.get(oaSpacialLoan.getCreateBy().getId()));// 为页面查询出申请人的名字
+		String view = "mobile/modules/oa/spacialLoan/oaSpacialLoanView";// 默认去查看页面
+		if (oaSpacialLoanService.isDeal(oaSpacialLoan)) {
+			model.addAttribute("num", num);// 添加页面序号
+			view = "mobile/modules/oa/spacialLoan/oaSpacialLoanExam";// 有权限的人去修改页面
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaSpacialLoan.getProcInsId());
+		}
+		model.addAttribute("oaSpacialLoan", oaSpacialLoan);
+		addTitle(model, oaSpacialLoan);
+		addTask(model, oaSpacialLoan);
+		addShoucang(oaSpacialLoan.getId(), model);
+		addHistory(oaSpacialLoan.getProcInsId(), model);// 装载流转信息
+		return view;
+	}
+
+	/**
+	 * 上级审核意见提交
+	 * 
+	 * exam 1不同意 ，0同意
+	 * 
+	 * sign流程执行的环节标志
+	 * 
+	 * next 是否交由总经理审批 1不同意 0同意
+	 */
+	@RequiresPermissions("oa:oaSpacialLoan:edit")
+	@RequestMapping(value = "dealExam")
+	@Token(remove = true)
+	public String dealExam(OaSpacialLoan oaSpacialLoan, Model model, RedirectAttributes redirectAttributes, String exam,
+			int sign, String next) {
+		if (!beanValidator(model, oaSpacialLoan)) {
+			return exam(oaSpacialLoan, model, sign);
+		}
+		oaSpacialLoanService.dealExam(oaSpacialLoan, exam, sign, next);
+		addMessage(redirectAttributes, "审核成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/oaSpacialLoan/form?id="
+				+ oaSpacialLoan.getId() + "&flag=view";
+	}
+
+	/**
+	 * 流程结束后的获取实体对象的方法
+	 * 
+	 */
+	private OaSpacialLoan init(OaSpacialLoan oaOvertime) {
+		if (oaOvertime.getAct() != null && StringUtils.isNotBlank(oaOvertime.getAct().getProcInsId())) {
+			oaOvertime = oaSpacialLoanService.getByProcInsId(oaOvertime.getAct().getProcInsId());
+		}
+		return oaOvertime;
+	}
+
+	/** 加入流程标题 */
+	private void addTitle(Model model, OaSpacialLoan oaOvertime) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaOvertime.getId())) {
+			name = UserUtils.get(oaOvertime.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaOvertime.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		model.addAttribute("title", "专项借支申请流程【" + name + " " + date + "】");
+	}
+
+	/** 加入工作台对象，用于显示流程图 */
+	private void addTask(Model model, OaSpacialLoan oaOvertime) {
+		// 如果流程已启动，给出流程图
+		if (oaOvertime.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaOvertime.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaOvertime.getProcInsId()));
+		}
+	}
+
+	/**
+	 * 查找并且装载，流程流转信息
+	 */
+	public void addHistory(String procInsId, Model model) {
+		if (StringUtils.isNotBlank(procInsId)) {
+			// List<Act> temp=actTaskService.histoicFlowList(procInsId, null,
+			// null);
+			model.addAttribute("historys", actTaskService.histoicFlowList(procInsId, null, null));
+		}
+	}
+
+	@Autowired
+	private UserFavoriteService UserFavoriteService;// 获取当前流程信息是否已经被收藏
+
+	/** 获取当前物质收藏状态 */
+	public void addShoucang(String id, Model model) {
+		if (StringUtils.isNotBlank(id)) {
+			model.addAttribute("shoucang", UserFavoriteService.getShoucangState(id));
+		}
+	}
+}

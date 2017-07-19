@@ -1,0 +1,246 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>保存成功管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		/* var validateForm;
+		function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+		  if(validateForm.form()){
+			  $("#inputForm").submit();
+			  return true;
+		  }
+	
+		  return false;
+		} */
+		$(document).ready(function() {
+			validateForm = $("#inputForm").validate({
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍候...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		/* 	
+			$(".add1line").click(
+					function() {
+						$(this)
+							.parent()
+							.parent()
+							.before(
+		 					'<tr><td><input name="date" type="text" readonly="readonly" maxlength="20" style="width: 90%;" class="laydate-icon form-control layer-date input-sm" value="" onclick="WdatePicker({dateFmt:\'yyyy-MM-dd HH:mm:ss\',isShowClear:false});" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="currentunit"  style="width:90%" class="form-control required"/><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="reason" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="meals" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="alcoholtobacco" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="numOur" style="width:90%" class="form-control" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="numCustomers" class="form-control" style="width:90%" /><span class="help-inline"><font color="red">*</font> </span></td><td><select name="ispriorapproval" class="form-control"  style="width: 100%" onclick="ispriorapprovalClick(this)"><option value="是">是</option><option value="否" selected="selected">否</option></select></td><td><a onclick="del1line(this)"><img class="add-del-png" src=\'${ctxStatic}/images/del.png\' /></a><input type="hidden" name="delFlag" value="0"></td></tr>');
+						return false;
+					}); */
+		});
+		
+	/* 	
+		function ispriorapprovalClick(item) {
+			if ($(item).val() == '否') {
+				$(item).parent().next().children().attr("readonly", false).next()
+						.children().text("*");
+			} else {
+				$(item).parent().next().children().attr("readonly", true).val("")
+						.next().children().text("");
+			}
+		}
+
+		
+		
+		function del1line(item) {
+			$(item).next().val("1");
+			$(item).parent().parent().hide();
+			return false;
+		} */
+	</script>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+	<div class="ibox">
+		<div class="ibox-title">
+			<h5>${title }</h5>
+		</div>
+		<div class="ibox-content">
+			<form:form id="inputForm" modelAttribute="oaEnreimb" action="${ctx}/oa/enreimb/oaEnreimb/save" method="post">
+				<%-- <legend>${title }</legend> --%>
+				<form:hidden path="id"/>
+				<input  type="hidden" name="procInsId" value="${oaEnter.procInsId }"/>
+				<sys:message content="${message}"/>
+			
+		<!-- 		<label>招 待 费 报 销 审 批 单</label> -->
+				<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+				<thead>
+					<tr>
+						<td rowspan="2">日期</td>
+						<td rowspan="2">往来单位</td>
+						<td rowspan="2">洽谈事由及项目名称</td>
+						<td colspan="2">实际金额</td>
+						<td colspan="2">参与人数</td>
+						<td rowspan="2">是否在事前报批</td>			
+					</tr>
+					<tr>
+						<td>餐费</td>
+						<td>酒水/烟等</td>
+						<td>我司</td>
+						<td>客户</td>
+					</tr>
+					</thead>
+					<tbody>
+					<c:forEach var="oaEnter" items="${listOaEnter}">
+						<tr>
+							<td>
+								<fmt:formatDate value="${oaEnter.date}"
+								pattern="yyyy-MM-dd" />						
+							</td>
+							<td>
+								${oaEnter.currentunit}
+							</td>
+							<td>
+								${oaEnter.reason}					
+							</td>
+							<td>
+								${oaEnter.meals}
+							</td>
+							<td>
+								${oaEnter.alcoholtobacco}
+							</td>
+							<td>
+								${oaEnter.numOur}
+							</td>
+							<td>
+								${oaEnter.numCustomers}
+							</td>					
+							<td>
+								${oaEnter.ispriorapproval}
+							</td>					
+						</tr>
+						</c:forEach>
+						<tr>
+							<td colspan="2">
+								合计金额
+							</td>
+							<td colspan="6">
+								${oaEnreimb.moneyDouble}
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								大写金额
+							</td>
+							<td colspan="6">
+								${oaEnreimb.moneyString}
+							</td>
+						</tr>
+						<c:if test="not empty ${name1}">
+						<tr>
+							<td colspan="2">
+								部门负责人签字
+							</td>
+							<td colspan="6">
+								${name1}
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								部门负责人审核意见
+							</td>
+							<td colspan="6">
+								${text1}
+							</td>
+						</tr>
+						</c:if>
+						<c:if test="not empty ${name2}">
+						<tr>
+							<td colspan="2">
+								总经理签字
+							</td>
+							<td colspan="6">
+								${name2}
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								总经理审核意见
+							</td>
+							<td colspan="6">
+								${text2 }
+							</td>
+						</tr>
+						</c:if>
+						<tr>
+							<td colspan="2">
+								财务签字
+							</td>
+							<td colspan="6">
+								${oaEnreimb.cwname}
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2">
+								财务审核意见
+							</td>
+							<td colspan="6">
+								${oaEnreimb.cwtext}
+							</td>
+						</tr>						
+					</tbody>
+				</table>
+				
+				
+				<%-- <table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+				   <tbody>
+						<tr>
+							<td class="width-15 active"><label class="pull-right">审核意见：</label></td>
+							<td class="width-35">
+							 <c:if test="${node ne 0}">
+								<div class="controls">
+									<input type="radio" name="fruit" value="0">同意
+									<input type="radio" name="fruit" value="1" checked="checked">不同意				
+								</div>
+							</c:if>
+							</td>
+							<td class="width-15 active"><label class="pull-right">审核留言：</label></td>
+							<td class="width-35">
+								<form:input path="cwtext" htmlEscape="false" maxlength="200" class="form-control "/>
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active"><label class="pull-right">合计金额（小写）：</label></td>
+							<td class="width-35">
+								<form:input path="moneyDouble" htmlEscape="false" class="form-control " readonly="readonly"/>
+							</td>
+							<td class="width-15 active"><label class="pull-right">合计金额（大写）：</label></td>
+							<td class="width-35">
+								<form:input path="moneyString" htmlEscape="false" class="form-control" readonly="readonly"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>  --%>
+				
+				<div style="text-align:center;">			
+					<input id="btnCancel" class="btn" type="button" value="返 回"
+						onclick="location.href='${ctx}/act/task/historic/'" /> 
+					<act:flow-back-btn></act:flow-back-btn>
+					<c:if test="${task != null}">
+						&nbsp;<input
+						onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+						class="btn" type="button" value="流程跟踪" />
+					</c:if>
+				</div>
+			</form:form>
+			<c:if test="${not empty oaEnreimb.id}">
+				<act:histoicFlow procInsId="${oaEnreimb.procInsId}" />
+			</c:if>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,98 @@
+//显示流程跟踪信息
+function btnPNGshow(str) {
+	var src="/oa/a/act/task/trace/photo/"+str
+		top.layer.open({
+			  type: 2, 
+			  area: ['900px', '500px'],
+		      title: "流程图",
+	          maxmin: true, //开启最大化最小化按钮
+	          shadeClose: true,
+			  content: src //这里content是一个普通的String
+		});
+}
+// 显示流程图
+function btnPNGshow2(str2) {
+	/*top.$.jBox.open("iframe:/oa/a/act/task/processPic?procDefId=" + str2,
+			"流程图", 1400, 500, {
+				buttons : {
+					"关闭" : true
+				},
+				submit : function(v, h, f) {
+
+				},
+				loaded : function(h) {
+					$(".jbox-content", top.document)
+							.css("overflow-y", "hidden");
+				}
+			});*/
+	var src="/oa/a/act/task/processPic?procDefId=" + str2
+	top.layer.open({
+		  type: 2, 
+		  area: ['900px', '500px'],
+	      title: "流程图",
+          maxmin: true, //开启最大化最小化按钮
+          shadeClose: true,
+		  content: src //这里content是一个普通的String
+	});
+}
+
+// 收藏
+function shoucang(mctx,title, url, type, sign) {
+	var jstr = {
+		title : title,
+		url : url,
+		type : type,
+		sign : sign
+	};
+	// ajax
+	$.ajax({
+		url : mctx+'/user/userFavorite/ajaxSave',
+		type : 'POST', // GET
+		async : true, // 或false,是否异步
+		contentType : "application/json;charset=utf-8",
+		data : JSON.stringify(jstr),
+		dataType : 'text', // 返回的数据格式：json/xml/html/script/jsonp/text
+		success : function(data) {
+			if (data == 'success') {
+				// 收藏
+				$("#userimg41").hide();
+				$("#userimg42").show();
+				mui.alert("收藏成功！", "系统提示");
+			} else {
+				// 取消收藏 del
+				mui.alert("收藏失败！", "系统提示");
+			}
+		}
+	})
+
+}
+// 取消收藏
+function QXshoucang(mctx,title, url, type, sign) {
+	var jstr = {
+		title : title,
+		url : url,
+		type : type,
+		sign : sign
+	};
+	// ajax
+	$.ajax({
+		url : mctx+'/user/userFavorite/ajaxDel',
+		type : 'POST', // GET
+		async : true, // 或false,是否异步
+		contentType : "application/json;charset=utf-8",
+		data : JSON.stringify(jstr),
+		dataType : 'text', // 返回的数据格式：json/xml/html/script/jsonp/text
+		success : function(data) {
+			if (data == 'success') {
+				// 收藏
+				$("#userimg42").hide();
+				$("#userimg41").show();
+				mui.alert("取消收藏成功！", "系统提示");
+			} else {
+				// 取消收藏 del
+				mui.alert("取消收藏失败！", "系统提示");
+			}
+		}
+	})
+
+}

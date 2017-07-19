@@ -1,0 +1,174 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>审核完成页面</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			$("#btnImport1").click(function() {
+
+				window.print();
+			});
+		});
+	</script>
+	<style>
+@media print {
+	.noprint {
+		display: none
+	}
+}
+</style>
+</head>
+<body>
+	<body class="gray-bg">
+<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>人员增补流程 </h5>
+		<div class="ibox-tools">
+		</div>
+	</div>
+   <div class="ibox-content">
+   		<div class="row">
+	<div class="col-sm-12">
+	<input id="btnImport1"
+			class="btn btn-myoa noprint" type="button" value="打印" />
+	<br/>
+	</div>
+	</div>
+	<sys:message content="${message}"/>
+	<form:form id="inputForm" modelAttribute="oaStaffupdated" action="${ctx}/oa/staff/oaStaffupdated/save" method="post" class="form-inline">
+		<div style="padding-bottom: 10px;text-align: center;font-size: 20px;">人员增补申请表</div>
+		<div style="overflow: hidden;">
+			<span style="display: inline-block; width: 72%;">申请人：${name }</span>
+			<span>申请时间：	
+				<fmt:formatDate value="${oaStaffupdated.createDate}" pattern="yyyy-MM-dd "/></span>
+		</div>
+		<table class="table table-bordered table-condensed dataTables-example dataTable">			
+		<tr>
+			<td>需求部门：</td>
+			<td>
+			${oaStaffupdated.department}
+			</td>
+			<td>现有人数：</td>
+			<td>
+			${oaStaffupdated.number}
+			</td>
+			<td>拟增人数：</td>
+			<td>
+			${oaStaffupdated.upNumber}
+			</td>
+		</tr>
+		<tr>
+			<td rowspan="2">增补岗位名称：</td>
+			<td rowspan="2">
+			${oaStaffupdated.upPostname}
+			</td>
+			<td rowspan="2">薪资范围：</td>
+			<td colspan="2">试用期薪资：</td>
+			<td>
+				${oaStaffupdated.trial}
+			</td>
+		</tr>	
+		<tr>
+			<td colspan="2">转正薪资：</td>
+			<td>
+				${oaStaffupdated.official}
+			</td>
+			</tr>
+		<tr>
+			<td>增补原因<!-- (0:补缺，1：增加，2：储备) -->：</td>
+			<td colspan="2">
+			<c:choose>
+						<c:when test="${oaStaffupdated.upReason == 0}">
+								补缺
+							</c:when>
+						<c:when test="${oaStaffupdated.upReason == 1 }">
+							增加
+							</c:when>
+						<c:otherwise>
+							储备
+							</c:otherwise>
+					</c:choose>
+			</td>
+			<td>期望到岗时间：</td>
+			<td colspan="2">
+			<fmt:formatDate value="${oaStaffupdated.expectationTime}" pattern="yyyy-MM-dd"/>
+			</td>
+		</tr>
+		<tr>
+			<td>岗位工作内容：</td>
+			<td colspan="5">
+				<textarea  rows="3" cols="100" maxlength="200" class="form-control required" disabled="disabled" readonly="readonly">${oaStaffupdated.upPostcontent } </textarea>
+			</td>
+		</tr>
+		<tr>
+			<td>增补岗位要求：</td>
+			<td colspan="5">
+				<textarea  rows="3" cols="100" maxlength="200" class="form-control required" disabled="disabled" readonly="readonly">${oaStaffupdated.upPostclaim }</textarea>
+			</td>
+		</tr>
+		<c:if test="${not empty oaStaffupdated.demandOpinion }">
+			<tr>
+					<td>部门副总意见：</td>
+				<td colspan="5">
+				<textarea  rows="2" cols="100" maxlength="200" class="form-control required" disabled="disabled" readonly="readonly"> ${oaStaffupdated.demandOpinion  }</textarea>
+			 
+					</td>
+		</tr>
+		</c:if>
+		<c:if test="${not empty oaStaffupdated.personnelmattersOpinion }">
+			<tr>
+					<td>人事行政部副总意见：</td>
+				<td colspan="5">
+				<textarea  rows="2"  cols="100"  maxlength="200" class="form-control required" disabled="disabled" readonly="readonly">${oaStaffupdated.personnelmattersOpinion  }</textarea>
+			  
+					</td>
+		</tr>
+		</c:if>
+		<c:if test="${not empty oaStaffupdated.bossOpinion }">
+			<tr>
+					<td>总经理意见：</td>
+				<td colspan="5">
+				<textarea  rows="2" cols="100" maxlength="200" class="form-control required" disabled="disabled" readonly="readonly">  ${oaStaffupdated.bossOpinion  }</textarea>
+			
+					</td>
+		</tr>
+		</c:if>
+	</table>
+		</form:form>
+		<script type="text/javascript">
+					function history() {
+			location.href="${ctx}/act/task/tosend/";
+		}
+					</script>
+	<br/>
+	<br/>
+	<div class="noprint">
+	<c:if test="${not empty oaStaffupdated.id}">
+		<act:histoicFlow procInsId="${oaStaffupdated.procInsId}" />
+		
+	</c:if>
+	</div>
+	</div>
+	</div>
+	</div>
+	
+</body>
+</html>

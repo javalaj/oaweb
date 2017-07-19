@@ -1,0 +1,165 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+<title>用车申请</title>
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/mui.min.css" />
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/Base.css" />
+	<script type="text/javascript" src="${ctxStatic}/jquery/jquery-1.9.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/liuxin/css/mobile2.css" />
+	<link rel="stylesheet" href="${ctxStatic}/mobile/css/oabase.css" />
+	<style type="text/css">
+			.btn-submit, .btn-draft{
+				background-color: #12b7f5;
+			    border: 1px solid #12b7f5;
+			 }
+			 .required{
+			 	border: 1px solid rgba(0,0,0,.2) !important;
+			 }
+			 .mui-table-view-cell:last-child:after{
+			 	content:none;
+			 }
+
+			 .divcontent{
+				border-bottom:none;
+			}		
+			.mui-table-view:after{
+				position: initial;
+			} 
+			.mui-content{
+				padding-top: 25px;
+			}
+			 </style>
+
+</head>
+
+	<body>
+		<header class="mui-bar mui-bar-nav">
+		<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		<h1 class="mui-title">编辑用车申请</h1>
+	</header>
+	
+	<div class="mui-content">
+		<form action="${ctx}/m/oa/oaUsecar/save" method="post">
+		<div class="main-tit">${title }</div>
+	
+		<input type="hidden" name="token" value="${token }"> 
+		<input type="hidden" value="0" name="flag" id="flag" /> 
+		<input type="hidden" value="${oaUsecar.id}" name="id" /> 
+		<input type="hidden" value="${oaUsecar.procInsId}" name="procInsId" />
+		<sys:message content="${message}" />
+
+
+		<ul class="mui-table-view divcontent">
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">申请人：</span>
+				<input type="text" class="inputs" value="${oaUsecar.createBy.name}" name="createBy.id" disabled/>
+			</li>
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">用车部门：</span> 
+				<input type="text" class="inputs" value="${oaUsecar.department}" name="department" disabled/>
+			</li>
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">用车时间：</span>
+				<input class="inputs mui-datetime required" name="usetime" id="usetime" type="text" readonly="readonly"
+					value="<fmt:formatDate value="${oaUsecar.usetime}" pattern="yyyy-MM-dd HH:mm:ss"/>" />
+			</li>
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">用车原因：</span>
+				<input type="text" class="inputs" value="${oaUsecar.usereason}" name="usereason" id="usereason"/>
+			</li>
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">目的地：</span>
+				<input type="text" class="inputs" value="${oaUsecar.destination}" name="destination" id="destination"/>
+			</li>
+			<li class="mui-table-view-cell" id="content11">
+				<span class="sp">用车范围：</span>
+				<span style="width: 62%;">
+					<input checked="checked" name="usescope" type="radio" value="市内"  class="exam"/>市内
+					<input name="usescope" type="radio" value="市外"  class="exam"/>市外
+			    </span>
+			</li>
+		</ul>
+
+		<!-- 		流程流转信息 -->
+		<c:if test="${fn:length(historys)>0}">
+		<ul class="xinfoot">
+			<c:forEach var="now" items="${listact}">
+				<li>
+					<div class="contents_title2">
+						<div class="content_img">
+							<c:choose>
+								<c:when test="${now.histIns.endTime != null}">
+									<img src="${ctxStatic}/mobile/images/wancheng.png" alt="" />
+								</c:when>
+								<c:otherwise>
+									<img src="${ctxStatic}/mobile/images/shenpizhong.png" alt="" />
+								</c:otherwise>
+							</c:choose>
+						</div>
+						<div class="content_title">
+							<h3>${now.assigneeName}</h3>
+							<span>${now.histIns.activityName}</span>
+						</div>
+						<div class="content_time">
+							<span><fmt:formatDate value="${now.histIns.startTime}"
+									pattern="yyyy.MM.dd HH:mm" /></span>
+						</div>
+						<div class="xinmsg">${now.comment}</div>
+					</div>
+				</li>
+			</c:forEach>
+		</ul>
+		</c:if> 
+		<div class="separation"></div>		
+
+		<div class="bottom-button">
+			<button type="submit" id="tijiao" data-loading-text="提交中" class="btnapp btn-submit">提交</button>
+			<c:if test="${not empty oaUsecar.id }">
+			<button type="submit" id="btnCancle2" data-loading-text="取消中" class="btnapp btn-next">取消申请</button>
+			</c:if>			
+		</div>
+		</form>
+		</div>
+		
+	<script src="${ctxStatic}/mobile/frame_js/mui.min.js"></script>
+	<script type="text/javascript">
+		// 			mui.init()
+		// 			/*js控制按钮的联网请求*/
+		// 			mui(document.body).on('tap', '.type', function(e) {
+		// 				mui(this).button('loading');
+		// 				setTimeout(function() {
+		// 					mui(this).button('reset');
+		// 				}.bind(this), 2000);
+		// 			});
+
+		$("#tijiao").click(function(){
+			if($("#usetime").val()==""){
+				mui.alert('用车时间不能为空！');
+				return false;
+			}
+			if($("#usereason").val()==""){
+				mui.alert('用车原因不能为空！');
+				return false;
+			}
+			if($("#destination").val()==""){
+				mui.alert('目的地不能为空！');
+				return false;
+			}
+			return true;
+		})
+		
+		$("#btnCancle2").click(function() {
+			$("#flag").val("1");
+
+		})
+
+	</script>
+	<sys:mui-datetime></sys:mui-datetime>
+</body>
+
+</html>

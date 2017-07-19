@@ -1,0 +1,358 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.fixedassets;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.dao.fixedassets.PerishableSerialDao;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableApply;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableHistory;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableSerial;
+import com.thinkgem.jeesite.modules.oa.entity.perishableproducts.PerishableProducts;
+import com.thinkgem.jeesite.modules.oa.service.perishableproducts.PerishableProductsService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 易耗品序列Service
+ * @author 易耗品序列
+ * @version 2016-12-02
+ */
+@Service
+@Transactional(readOnly = true)
+public class PerishableSerialService extends CrudService<PerishableSerialDao, PerishableSerial> {
+	/**自定义流程id*/
+	public static final String PROC_DEF_KEY = "perishable_products";
+	
+	public static final String WORKFLOW_NAME = "办公用品申请";
+	
+	public PerishableSerial get(String id) {
+		return super.get(id);
+	}
+	
+	public List<PerishableSerial> findList(PerishableSerial perishableSerial) {
+		return super.findList(perishableSerial);
+	}
+	
+	public Page<PerishableSerial> findPage(Page<PerishableSerial> page, PerishableSerial perishableSerial) {
+		return super.findPage(page, perishableSerial);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(PerishableSerial perishableSerial) {
+		super.save(perishableSerial);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(PerishableSerial perishableSerial) {
+		super.delete(perishableSerial);
+	}
+	
+	/**
+	 * 提交申请后保存易耗品序列和申请物品
+	 * @param perishableId
+	 * @param amount
+	 */
+	@Transactional(readOnly = false)
+	public PerishableSerial saveForAct(String[] perishableId,Integer[] amount, String remarks)
+	{
+		PerishableSerial obj = new PerishableSerial();
+		
+		String title = UserUtils.getUser().getName() + "的易耗品申请";
+		
+		obj.setTitle(title);
+		
+		obj.setRemarks(remarks);
+		
+		save(obj);
+		
+		//保存申请物品
+		for (int i = 0;i < perishableId.length;i++)
+		{
+			PerishableApply apply = new PerishableApply();
+			
+			apply.setSerialId(obj.getId());
+			
+			apply.setAmount(amount[i]);
+			
+			PerishableProducts perishable = new PerishableProducts();
+			
+			perishable.setId(perishableId[i]);
+			
+			apply.setPerishable(perishable);
+			
+			ps.save(apply);
+			
+			lockStock(perishableId[i], amount[i]);
+		}
+		Map<String, Object> vars = initVars();
+		
+		startProcess(obj,vars);
+		
+		return obj;
+	}
+	
+	/**
+	 * 启动工作流
+	 * @param obj
+	 * @param vars
+	 */
+	public void startProcess(PerishableSerial obj, Map<String, Object> vars)
+	{
+		String title = titleHandle(WORKFLOW_NAME);
+		
+		// 第一次申请，启动工作流
+		String procInsId = actTaskService.startProcess("perishable_products",
+				"perishable_serial", obj.getId(),
+				title, vars);
+		// 线程暂停两秒
+		try 
+		{
+			Thread.sleep(2000);
+		}
+		catch (InterruptedException e) 
+		{
+			e.printStackTrace();
+		}
+		// 通过procinsid获取任务的列表，一般只有一条，在出现分支或子流程的情况下会有多条，不建议现在配置那种，即并行网关
+		List<Task> list = actTaskService.getProcessEngine()
+				.getTaskService().createTaskQuery()
+				.processInstanceId(procInsId).list();
+		
+		if (list.size() > 0) {
+			// 任务完成，跟着流程的线继续走到下一个节点
+			actTaskService.complete(list.get(0).getId(), procInsId, "【提交】",
+					title, vars);
+		}
+	}
+	
+	
+	/**
+	 * 锁定仓库库存
+	 * @param perishableId
+	 * @param amount
+	 */
+	public void lockStock(String perishableId, Integer amount)
+	{
+		PerishableProducts obj = pps.get(perishableId);
+		
+		obj.setAmount(obj.getAmount() - amount);
+		
+		pps.save(obj);
+	}
+	
+	/**
+	 * 初始化工作流中的变量的值，带入vars中放到后面使用
+	 * @return
+	 */
+	public Map<String, Object> initVars()
+	{
+		Map<String, Object> vars = new HashMap<String, Object>();
+		
+		vars.put("apply", UserUtils.getUser().getLoginName());
+		
+		vars.put("admin", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "admin", ""));
+		
+		vars.put("staff", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "staff", ""));
+		
+		vars.put("file", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "file", ""));
+		
+		return vars;
+	}
+	
+	/**
+	 * 根据Id查询序列对象内封装了申请对象集合
+	 * @param id
+	 * @return
+	 */
+	public PerishableSerial selectSerialById(String id)
+	{
+		return dao.selectSerialById(id);
+	}
+	
+	/**
+	 * 判断是否该当前人员处理
+	 * 
+	 * @param id
+	 * @return true/false
+	 */
+	public boolean isDeal(PerishableSerial perishableSerial) {
+		System.out.println(perishableSerial.getProcInsId());
+		if (perishableSerial.getProcInsId() == null) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine()
+					.getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName())
+					.processInstanceId(perishableSerial.getProcInsId()).list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 根据流程实例ID获取对象
+	 * @param procInsId
+	 * @return
+	 */
+	public PerishableSerial getByProcInsId(String procInsId)
+	{
+		return dao.getByProcInsId(procInsId);
+	}
+	
+	/**
+	 * 获取申请列表
+	 * @param list
+	 * @return
+	 */
+	public List<PerishableApply> getApplyList(List<PerishableApply> list)
+	{
+		List<PerishableApply> temp = new ArrayList<PerishableApply>();
+		
+		if (list.size() > 0)
+			for (PerishableApply obj : list) 
+				temp.add(ps.get(obj.getId()));
+		
+		return temp;
+	}
+	
+	/**
+	 * 根据流程实例Id查询任务
+	 * @param procInsId
+	 * @return
+	 */
+	public Task getTaskByProcInsId(String procInsId) {
+
+		List<Task> list = actTaskService.getProcessEngine().getTaskService()
+				.createTaskQuery().processInstanceId(procInsId).list();
+		if (list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+	
+	/**
+	 * 审核
+	 * @param b
+	 * @param ids
+	 * @param amount
+	 * @param perishableSerial
+	 */
+	@Transactional(readOnly = false)
+	public void exam(boolean b, String[] ids, String[] amount,PerishableSerial perishableSerial)
+	{
+		// 通过procinsid和当前人两个维度取得任务列表，一般只有一条
+		List<Task> list = actTaskService.getProcessEngine().getTaskService()
+				.createTaskQuery()
+				.processInstanceId(perishableSerial.getProcInsId())
+				.taskAssignee(UserUtils.getUser().getLoginName()).list();
+		
+		Map<String, Object> vars = initVars();
+		
+		if (b)
+		{
+			for (int i = 0;i < ids.length; i++)
+			{
+				PerishableProducts obj = pps.get(ids[i]);
+				//更新库存
+				obj.setAmount(obj.getAmount() + Integer.parseInt(amount[i]));
+				
+				pps.save(obj);
+			}
+			
+			if (list.size() > 0) 
+			{
+				String title = "【" + UserUtils.get(perishableSerial.getCreateBy().getId()).getName() + "】【" + "办公用品申请"
+						+ "】已被" + "【" + UserUtils.getUser().getUsername() + "】" + "退回";
+				
+				String content = "@@proNotify@@/oa/a/oa/fixedassets/perishableSerial/view?id=" + perishableSerial.getId();
+				
+				WorkflowUtils.sendOaNotify(title,content,perishableSerial.getCreateBy().getId());
+				
+				vars.put("flag", false);
+				
+				vars.put("apply", UserUtils.get(perishableSerial.getCreateBy().getId()).getLoginName());
+				
+				actTaskService.complete(list.get(0).getId(),
+						perishableSerial.getProcInsId(), "【退回】",title, vars);
+			}
+		}
+		else
+		{
+			for (int i = 0;i < ids.length; i++)
+			{
+				PerishableHistory perishableHistory = new PerishableHistory();
+				
+				perishableHistory.setAmount(Integer.parseInt(amount[i]));
+				
+				perishableHistory.setType("1");
+				
+				PerishableProducts perishableProducts = new PerishableProducts();
+				
+				perishableProducts.setId(ids[i]);
+				
+				perishableHistory.setPerishableProducts(perishableProducts);
+				
+				phs.save(perishableHistory);
+			}
+			
+			if (list.size() > 0) 
+			{
+				String title = "【" + UserUtils.get(perishableSerial.getCreateBy().getId()).getName() + "】" + "【办公用品申请】";
+				
+				vars.put("flag", true);
+				
+				actTaskService.complete(list.get(0).getId(),
+						perishableSerial.getProcInsId(), "【同意】",title, vars);
+			}
+		}
+	}
+	
+	@Transactional(readOnly = false)	
+	public void application(PerishableSerial perishableSerial)
+	{
+		// 通过procinsid和当前人两个维度取得任务列表，一般只有一条
+		List<Task> list = actTaskService.getProcessEngine().getTaskService()
+				.createTaskQuery()
+				.processInstanceId(perishableSerial.getProcInsId())
+				.taskAssignee(UserUtils.getUser().getLoginName()).list();
+		
+		Map<String, Object> vars = initVars();
+		
+		if (list.size() > 0) 
+		{
+			String title = "【" + UserUtils.get(perishableSerial.getCreateBy().getId()).getName() + "】" + "【办公用品申请】";
+			
+			vars.put("flag", true);
+			
+			actTaskService.complete(list.get(0).getId(),
+					perishableSerial.getProcInsId(), "【领用完成】", title, vars);
+		}
+	}
+	
+	@Autowired
+	private PerishableApplyService ps;
+	
+	@Autowired
+	private ActTaskService actTaskService;
+	
+	@Autowired
+	private PerishableProductsService pps;
+
+	@Autowired
+	private PerishableHistoryService phs;
+}

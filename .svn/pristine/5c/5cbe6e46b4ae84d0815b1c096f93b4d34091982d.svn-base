@@ -1,0 +1,33 @@
+<table border="1" cellspacing="0" cellpadding="0">
+	<tr>
+		<td colspan="6" align="center">${time}工资条</td>
+	</tr>
+	<tr>
+		<td align="center">姓名</td>
+		<td align="center">基本工资</td>
+		<td align="center">绩效工资</td>
+		<td align="center">应发工资</td>
+		<td align="center">各项扣款</td>
+		<td align="center">实发工资</td>
+	</tr>
+
+	<tr>
+		<td align="center">${name}</td>
+		<td align="center">${basicPay}</td>
+		<td align="center">${performancePay}</td>
+		<td align="center">${grossPay}</td>
+		<td align="center">${variousDeductions}</td>
+		<td align="center">${netPay}</td>
+	</tr>
+</table>
+	<br>
+
+	
+<table>
+	<tr>
+		<td>如有疑问请联系人事行政部方晓云方经理。谢谢！</td>
+	</tr>
+	<tr>
+		<td>By.楚誉协同办公系统</td>
+	</tr>	
+</table>

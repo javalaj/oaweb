@@ -1,0 +1,22 @@
+.overwrite-mui-control-item{
+	line-height: 38px;
+    display: table-cell;
+    overflow: hidden;
+    width: 1%;
+    -webkit-transition: background-color .1s linear;
+    transition: background-color .1s linear;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #007aff;
+    border-color: #007aff;
+    border-left: 1px solid #007aff;
+}
+ .overwrite-mui-active{
+    color: #fff;
+    background-color: #007aff;
+}
+
+.overwrite-mui-control-item:first-child {
+    border-left-width: 0;
+}

@@ -1,0 +1,137 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>易耗品管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					top.layer.msg('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		
+		});
+		function applySubmit()
+		{
+			$.ajax({ 
+				type: "POST", 
+				url: "${ctx}/oa/fixedassets/perishableSerial/application", 
+				data:	{
+						'id':"${perishableSerial.id}"
+					 	},
+				dataType : 'json',
+				success: function(b) 
+				{
+					window.location='${ctx}/act/task/todo';
+				}
+			});
+		}
+			
+	</script>
+</head>
+<body class="gray-bg">
+<%-- 	<ul class="nav nav-tabs">
+		<li class="active"><a
+			href="${ctx}/oa/fixedassets/perishableSerial/view?id=${perishableSerial.id}">申请流程查看
+		</a>
+		</li>
+	</ul>
+	<br> --%>
+	<form id="inputForm" action="${ctx}/fixedassets/perishableSerial/application" 
+	method="post" class="form-horizontal"> 
+
+	<div class="wrapper wrapper-content">
+	<div class="ibox">
+	
+	<div class="ibox-title">
+	<h5>办公用品领用单</h5>
+	<ibox:tools/>
+	</div>
+	
+	<div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<div class="row">
+	<div class="col-sm-12">
+
+<!-- 工具栏 -->
+<%-- 	<div class="pull-left">
+			<a href="${ctx}/oa/fixedassets/perishableSerial/view?id=${perishableSerial.id}"
+						class="btn btn-white btn-sm">申请流程查看</a> 
+	</div> --%>
+	
+	<table class="table table-striped table-bordered  table-hover table-condensed  dataTables-example dataTable no-footer">
+		<thead>
+			<tr>
+				<th style="width: 30%;">办公用品图片</th>
+				<th style="width: 30%;"></th>
+				<th style="width: 10%;">单价</th>
+				<th style="width: 10%;">数量</th>
+				<th style="width: 10%;">单位</th>
+				<th style="width: 10%;"></th>
+			</tr>
+		</thead>
+		<tbody>
+		<c:forEach items="${list}" var="vo" varStatus="status">
+		
+		
+			<tr id="del${status.index}">
+				<td align=center>
+					<img alt="图片" src="${vo.perishable.photo}" width="60px;" height="60px;">
+					
+				</td>
+				<td align=center>
+					<div>
+						${vo.perishable.itemName}
+						<br/>
+						品牌：${fns:getDictLabel(vo.perishable.brand, 'equ_brand', '')} 型号：${vo.perishable.model}
+					</div>
+				</td align=center>
+				<td align=center>${vo.perishable.unitPrice}</td>
+				<td align=center>
+					<input id="amount${status.index}" name="amount" type="text" value="${vo.amount}" readonly="readonly"
+					class="form-control number required" style="width: 50px;"/>
+				</td>
+				<td align=center>${fns:getDictLabel(vo.perishable.unit, 'unit', '')}</td>
+				<td align=center></td>
+			</tr>
+		
+			
+		
+		</c:forEach>	
+		</tbody>
+	</table>
+		<%-- 备注说明：
+		<br/>
+		<textarea class="form-control" name="remarks" style="width: 60%;height: 50px;">${perishableSerial.remarks}</textarea> --%>
+		<br/>
+		
+		<div class="form-actions">
+			<center>
+			<c:if test="${view ne '1'}">
+			<input id="btnSubmit" class="btn btn-primary" type="button" 
+					value="已取完成" onclick="applySubmit();"/>&nbsp;
+			</c:if>
+			<input id="btnCancel" class="btn" type="button" value="返 回" 
+			onclick="history.go(-1);"/></center>
+		</div>
+	</form>
+	<c:if test="${not empty perishableSerial.id}">
+			<act:histoicFlow procInsId="${perishableSerial.procInsId}" />
+	</c:if>
+</body>
+</html>

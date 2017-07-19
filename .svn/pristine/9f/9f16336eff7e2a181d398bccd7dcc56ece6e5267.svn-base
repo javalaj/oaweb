@@ -1,0 +1,536 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.fixedassets;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.mapper.JsonMapper;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.ApplyVo;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsEquipment;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsInventory;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsSerial;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.FixedAssets;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.FixedAssetsApply;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsClaimService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsEquipmentService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsInventoryService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsSerialService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.FixedAssetsApplyService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.FixedAssetsService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 资产序列Controller
+ * 
+ * @author zf
+ * @version 2016-11-20
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/fixedassets/assetsSerial")
+public class AssetsSerialController extends BaseController {
+
+	@ModelAttribute
+	public AssetsSerial get(@RequestParam(required = false) String id) {
+		AssetsSerial entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = assetsSerialService.get(id);
+		}
+		if (entity == null) {
+			entity = new AssetsSerial();
+		}
+		return entity;
+	}
+
+	/**
+	 * 审批页面
+	 * 
+	 * @param assetsSerial
+	 * @param model
+	 * @param act
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:view")
+	@RequestMapping(value = "exam")
+	public String exam(AssetsSerial assetsSerial, Model model, Act act) {
+		if (act.getProcInsId() != null && !"".equals(act.getProcInsId())) {
+			assetsSerial = assetsSerialService.get(assetsSerial.getId());
+		} else if (assetsSerial.getAct() != null
+				&& assetsSerial.getAct().getProcInsId() != null) {
+			assetsSerial = assetsSerialService.getByProcInsId(assetsSerial
+					.getAct().getProcInsId());
+		}
+		List<ApplyVo> list = assetsSerialService
+				.findApply(assetsSerial.getId());
+
+		model.addAttribute("task", assetsSerialService
+				.getTaskByProcInsId(assetsSerial.getProcInsId()));
+
+		model.addAttribute("list", list);
+
+		model.addAttribute("assetsSerial", assetsSerial);
+		// 判断是否为该人员应该操作
+		String str = "modules/fixedassets/view";
+
+		if (assetsSerialService.isDeal(assetsSerial)) {
+			str = "modules/fixedassets/exam";
+		}
+
+		model.addAttribute("task", assetsSerialService
+				.getTaskByProcInsId(assetsSerial.getProcInsId()));
+
+		return str;
+	}
+
+	/*
+	 * 行政部门审批处理
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "dealExam")
+	public String dealExam(AssetsSerial assetsSerial, Model model,
+			RedirectAttributes redirectAttributes, String exam) {
+		assetsSerialService.dealExam(assetsSerial, exam);
+
+		addMessage(redirectAttributes, "审核流程成功");
+
+		return "redirect:" + Global.getAdminPath()
+				+ "/fixedassets/assetsSerial/view?id=" + assetsSerial.getId();
+	}
+
+	/**
+	 * 查看页面
+	 * 
+	 * @param assetsSerial
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:view")
+	@RequestMapping(value = "view")
+	public String view(AssetsSerial assetsSerial, Model model) {
+		if (assetsSerial.getId() != null) {
+			assetsSerial = assetsSerialService.get(assetsSerial.getId());
+		} else if (assetsSerial.getProcInsId() != null) {
+			assetsSerial = assetsSerialService.getByProcInsId(assetsSerial
+					.getProcInsId());
+		}
+
+		List<ApplyVo> list = assetsSerialService
+				.findApply(assetsSerial.getId());
+
+		model.addAttribute("task", assetsSerialService
+				.getTaskByProcInsId(assetsSerial.getProcInsId()));
+
+		model.addAttribute("list", list);
+
+		model.addAttribute("assetsSerial", assetsSerial);
+
+		return "modules/fixedassets/view";
+	}
+
+	@RequiresPermissions("fixedassets:assetsSerial:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(AssetsSerial assetsSerial, HttpServletRequest request,
+			HttpServletResponse response, Model model) {
+		Page<AssetsSerial> page = assetsSerialService.findPage(
+				new Page<AssetsSerial>(request, response), assetsSerial);
+		model.addAttribute("page", page);
+		return "modules/fixedassets/assetsSerialList";
+	}
+
+	/**
+	 * 撤回页面
+	 * 
+	 * @param assetsSerial
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:view")
+	@RequestMapping(value = "form")
+	public String form(AssetsSerial assetsSerial, Model model) {
+		// 若任务已结束请在实体类中加入一个act的实体，实体中的以下参数仍能拿到
+		if (assetsSerial.getId() != null && !"".equals(assetsSerial.getId())) {
+			assetsSerial = assetsSerialService.get(assetsSerial.getId());
+		} else if (assetsSerial.getAct() != null
+				&& assetsSerial.getAct().getProcInsId() != null) {
+			assetsSerial = assetsSerialService.getByProcInsId(assetsSerial
+					.getAct().getProcInsId());
+		}
+
+		List<ApplyVo> list = assetsSerialService
+				.findApply(assetsSerial.getId());
+
+		model.addAttribute("task", assetsSerialService
+				.getTaskByProcInsId(assetsSerial.getProcInsId()));
+
+		// 判断是否为该人员应该操作
+		String str = "modules/fixedassets/view";
+
+		if (assetsSerialService.isDeal(assetsSerial)) {
+			str = "modules/fixedassets/applyList_reject";
+		}
+
+		model.addAttribute("list", list);
+
+		model.addAttribute("assetsSerial", assetsSerial);
+
+		return str;
+	}
+
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "save")
+	public String save(AssetsSerial assetsSerial, Model model,
+			RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, assetsSerial)) {
+			return form(assetsSerial, model);
+		}
+		assetsSerialService.save(assetsSerial);
+		addMessage(redirectAttributes, "保存资产序列成功");
+		return "redirect:" + Global.getAdminPath()
+				+ "/fixedassets/assetsSerial/?repage";
+	}
+
+	/**
+	 * 提交资产申请
+	 * 
+	 * @param redirectAttributes
+	 * @param id
+	 * @param amount
+	 * @param remarks
+	 * @param type
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = { "applyAssets" })
+	public String applyAssets(RedirectAttributes redirectAttributes,
+			String[] assetsid, String[] equid, String remarks, String type,
+			String exam) {
+		
+		AssetsInventory assetsInventory = new AssetsInventory();
+		
+		assetsInventory.setUserid(UserUtils.getUser().getId());
+		
+		List<AssetsInventory> list = assetsInventoryService.findList(assetsInventory);
+		
+		// 删除物品栏
+		assetsInventoryService.deleteByUserId(UserUtils.getUser().getId());
+		
+		
+		if (assetsid == null || (assetsid != null && assetsid.length == 0)) 
+		{
+			addMessage(redirectAttributes, "请添加物品");
+			
+			return "redirect:" + Global.getAdminPath()
+					+ "/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=1";
+
+		} 
+		else 
+		{
+			assetsid = new String[list.size()];
+			
+			equid = new String[list.size()];
+			
+			//处理分页提交问题
+			for (int i = 0; i < list.size(); i++)
+			{
+				assetsid[i] = list.get(i).getFixedAssets().getId();
+				
+				equid[i] = list.get(i).getEquId();
+			}
+			
+			AssetsSerial assetsSerial = assetsSerialService.save(type,
+					assetsid, equid, remarks, "1".equals(exam) ? true : false);
+			
+			addMessage(redirectAttributes, "保存申请流程成功");
+			
+			return "redirect:" + Global.getAdminPath()
+					+ "/fixedassets/assetsSerial/view?id="
+					+ assetsSerial.getId();
+		}
+	}
+
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "delete")
+	public String delete(AssetsSerial assetsSerial,
+			RedirectAttributes redirectAttributes) {
+		assetsSerialService.delete(assetsSerial);
+		addMessage(redirectAttributes, "删除资产序列成功");
+		return "redirect:" + Global.getAdminPath()
+				+ "/fixedassets/assetsSerial/?repage";
+	}
+
+	/**
+	 * 删除申请资产
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "deleteApply")
+	@ResponseBody
+	public String deleteApply(HttpServletRequest request,
+			HttpServletResponse response) {
+		String id = request.getParameter("applyId");
+
+		String equid = request.getParameter("equid");
+
+		FixedAssetsApply obj = fixedAssetsApplyService.get(id);
+
+		fixedAssetsApplyService.delete(obj);
+
+		// 更新库存状态
+		AssetsEquipment assetsEquipment = assetsEquipmentService.get(equid);
+
+		assetsEquipment.setCondition("在库");
+
+		assetsEquipmentService.save(assetsEquipment);
+
+		return JsonMapper.getInstance().toJson(true);
+	}
+
+	/**
+	 * 修改申请资产的数量
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "updateApply")
+	@ResponseBody
+	public String updateApply(HttpServletRequest request,
+			HttpServletResponse response) {
+		String id = request.getParameter("applyId");
+
+		Integer amount = Integer.parseInt(request.getParameter("amount"));
+
+		FixedAssets fixedAssets = fixedAssetsService.get(request
+				.getParameter("assetsId"));
+
+		Integer assetsAmount = fixedAssets.getAmount();
+
+		boolean bool = false;
+
+		// 小于库存时更新申请单
+		if (amount <= assetsAmount) {
+			bool = true;
+
+			assetsSerialService.updateApply(amount, id);
+		}
+
+		return JsonMapper.getInstance().toJson(bool);
+	}
+
+	/**
+	 * 查询申请资产的数量
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "compareAmount")
+	@ResponseBody
+	public String compareAmount(HttpServletRequest request,
+			HttpServletResponse response) {
+		String assetsId = request.getParameter("assetsId");
+
+		String[] temp = assetsId.split(",");
+
+		List<String> assetsIdList = Arrays.asList(temp);
+
+		List<Integer> amountList = new ArrayList<Integer>();
+
+		List<FixedAssets> list = fixedAssetsService.findApplyList(assetsIdList);
+
+		for (FixedAssets obj : list)
+			amountList.add(obj.getAmount());
+
+		return JsonMapper.getInstance().toJson(amountList);
+	}
+
+	/**
+	 * 修改备注
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "updateRemarks")
+	@ResponseBody
+	public String updateRemarks(HttpServletRequest request,
+			HttpServletResponse response) {
+		String id = request.getParameter("id");
+
+		String remarks = request.getParameter("remarks");
+
+		assetsSerialService.updateRemarks(remarks, id);
+
+		return JsonMapper.getInstance().toJson(true);
+	}
+
+	/**
+	 * 重新申请
+	 * 
+	 * @param assetsSerial
+	 * @param exam
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "reapply")
+	public String reapply(AssetsSerial assetsSerial, String exam) {
+		assetsSerialService.reapply(assetsSerial, "1".equals(exam) ? true
+				: false);
+
+		return "redirect:" + Global.getAdminPath()
+				+ "/fixedassets/assetsSerial/view?id=" + assetsSerial.getId();
+	}
+
+	/**
+	 * 领用页面
+	 * 
+	 * @param assetsSerial
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "claimForm")
+	public String claimForm(AssetsSerial assetsSerial, Model model) {
+		/*
+		 * List<ApplyVo> list = assetsSerialService
+		 * .claimList(assetsSerial,assetsSerialService
+		 * .findApply(assetsSerial.getId()));
+		 */
+
+		if (assetsSerial.getId() != null && !"".equals(assetsSerial.getId())) {
+			assetsSerial = assetsSerialService.get(assetsSerial.getId());
+		} else if (assetsSerial.getAct() != null
+				&& assetsSerial.getAct().getProcInsId() != null) {
+			assetsSerial = assetsSerialService.getByProcInsId(assetsSerial
+					.getAct().getProcInsId());
+		}
+
+		model.addAttribute("task", assetsSerialService
+				.getTaskByProcInsId(assetsSerial.getProcInsId()));
+
+		List<ApplyVo> list = assetsSerialService
+				.getClaimList(assetsSerialService.findApply(assetsSerial
+						.getId()));
+
+		model.addAttribute("list", list);
+
+		model.addAttribute("assetsSerial", assetsSerial);
+
+		// 判断是否为该人员应该操作
+		String str = "modules/fixedassets/view";
+
+		if (assetsSerialService.isDeal(assetsSerial)) {
+			str = "modules/fixedassets/claimForm";
+		}
+
+		return str;
+	}
+
+	/**
+	 * 保存资产使用信息
+	 * 
+	 * @param assetsSerial
+	 * @param claimNumber
+	 * @param assetsId
+	 * @param operator
+	 * @param remarks
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "claimSave")
+	public String claimSave(AssetsSerial assetsSerial, String[] claimNumber,
+			String[] equId, String[] assetsId, String[] operator,
+			String remarks, String[] phone, String[] address) {
+		assetsClaimService.save(assetsSerial, claimNumber, equId, assetsId,
+				operator, remarks, phone, address);
+		return "redirect:" + Global.getAdminPath() + "/act/task/todo";
+	}
+
+	/**
+	 * 审批通过后更新库存表
+	 * 
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("fixedassets:assetsSerial:edit")
+	@RequestMapping(value = "updateAmount")
+	@ResponseBody
+	public String updateAmount(HttpServletRequest request,
+			HttpServletResponse response) {
+		/*
+		 * String assetsId = request.getParameter("assetsId");
+		 * 
+		 * String [] ids = assetsId.split(",");
+		 * 
+		 * String amounts = request.getParameter("amounts");
+		 * 
+		 * String [] amountStr = amounts.split(",");
+		 * 
+		 * for (int i = 0;i < ids.length; i++) { FixedAssets obj =
+		 * fixedAssetsService.get(ids[i]);
+		 * 
+		 * obj.setAmount(obj.getAmount() - Integer.parseInt(amountStr[i]));
+		 * 
+		 * fixedAssetsService.update(obj); }
+		 */
+
+		String equIdList = request.getParameter("equIdList");
+
+		String[] equIds = equIdList.split(",");
+
+		for (int i = 0; i < equIds.length; i++) {
+			AssetsEquipment assetsEquipment = assetsEquipmentService
+					.get(equIds[i]);
+
+			assetsEquipment.setCondition("在库");
+
+			assetsEquipmentService.save(assetsEquipment);
+		}
+
+		return JsonMapper.getInstance().toJson(true);
+	}
+
+	@Autowired
+	private AssetsClaimService assetsClaimService;
+
+	@Autowired
+	private FixedAssetsApplyService fixedAssetsApplyService;
+
+	@Autowired
+	private FixedAssetsService fixedAssetsService;
+
+	@Autowired
+	private AssetsSerialService assetsSerialService;
+
+	@Autowired
+	private AssetsInventoryService assetsInventoryService;
+
+	@Autowired
+	private AssetsEquipmentService assetsEquipmentService;
+}

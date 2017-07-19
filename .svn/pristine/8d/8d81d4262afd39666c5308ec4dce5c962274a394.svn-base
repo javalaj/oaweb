@@ -1,0 +1,298 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.dao.OaOvertimeDao;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.OaOvertime;
+import com.thinkgem.jeesite.modules.oa.entity.filling.OaFilling;
+import com.thinkgem.jeesite.modules.oa.service.filling.OaFillingService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.sys.entity.workflow.SysWorkflowVar;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.service.workflow.SysWorkflowVarService;
+import com.thinkgem.jeesite.modules.sys.utils.OrdersUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 加班流程业务工作流Service
+ * 
+ * @author liuxin
+ * @version 2016-11-17
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaOvertimeService extends CrudService<OaOvertimeDao, OaOvertime> {
+	@Autowired
+	private ActTaskService actTaskService;// 工作流业务类
+	@Autowired
+	private OaFillingService oaFillingService;// 归档表
+	@Autowired
+	private SysWorkflowVarService sysWorkflowVarService;// 工作流变量service
+	@Autowired
+	private OaNotifyService oaNotifyService;// 发送通知service
+	@Autowired
+	private SystemService systemService;// 用户调休时长修改
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回业务service
+
+	public OaOvertime get(String id) {
+		return super.get(id);
+	}
+
+	public List<OaOvertime> findList(OaOvertime oaOvertime) {
+		return super.findList(oaOvertime);
+	}
+
+	public Page<OaOvertime> findPage(Page<OaOvertime> page, OaOvertime oaOvertime) {
+		return super.findPage(page, oaOvertime);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OaOvertime oaOvertime) {
+		super.delete(oaOvertime);
+	}
+
+	public OaOvertime getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+
+	/**
+	 * save业务逻辑方法
+	 */
+	@Transactional(readOnly = false)
+	public void save(OaOvertime oaOvertime, String flag, String toSendMessageUserid, String title) {
+		// 查询文件编号，并设置？？
+		if (StringUtils.isBlank(oaOvertime.getFileid())) {
+			oaOvertime.setFileid(OrdersUtils.getGenerateOrderNo8("CY"));
+		}
+		//
+		if (StringUtils.isBlank(oaOvertime.getOfficename())) {
+			// 查询出部门名称，并设置
+			oaOvertime.setOfficename(UserUtils.getUser().getOffice().getName());
+		}
+		super.save(oaOvertime);// 该步骤为默认继承步骤，直接保存该记录。
+		Map<String, Object> vars = new HashMap<String, Object>();
+		// 这里put 流程图上所有的需要值，以便于activiti流插件，的控制
+		vars.put("apply", UserUtils.getUser().getLoginName());// 发起人登陆名字
+		vars.put("upper", ActRouting.getUpper(UserUtils.getUser().getId()));// 上级登陆名字
+		vars.put("flag", true);// 流程控制标志位 boolean
+		SysWorkflowVar sysWorkflowVar = new SysWorkflowVar();
+		sysWorkflowVar.setWorkflowIdentification("oa_overtime");
+		sysWorkflowVar.setVarName("filling");
+		vars.put("filling", sysWorkflowVarService.findBySignVar(sysWorkflowVar).get(0).getVarValue());// 人力资源登陆名字
+		if (StringUtils.isBlank(oaOvertime.getProcInsId())) {
+			// 流程关联id为null所以为第一次创建
+			oaOvertime.setProcInsId(actTaskService.startProcess("oa_overtime", "oa_overtime", oaOvertime.getId(),
+					"加班申请流程【" + UserUtils.getUser().getName() + " " + DateUtils.getDate() + "】", vars));// 关键步骤，获取procInsId，否则推送失败
+			// 线程暂停两秒，使得流程流转信息排序正确，防止开始和申请排序颠倒
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// 执行下一步
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOvertime.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaOvertime.getProcInsId(), "【提交】", null, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveINIT(oaOvertime.getProcInsId(), list.get(0),
+						"/oa/oaOvertime/form?flag=view&id=" + oaOvertime.getId());
+			}
+		} else {
+			// 打回后，以及第一次流程启动成功后的相同步骤
+			oaOvertime.setExamname(null);
+			oaOvertime.setExamtext(null);
+			String examtext = "【重新提交】";
+			if (flag.equals("1")) {
+				vars.put("flag", false);// 流程控制标志位 boolean
+				examtext = "【作废】";
+			}
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOvertime.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaOvertime.getProcInsId(), examtext, null, vars);
+				if (flag.equals("1")) {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNULL(oaOvertime.getProcInsId());
+				} else {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaOvertime.getProcInsId(),list.get(0));
+				}
+			}
+			super.save(oaOvertime);
+		}
+		// 发送通知
+		// 新建一个消息对象
+		OaNotify oaNotify = new OaNotify();
+		if (toSendMessageUserid != null && toSendMessageUserid.length() > 0) {
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/oaOvertime/exam?id=" + oaOvertime.getId());// 注入@@proNotify@@作为超链接的注解，前台判断
+			oaNotify.setType("4");// 流程通知配置为4
+			oaNotify.setStatus("1");// 貌似是已发
+			oaNotify.setTitle(title);//"流程流转通知-" +
+			oaNotify.setOaNotifyRecordIds(toSendMessageUserid);
+			oaNotifyService.save(oaNotify);
+		}
+	}
+
+	/**
+	 * dealExam业务逻辑方法
+	 * 
+	 * exam 1不同意 ，0同意
+	 */
+	@Transactional(readOnly = false)
+	public void dealExam(OaOvertime oaOvertime, String exam) {
+		// 审批人签名??
+		oaOvertime.setExamname(UserUtils.getUser().getName());
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		if (exam.equals("0")) {// 上级审核同意
+			// 定制vars
+			vars.put("flag", true);// 流程控制标志位 boolean
+			examStr = "【同意】";
+		} else {
+			// 上级审核不同意
+			vars.put("flag", false);// 流程控制标志位 boolean
+			examStr = "【不同意】";
+			// 发送通知
+			sendMsg("@@proNotify@@/oa/a/oa/oaOvertime/form?id=" + oaOvertime.getId(), "您提交的加班申请流程【"
+					+ DateUtils.formatDate(oaOvertime.getCreateDate()) + "】已被【" + UserUtils.getUser().getName() + "】退回",
+					oaOvertime.getCreateBy().getId());
+		}
+		oaOvertime.setExamtext(examStr + oaOvertime.getExamtext());
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOvertime.getProcInsId()).list();
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaOvertime.getProcInsId(), oaOvertime.getExamtext(), null,
+					vars);
+			// 流程撤回操作数据设置
+			oaFlowBackService.saveNOW(oaOvertime.getProcInsId(), list.get(0));
+		}
+		super.save(oaOvertime);// 更新业务表字段
+	}
+
+	/**
+	 * dealFilling业务逻辑方法
+	 * 
+	 */
+	@Transactional(readOnly = false)
+	public void dealFilling(OaOvertime oaOvertime, String exam, String ftext) {
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOvertime.getProcInsId()).list();
+		//
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		if (exam.equals("0")) {// 上级审核同意z
+			// 定制vars
+			vars.put("flag", true);// 流程控制标志位 boolean
+			examStr = "【同意】";
+			// 归档表数据录入
+			OaFilling oaFilling = new OaFilling();
+			oaFilling.setApplyDate(oaOvertime.getCreateDate());
+			oaFilling.setApplyReason(oaOvertime.getReason());
+			oaFilling.setApplyType("加班");
+			// oaFilling.setApplyTypeLit(DictUtils.getDictValue(oaOvertime.getVacatetype(),
+			// "pro_vacate_type", ""));// 通过数据字典去取得然后存中文
+			oaFilling.setApplyUser(oaOvertime.getCreateBy());
+			oaFilling.setFillingDate(new Date());
+			oaFilling.setHours(oaOvertime.getTime());
+			oaFilling.setBeginDate(oaOvertime.getStarttime());
+			oaFilling.setEndDate(oaOvertime.getEndtime());
+			oaFillingService.save(oaFilling);
+			/* 更新可调休时长 */
+			systemService.updateResttime(UserUtils.getUser().getId(), oaFilling.getHours());
+			// 发送通知
+			sendMsg("@@proNotify@@/oa/a/oa/oaOvertime/form?flag=view&id=" + oaOvertime.getId(), "您提交的加班申请流程【"
+					+ DateUtils.formatDate(oaOvertime.getCreateDate()) + "】已被【" + UserUtils.getUser().getName() + "】办结",
+					oaOvertime.getCreateBy().getId());
+		} else {
+			// 上级审核不同意
+			vars.put("flag", false);// 流程控制标志位 boolean
+			examStr = "【不同意】";// 发送通知
+			sendMsg("@@proNotify@@/oa/a/oa/oaOvertime/form?id=" + oaOvertime.getId(), "您提交的加班申请流程【"
+					+ DateUtils.formatDate(oaOvertime.getCreateDate()) + "】已被【" + UserUtils.getUser().getName() + "】退回",
+					oaOvertime.getCreateBy().getId());
+		}
+		//
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaOvertime.getProcInsId(), examStr + "【归档】" + ftext, null,
+					vars);
+			if (exam.equals("0")) {
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNULL(oaOvertime.getProcInsId());
+			} else {
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNOW(oaOvertime.getProcInsId(), list.get(0));
+			}
+		}
+
+	}
+
+	/**
+	 * 判断当前用户是否需要去form页面创建，审批，修改这个流程
+	 */
+	public boolean isDeal(OaOvertime oaOvertime) {
+		if (StringUtils.isBlank(oaOvertime.getId())) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOvertime.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * 查询用户 剩余调休时间
+	 */
+	public String getRestTimeById(String userId) {
+		String result = dao.getRestTimeById(userId);
+		if (result == null) {
+			return "0";
+		}
+		return result;
+	}
+
+	/**
+	 * 
+	 * 发送流程完成信息的通知
+	 * 
+	 * url:@@proNotify@@/oa/a/oa/oaOvertime/exam?id=
+	 * 
+	 * title:请假申请流程【2017-03-07】已办结
+	 * 
+	 */
+	@Transactional(readOnly = false)
+	public void sendMsg(String url, String title, String userId) {
+		OaNotify oaNotify = new OaNotify();
+		oaNotify.setContent(url);// 注入@@proNotify@@作为超链接的注解，前台判断
+		oaNotify.setType("4");// 流程通知配置为4
+		oaNotify.setStatus("1");// 貌似是已发
+		oaNotify.setTitle(title);
+		oaNotify.setOaNotifyRecordIds(userId);
+		oaNotifyService.save(oaNotify);
+	}
+}

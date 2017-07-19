@@ -1,0 +1,204 @@
+package com.thinkgem.jeesite.mobile.modules.sys.web;
+
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.entity.emp.OaEmpOpinion;
+import com.thinkgem.jeesite.modules.oa.service.OaOvertimeService;
+import com.thinkgem.jeesite.modules.oa.service.emp.OaEmpOpinionService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsClaimService;
+import com.thinkgem.jeesite.modules.oa.service.loan.OaLoanMainService;
+import com.thinkgem.jeesite.modules.oa.service.loan.OaLoanRepaymentService;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+
+/**
+ * 用户Controller
+ * 
+ * @author niting
+ * @version 2017-2-15
+ */
+@Controller("muserController")
+@RequestMapping(value = "${adminPath}${mobilePath}/sys/user")
+public class UserController {
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private AssetsClaimService assetsClaimService;
+	@Autowired
+	private OaOvertimeService oaOvertimeService;// 加班service，查询剩余调休时间
+	@Autowired
+	private OaLoanMainService oaLoanMainService;//我的借款
+	@Autowired
+	private OfficeService officeService;
+	@Autowired
+	private OaEmpOpinionService oaEmpOpinionService;//意见
+	private ActRouting actRouting;
+	@Autowired
+	private OaLoanRepaymentService oaLoanRepaymentService;// 已归还金额带出
+	
+	/**
+	 * 用户信息显示及保存
+	 * 
+	 * @param user
+	 * @param model
+	 * @return
+	 * @throws ParseException
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "info")
+	public String info(User user, HttpServletResponse response, Model model) throws Exception {
+		// 获取当前用户
+		User currentUser = UserUtils.getUser();
+		// 获取上级领导登录名
+				String upperOneLoginName = null;
+				User userUpper = null;
+				try {
+					upperOneLoginName = actRouting.getUpper2(UserUtils.getUser().getCurrentUser().getId());
+					// 判断上级领导是否是当前登录者
+					if (upperOneLoginName.equals(UserUtils.getUser().getCurrentUser().getLoginName())) {
+
+						Office parentOffice = officeService.get(UserUtils.getUser().getCurrentUser().getOffice().getParentId());
+
+						upperOneLoginName = UserUtils.get(parentOffice.getPrimaryPerson().getId()).getLoginName();
+					}
+					userUpper = systemService.getUserByLoginName(upperOneLoginName);
+					currentUser.setUpperOne(userUpper.getName());
+				} catch (Exception e) {
+					// TODO: handle exception
+				}
+
+		
+		// 修改个人信息
+		if (StringUtils.isNotBlank(user.getName())) { // isNotBlank字符串判断，判断user.getName()是不是空的,如果不是空的就进入方法
+			if (Global.isDemoMode()) {
+				model.addAttribute("message", "演示模式，不允许操作！");
+				return "mobile/modules/sys/userInfo";
+			}
+			// 如果user不为空，保存信息
+			currentUser.setEmail(user.getEmail());
+			currentUser.setPhone(user.getPhone());
+			currentUser.setMobile(user.getMobile());
+			currentUser.setRemarks(user.getRemarks());
+			currentUser.setQq(user.getQq());
+			currentUser.setWorklocation(user.getWorklocation());
+			systemService.updateUserInfo(currentUser);
+			model.addAttribute("message", "保存成功");
+		}
+		
+		model.addAttribute("user", currentUser);
+		model.addAttribute("Global", new Global());
+		//
+		// 获取页面字段上级领导字段,新加入字段代替不影响原来的，修改时可以删除
+		model.addAttribute("upperX", ActRouting.getUpperX());
+		//
+		return "mobile/modules/sys/userInfo";
+	}
+	
+	/**
+	 * 移动端‘我的’页面
+	 */
+	@RequestMapping(value = "list")
+	public String list(User user, HttpServletResponse response, Model model) throws Exception {
+		// 获取当前用户
+		User currentUser = UserUtils.getUser();
+		model.addAttribute("user",currentUser);
+		// 剩余调休时间
+		model.addAttribute("restTime", oaOvertimeService.getRestTimeById(UserUtils.getUser().getId()));
+		model.addAttribute("SumLoanMoney",oaLoanMainService.getSumLoanMoney(currentUser.getId())-oaLoanRepaymentService.getSumRepaymentMoney(UserUtils.getUser().getId()));
+		return "mobile/modules/sys/userList";
+	}
+	
+	@RequestMapping(value = "shezhi")
+	public String shezhi(User user, HttpServletResponse response, Model model) throws Exception {
+		return "mobile/modules/sys/shezhi";
+	}
+	
+	/**
+	 * 帮助与反馈
+	 */
+	@RequestMapping(value = "help")
+	public String help(User user, HttpServletResponse response, Model model) throws Exception {
+		return "mobile/modules/sys/help";
+	}
+	
+	/**
+	 * 帮助与反馈
+	 */
+	@RequestMapping(value = "helpdetail")
+	public String helpdetail(User user,int num, HttpServletResponse response, Model model) throws Exception {		
+		model.addAttribute("num", num);
+		return "mobile/modules/sys/helpDetail";
+	}
+	
+	/**
+	 * 保存用户意见
+	 */
+	@RequestMapping(value = "save")
+	public String save(OaEmpOpinion oaEmpOpinion, Model model, RedirectAttributes redirectAttributes) {
+		// 获取当前用户
+		User currentUser = UserUtils.getUser();
+		oaEmpOpinion.setCreateBy(currentUser);
+		oaEmpOpinion.setIstreated("0");
+		oaEmpOpinionService.save(oaEmpOpinion);
+		return "mobile/modules/sys/help";
+	}
+	
+	/**
+	 *当前用户涉及的固定资产
+	 * 
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "fixedAsset")
+	public String claimant(User user, HttpServletResponse response, Model model) throws Exception {
+		// 查询个人领用或借用等涉及到的固定资产
+		HashMap<String, String> paramMap = new HashMap<String, String>();
+		paramMap.put("claimant", user.getName());
+		// 涉及到的固定资产集合
+		List<Map<String, Object>> resultMap = assetsClaimService.getAll(paramMap);
+		model.addAttribute("resultMap", resultMap);
+		return "mobile/modules/sys/FixedAsset";
+	}
+	
+	/**
+	 * 修改个人用户密码
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "modifyPwd")
+	public String modifyPwd(String oldPassword, String newPassword, Model model) {
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(oldPassword) && StringUtils.isNotBlank(newPassword)) {
+			if (Global.isDemoMode()) {
+				model.addAttribute("message", "演示模式，不允许操作！");
+				return "mobile/modules/sys/userModifyPwd";
+			}
+			if (SystemService.validatePassword(oldPassword, user.getPassword())) {
+				systemService.updatePasswordById(user.getId(), user.getLoginName(), newPassword);
+				model.addAttribute("message", "yes");
+			} else {
+				model.addAttribute("message", "no");
+			}
+		}
+		model.addAttribute("user", user);
+		return "mobile/modules/sys/userModifyPwd";
+	}
+}
+

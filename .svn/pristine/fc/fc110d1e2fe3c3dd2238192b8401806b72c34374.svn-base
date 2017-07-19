@@ -1,0 +1,278 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>出差申请</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document).ready(
+			function() {
+				//作废按钮
+				$("#btnCancle2").click(function() {
+					$("#flag").val("1");
+				});
+				//加载自已的验证方法
+				xin_validate();
+				//保单验证
+				$("#inputForm")
+						.validate(
+								{
+									rules : {
+										startTime : {
+											required : true,
+											min_date : $("#shenqingdate")[0]
+										},
+										endTime : {
+											required : true,
+											min_date : $("#startTime")[0]
+										},
+										cost : {
+											required : true,
+											number_1 : [ "" ]
+										},
+										task : {
+											required : true
+										},
+										projectName : {
+											required : true
+										},
+										scheduleProgram : {
+											required : true
+										},
+										address : {
+											required : true
+										},
+										unitName : {
+											required : true
+										},
+										unitUserName : {
+											required : true
+										}
+									},
+									messages : {
+										startTime : {
+											required : "必填信息",
+											min_date : "时间必须大于或等于申请时间"
+										},
+										endTime : {
+											required : "必填信息",
+											min_date : "时间必须大于或等于开始时间"
+										}
+									},
+									submitHandler : function(form) {
+										//loading('正在提交，请稍等...');
+										form.submit();
+									},
+									errorContainer : "#messageBox",
+									errorPlacement : function(error, element) {
+										$("#messageBox").text("输入有误，请先更正。");
+										if (element.is(":checkbox")
+												|| element.is(":radio")
+												|| element.parent().is(
+														".input-append")) {
+											error.appendTo(element.parent()
+													.parent());
+										} else {
+											error.insertAfter(element);
+										}
+									}
+								});
+			});
+	/* $("#btnSubmit").click(function() {
+	var judge1 = judge11();
+	var judge2 = notnull();
+	return judge1 && judge2;
+	}); */
+	//$("#name").focus();
+	//非空的判断
+	/* 	function notnull() {
+	 var judge = true;
+	 $(".xinreq").each(function() {
+	 if ($(this).val() == "") {
+	 $(this).next().children().text("必填信息 *");
+	 judge = false;
+	 } else {
+	 $(this).next().children().text("*");
+	 }
+	 });
+	 //特殊的 费用控制
+	 if ($("input[name=cost]").val() != "") {
+	 if ($("input[name=cost]").val() % 1 === 0
+	 && $("input[name=cost]").val() >= 0) {
+	 $("input[name=cost]").next().children().text("*");
+	 } else {
+	 $("input[name=cost]").next().children().text("请输入大于或等于0的整数 *");
+	 judge = false;
+	 }
+	 } else {
+	 $("input[name=cost]").next().children().text("必填信息 *");
+	 judge = false;
+	 }
+	 return judge;
+	 }
+	 function judge11() {
+	 var judge = true;
+	 var min = $("input[name=startTime]").val();
+	 var max = $("input[name=startTime]").val();
+	 if ($("input[name=startTime]").val() == "") {
+	 $("input[name=startTime]").next().children().text("必填信息 *");
+	 judge = false;
+	 } else {
+	 $("input[name=startTime]").next().children().text(" *");
+	 }
+	 if ($("input[name=endTime]").val() == "") {
+	 $("input[name=endTime]").next().children().text("必填信息 *");
+	 judge = false;
+	 } else {
+	 $("input[name=endTime]").next().children().text(" *");
+	 }
+	 if ($("input[name=endTime]").val() != ""
+	 && $("input[name=startTime]").val() != "") {
+	 if (min >= max) {
+	 $("input[name=endTime]").next().children().text("时间错误 *");
+	 judge = false;
+	 } else {
+	 $("input[name=endTime]").next().children().text(" *");
+	 }
+	 }
+	 return judge;
+	 } */
+</script>
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/liuxin/css/liucheng.css">
+	<style>
+		.form-inline .form-control{
+			width:30%;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title printHidden">
+				<h5>${title}</h5>
+			</div>
+			<div class="ibox-content">
+				<%--
+				<ul class="nav nav-tabs">
+					<li class="active"><a
+						href="${ctx}/oa/oaOutwork/form?id=${oaOutwork.id}">编辑-出差申请</a></li>
+				</ul>
+				<br />
+				 --%>
+				<form:form id="inputForm" modelAttribute="oaOutwork"
+					action="${ctx}/oa/oaOutwork/save" method="post" class="form-inline">
+					<input type="hidden" name="token" value="${token }">
+					<input type="hidden" name="flag" value="0" id="flag">
+					<form:hidden path="id" />
+					<form:hidden path="procInsId" />
+					<form:hidden path="officeName" />
+					<sys:message content="${message}" />
+					<div class="control-group">
+						<jsp:useBean id="nowdate" class="java.util.Date" scope="page" />
+						<label class="control-label">申请时间：</label> <input type="text"
+							readonly="readonly" id="shenqingdate"
+							class="laydate-icon form-control xinreq"
+							style="background-color: #FFFFFF;" maxlength="20"
+							value="<fmt:formatDate value="${nowdate}" pattern="yyyy-MM-dd HH:mm:ss"/>" /><span
+							class="help-inline"><font color="red"></font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">文件编号：</label>
+
+						<form:input path="fileId" htmlEscape="false" maxlength="100"
+							readonly="true" class="form-control input-sm "
+							style="background-color: #FFFFFF;" />
+					</div>
+					<div class="control-group">
+						<label class="control-label">出差任务：</label>
+
+						<form:input path="task" htmlEscape="false" maxlength="255"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">项目或合同名称：</label>
+
+						<form:input path="projectName" htmlEscape="false" maxlength="255"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">出差日程安排：</label>
+
+						<form:textarea rows="5" cols="50" path="scheduleProgram"
+							htmlEscape="false" maxlength="1024"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">目的地：</label>
+
+						<form:input path="address" htmlEscape="false" maxlength="100"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">访问单位：</label>
+
+						<form:input path="unitName" htmlEscape="false" maxlength="100"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">拜访对象：</label>
+
+						<form:input path="unitUserName" htmlEscape="false" maxlength="100"
+							class="form-control input-sm xinreq" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">出差开始时间：</label> <input
+							name="startTime" type="text" readonly="readonly" id="startTime"
+							class="laydate-icon form-control"
+							style="background-color: #FFFFFF;" maxlength="20"
+							value="<fmt:formatDate value="${oaOutwork.startTime}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">预计结束时间：</label> <input name="endTime"
+							type="text" readonly="readonly" maxlength="20"
+							class="laydate-icon form-control"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaOutwork.endTime}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">预计出差费用：</label>
+
+						<form:input path="cost" htmlEscape="false" maxlength="64"
+							class="form-control input-sm" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="form-actions">
+						<shiro:hasPermission name="oa:oaOutwork:edit">
+							<input id="btnSubmit" class="btn btn-primary" type="submit"
+								value="申请出差" />&nbsp;</shiro:hasPermission>
+						<c:if test="${not empty oaOutwork.id}">
+							<input id="btnCancle2" class="btn btn-primary" type="submit"
+								value="取消申请" />&nbsp;</c:if>
+						<input id="btnCancel" class="btn" type="button" value="返 回"
+							onclick="history.go(-1)" />
+						<c:if test="${task != null}">
+				&nbsp;<input
+								onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+								class="btn" type="button" value="流程跟踪" />
+						</c:if>
+					</div>
+				</form:form>
+				<c:if test="${not empty oaOutwork.id}">
+					<act:histoicFlow procInsId="${oaOutwork.procInsId}" />
+				</c:if>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

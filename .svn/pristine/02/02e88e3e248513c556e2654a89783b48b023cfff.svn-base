@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.loan.OaLoanDailyApprovalDao">
+    
+	<sql id="oaLoanDailyApprovalColumns">
+		a.id AS "id",
+		a.is_purchase AS "isPurchase",
+		a.loan_user_id AS "loanUser.id",
+		a.project_manager_id AS "projectManager.id",
+		a.loan_reason AS "loanReason",
+		a.loan_money AS "loanMoney",
+		a.title AS "title",
+		a.exam2_opinion AS "exam2Opinion",
+		a.exam3_opinion AS "exam3Opinion",
+		a.exam4_opinion AS "exam4Opinion",
+		a.exam5_opinion AS "exam5Opinion",
+		a.exam6_opinion AS "exam6Opinion",
+		a.exam7_opinion AS "exam7Opinion",
+		a.approval_time AS "approvalTime",
+		a.approval_pass_time AS "approvalPassTime",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.status AS "status",
+		a.is_start AS "isStart",
+		a.approval_no AS "approvalNo",
+		u3.name AS "loanUser.name",
+		u3.login_name AS "loanUser.loginName",
+		u4.name AS "projectManager.name",
+		u4.login_name AS "projectManager.loginName",
+		o1.name AS "loanUserOfficeName",
+		o2.name AS "loanUserParentOfficeName"
+	</sql>
+	
+	<sql id="oaLoanDailyApprovalJoins">
+		LEFT JOIN sys_user u3 ON u3.id = a.loan_user_id
+		LEFT JOIN sys_user u4 ON u4.id = a.project_manager_id
+		LEFT JOIN sys_office o1 ON o1.id = u3.office_id
+		LEFT JOIN sys_office o2 ON o2.id = o1.parent_id
+	</sql>
+    
+	<select id="get" resultType="OaLoanDailyApproval">
+		SELECT 
+			<include refid="oaLoanDailyApprovalColumns"/>
+		FROM oa_loan_daily_approval a
+		<include refid="oaLoanDailyApprovalJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaLoanDailyApproval">
+		SELECT 
+			<include refid="oaLoanDailyApprovalColumns"/>
+		FROM oa_loan_daily_approval a
+		<include refid="oaLoanDailyApprovalJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	
+	<select id="findList" resultType="OaLoanDailyApproval">
+		SELECT 
+			<include refid="oaLoanDailyApprovalColumns"/>
+		FROM oa_loan_daily_approval a
+		<include refid="oaLoanDailyApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND a.loan_user_id = #{currentUserId}
+			</if>
+			
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaLoanDailyApproval">
+		SELECT 
+			<include refid="oaLoanDailyApprovalColumns"/>
+		FROM oa_loan_daily_approval a
+		<include refid="oaLoanDailyApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_loan_daily_approval(
+			id,
+			is_purchase,
+			loan_user_id,
+			project_manager_id,
+			loan_reason,
+			loan_money,
+			title,
+			exam2_opinion,
+			exam3_opinion,
+			exam4_opinion,
+			exam5_opinion,
+			exam6_opinion,
+			exam7_opinion,
+			approval_time,
+			approval_pass_time,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			status,
+			is_start,
+			approval_no
+		) VALUES (
+			#{id},
+			#{isPurchase},
+			#{loanUser.id},
+			#{projectManager.id},
+			#{loanReason},
+			#{loanMoney},
+			#{title},
+			#{exam2Opinion},
+			#{exam3Opinion},
+			#{exam4Opinion},
+			#{exam5Opinion},
+			#{exam6Opinion},
+			#{exam7Opinion},
+			#{approvalTime},
+			#{approvalPassTime},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{status},
+			#{isStart},
+			#{approvalNo}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_loan_daily_approval SET 	
+			is_purchase = #{isPurchase},
+			loan_user_id = #{loanUser.id},
+			project_manager_id = #{projectManager.id},
+			loan_reason = #{loanReason},
+			loan_money = #{loanMoney},
+			title = #{title},
+			exam2_opinion = #{exam2Opinion},
+			exam3_opinion = #{exam3Opinion},
+			exam4_opinion = #{exam4Opinion},
+			exam5_opinion = #{exam5Opinion},
+			exam6_opinion = #{exam6Opinion},
+			exam7_opinion = #{exam7Opinion},
+			approval_time = #{approvalTime},
+			approval_pass_time = #{approvalPassTime},
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			status = #{status},
+			is_start = #{isStart},
+			approval_no = #{approvalNo}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_loan_daily_approval SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,276 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity;
+
+import java.util.Date;
+
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+
+/**
+ * 出差申请业务表Entity
+ * 
+ * @author liuxin
+ * @version 2016-11-18
+ */
+public class OaOutwork extends ActEntity<OaOutwork> {
+
+	private static final long serialVersionUID = 1L;
+	private String procInsId; // 工作流关联id
+	private String fileId; // 文件编号
+	private String officeName; // 部门名称
+	private String task; // 出差任务
+	private String address; // 出差地址----------------------------目的地
+	private String unitName; // 出差单位名称-----------------------访问单位
+	private String unitUserName; // 出差单位接待人-----------------拜访对象
+	private Date startTime; // 出差开始时间
+	private Date endTime; // 出差预计结束时间----------------预计结束时间
+	private String cost; // 出差费用------------------- 预计出差费用
+	private String examname; // 上级领导签字
+	private String examtext; // 上级领导意见
+	private String examname2; // 部门副总签字
+	private String examtext2; // 部门副总意见
+	private String examname21;// 总经理签名
+	private String examtext21;// 总经理意见
+	// 新增业务字段
+	// 1
+	private String projectName;// 项目或合同名称
+	private String scheduleProgram;// 出差日程安排 （多行编辑）
+	// 2
+	private Date realEndTime;// 确定出差结束时间
+	// 3
+	private String examname3; // 上级领导审核结束时间签字
+	private String examtext3;// 上级领导审核结束时间意见
+	private String examname4;// 财务负责人签字
+	private String examtext4;// 财务报销情况
+	// 4
+	private String fileurl;// 出差报告(技术部)
+
+	// 出差时长
+	private String time;
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
+
+	public String getFileurl() {
+		return fileurl;
+	}
+
+	public void setFileurl(String fileurl) {
+		this.fileurl = fileurl;
+	}
+
+	public Date getRealEndTime() {
+		return realEndTime;
+	}
+
+	public String getExamname4() {
+		return examname4;
+	}
+
+	public void setExamname4(String examname4) {
+		this.examname4 = examname4;
+	}
+
+	public String getExamtext4() {
+		return examtext4;
+	}
+
+	public void setExamtext4(String examtext4) {
+		this.examtext4 = examtext4;
+	}
+
+	public void setRealEndTime(Date realEndTime) {
+		this.realEndTime = realEndTime;
+	}
+
+	public String getProjectName() {
+		return projectName;
+	}
+
+	public void setProjectName(String projectName) {
+		this.projectName = projectName;
+	}
+
+	public String getScheduleProgram() {
+		return scheduleProgram;
+	}
+
+	public void setScheduleProgram(String scheduleProgram) {
+		this.scheduleProgram = scheduleProgram;
+	}
+
+	public String getExamname3() {
+		return examname3;
+	}
+
+	public void setExamname3(String examname3) {
+		this.examname3 = examname3;
+	}
+
+	public String getExamtext3() {
+		return examtext3;
+	}
+
+	public void setExamtext3(String examtext3) {
+		this.examtext3 = examtext3;
+	}
+
+	public OaOutwork() {
+		super();
+	}
+
+	public OaOutwork(String id) {
+		super(id);
+	}
+
+	@Length(min = 0, max = 64, message = "工作流关联id长度必须介于 0 和 64 之间")
+	public String getProcInsId() {
+		return procInsId;
+	}
+
+	public void setProcInsId(String procInsId) {
+		this.procInsId = procInsId;
+	}
+
+	@Length(min = 0, max = 100, message = "文件编号长度必须介于 0 和 100 之间")
+	public String getFileId() {
+		return fileId;
+	}
+
+	public void setFileId(String fileId) {
+		this.fileId = fileId;
+	}
+
+	@Length(min = 0, max = 100, message = "部门名称长度必须介于 0 和 100 之间")
+	public String getOfficeName() {
+		return officeName;
+	}
+
+	public void setOfficeName(String officeName) {
+		this.officeName = officeName;
+	}
+
+	@Length(min = 0, max = 255, message = "出差任务长度必须介于 0 和 255 之间")
+	public String getTask() {
+		return task;
+	}
+
+	public void setTask(String task) {
+		this.task = task;
+	}
+
+	@Length(min = 1, max = 100, message = "出差地址长度必须介于 1 和 100 之间")
+	public String getAddress() {
+		return address;
+	}
+
+	public void setAddress(String address) {
+		this.address = address;
+	}
+
+	@Length(min = 1, max = 100, message = "出差单位名称长度必须介于 1 和 100 之间")
+	public String getUnitName() {
+		return unitName;
+	}
+
+	public void setUnitName(String unitName) {
+		this.unitName = unitName;
+	}
+
+	@Length(min = 1, max = 100, message = "出差单位接待人长度必须介于 1 和 100 之间")
+	public String getUnitUserName() {
+		return unitUserName;
+	}
+
+	public void setUnitUserName(String unitUserName) {
+		this.unitUserName = unitUserName;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@NotNull(message = "出差开始时间不能为空")
+	public Date getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(Date startTime) {
+		this.startTime = startTime;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@NotNull(message = "出差预计结束时间不能为空")
+	public Date getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(Date endTime) {
+		this.endTime = endTime;
+	}
+
+	public String getCost() {
+		return cost;
+	}
+
+	public void setCost(String cost) {
+		this.cost = cost;
+	}
+
+	public String getExamname() {
+		return examname;
+	}
+
+	public void setExamname(String examname) {
+		this.examname = examname;
+	}
+
+	public String getExamtext() {
+		return examtext;
+	}
+
+	public void setExamtext(String examtext) {
+		this.examtext = examtext;
+	}
+
+	public String getExamname2() {
+		return examname2;
+	}
+
+	public void setExamname2(String examname2) {
+		this.examname2 = examname2;
+	}
+
+	public String getExamtext2() {
+		return examtext2;
+	}
+
+	public void setExamtext2(String examtext2) {
+		this.examtext2 = examtext2;
+	}
+
+	public String getExamname21() {
+		return examname21;
+	}
+
+	public void setExamname21(String examname21) {
+		this.examname21 = examname21;
+	}
+
+	public String getExamtext21() {
+		return examtext21;
+	}
+
+	public void setExamtext21(String examtext21) {
+		this.examtext21 = examtext21;
+	}
+
+}

@@ -1,0 +1,83 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.perishableproducts;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.perishableproducts.Apply;
+import com.thinkgem.jeesite.modules.oa.service.perishableproducts.ApplyService;
+
+/**
+ * 易耗品增删改查Controller
+ * @author zf
+ * @version 2016-11-08
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/perishableproducts/apply")
+public class ApplyController extends BaseController {
+
+	@Autowired
+	private ApplyService applyService;
+	
+	@ModelAttribute
+	public Apply get(@RequestParam(required=false) String id) {
+		Apply entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = applyService.get(id);
+		}
+		if (entity == null){
+			entity = new Apply();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("perishableproducts:apply:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(Apply apply, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<Apply> page = applyService.findPage(new Page<Apply>(request, response), apply); 
+		model.addAttribute("page", page);
+		return "modules/perishableproducts/applyList";
+	}
+
+	@RequiresPermissions("perishableproducts:apply:view")
+	@RequestMapping(value = "form")
+	public String form(Apply apply, Model model) {
+		model.addAttribute("apply", apply);
+		return "modules/perishableproducts/applyForm";
+	}
+
+	@RequiresPermissions("perishableproducts:apply:edit")
+	@RequestMapping(value = "save")
+	public String save(Apply apply, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, apply)){
+			return form(apply, model);
+		}
+		applyService.save(apply);
+		addMessage(redirectAttributes, "保存办公用品成功");
+		return "redirect:"+Global.getAdminPath()+"/perishableproducts/apply/?repage";
+	}
+	
+	@RequiresPermissions("perishableproducts:apply:edit")
+	@RequestMapping(value = "delete")
+	public String delete(Apply apply, RedirectAttributes redirectAttributes) {
+		applyService.delete(apply);
+		addMessage(redirectAttributes, "删除办公用品成功");
+		return "redirect:"+Global.getAdminPath()+"/perishableproducts/apply/?repage";
+	}
+
+}

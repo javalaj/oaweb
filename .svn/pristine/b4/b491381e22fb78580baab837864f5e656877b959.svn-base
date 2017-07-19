@@ -1,0 +1,233 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>日程管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+				$("#btnSubmit").click(function() {
+							var judeg2 = judgeDate();
+							var judge1 = judgeInt(); 
+							return judge1&&judeg2;
+						});
+			$("#inputForm").validate({
+				
+				rules: {
+					"compere.name": {
+				        required: true
+				     },
+				     "actor.name": {
+					        required: true
+					     },
+				},
+			    messages: {
+			    	"compere.name": {
+			          required: "必填信息",
+			        },
+			        "actor.name": {
+				          required: "必填信息",
+				        },
+			    },
+			
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			function judgeInt() {
+				var judge = true;
+				var str = "";
+				var str1 = "*"
+				var str2 = "不能为空并且输入两位以上的数 *";
+				$("input[name='planTitle']").each(function() {
+						if (!(/\S{2,}/.test($(this).val()))) {
+							judge = false;
+							str = str2;
+						} else {
+							str = str1;
+						}
+						$(this).next().children().text(str);
+				});
+				return judge;
+			}
+			$("input[name='planTitle']").blur(function(){
+				if (!(/\S{2,}/.test($(this).val()))) {
+					$(this).next().children().text("不能为空并且输入两位以上的数 *");
+				} else {
+					$(this).next().children().text("*");
+				}
+			})
+					 	function judgeDate() {
+		var judge = true;
+		var last = "";
+		var index = 0;
+		var str = "";
+		var str1 = "*"
+		var str2 = "时间错误 *";
+		$("input[name$='startTime']").each(
+				function() {
+					if (index % 2 == 0) {
+						last = $(this).val();
+					} else {
+						if (!$(this).is(":hidden") && $(this).val() != ""
+							&& last != "") {
+							if (new Date($(this).val()) < new Date(last)) {
+								judge = false;
+								str = str1;
+							} else {
+								
+								str = str2;
+							}
+							$("#cz").children().text(str);
+					}
+					}
+					index++;
+				});
+		return judge;
+	}
+			$("#select").change(function(){
+			     var select=$("#select").val();
+				if(select==0){
+					//工作任务
+					window.location.href="${ctx}/oa/mytask/myTask/form";
+				}else if(select==1){
+					
+				}else{
+					window.location.href="${ctx}/oa/mytask/oaPlan/form";
+				}
+				
+				
+			})
+		});
+	</script>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>修改私人活动： </h5>
+		<div class="ibox-tools">
+		</div>
+	</div>
+   <div class="ibox-content">
+   	<sys:message content="${message}"/>
+   	<div class="row">
+	<div class="col-sm-12">
+	<br/>
+	</div>
+	</div>
+	
+	<form:form id="inputForm" modelAttribute="oaPlan" action="${ctx}/oa/mytask/oaPlan/save" method="post" class="form-inline">
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>		
+<%-- 		<div class="control-group">
+			<label class="control-label">日程图标：</label>
+			<div class="controls">
+				<form:input path="planIcon" htmlEscape="false" maxlength="64" class="input-xlarge "/>
+			</div>
+		</div> --%>
+		<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+		
+			<tr>
+				<td>计划类型：</td>
+				<td>
+				私人
+				</td>
+				<td>活动日期：</td>
+				<td>
+				<input name="startDay" type="text" readonly="readonly" maxlength="20" class="input-medium Wdate  required"
+					value="<fmt:formatDate value="${oaPlan.startDay}" pattern="yyyy-MM-dd"/>"
+					onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false,minDate:'%y-%M-%d'});"/>
+					<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+			</tr>
+					
+		<tr>
+			<td>活动主题： <font color="red">*</font></td>
+			<td colspan="4">
+				<form:input name="planTitle" path="planTitle" htmlEscape="false" maxlength="255" class="form-control " cssStyle="width: 35%"/>
+			 	<span class="help-inline"></span>
+			</td>
+			
+		</tr>
+		<tr>
+			
+		</tr>		
+			<tr>
+				<td>开始时间： <font color="red">*</font></td>
+				<td>
+				<input name="startTime" type="text" readonly="readonly" maxlength="20" class="input-medium Wdate  required"
+					value="<fmt:formatDate value="${startime}" pattern="HH:mm"/>"
+					onclick="WdatePicker({dateFmt:'HH:mm',isShowClear:false,qsEnabled:true,quickSel:['08:30','12:00','13:00','13:30','17:30']});"/>
+					<span class="help-inline"> </span>
+					</td>
+					
+					<td>结束时间： <font color="red">*</font></td>
+					<td>
+					<input name="endTime" type="text" readonly="readonly" maxlength="20" class="input-medium Wdate required"
+					value="<fmt:formatDate value="${endtime}" pattern="HH:mm"/>"
+					onclick="WdatePicker({dateFmt:'HH:mm',isShowClear:false,qsEnabled:true,quickSel:['08:30','12:00','13:00','13:30','17:30']});"/>
+					<span class="help-inline"><span id="cz" class="help-inline"><font color="red"></font> </span> </span>
+					</td>
+					
+			</tr>	
+
+	
+		
+			
+
+			<tr>
+			
+			<td>提醒：</td>
+			<td colspan="4">
+				<form:select path="tip" cssStyle="width: 55%" class="form-control">
+					<form:option value="" label=""/>
+					<form:options items="${fns:getDictList('tip')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+				</form:select>
+			</td>
+				</tr>
+				<tr>
+				
+				<td>
+				   重复周期： 
+				</td>
+				  <td colspan="4">
+				  <form:select path="cycle"  cssStyle="width: 55%" class="form-control ">
+					<form:option value="" label=""/>
+					<form:options items="${fns:getDictList('cycle')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+				</form:select>
+				  </td>
+				</tr>	
+	
+<tr>
+<td colspan="3"></td>
+<td colspan="2">
+				<shiro:hasPermission name="oa:mytask:oaPlan:edit"><input id="btnSubmit" class="btn btn-myoa btn-myoa-large" type="submit" value="保 存"/>&nbsp;</shiro:hasPermission>
+			<input id="btnCancel" class="btn btn-myoa" type="button" value="返 回" onclick="history();"/>
+				</td>
+					</tr>
+		
+		</table>
+	</form:form>
+	<br/>
+	<br/>
+	</div>
+	</div>
+	</div>
+	 <script type="text/javascript">
+ 
+ function history(){
+	 window.location.href="${ctx}/oa/mytask/oaPlan/list";
+ }
+ </script>
+</body>
+ 
+
+</html>

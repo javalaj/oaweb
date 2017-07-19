@@ -1,0 +1,197 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no" />
+
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/mobile/css/Base.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/mobile/css/oa.css" />
+<link rel="stylesheet" href="${ctxStatic}/mobile/css/mui.css" />
+<link rel="stylesheet" href="${ctxStatic}/mobile/css/oabase.css" />
+<link rel="stylesheet" href="${ctxStatic}/liuxin/css/mobile.css" />
+<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+		<title>周计划打分</title>
+		<style type="text/css">
+.log-span {
+	padding: 10px;
+	word-wrap: break-word;
+	word-break: break-all;
+	font-size: 14px;
+	font-family: "微软雅黑";
+	color: #666666;
+}
+table, td {
+	border: none;
+}
+table {
+	width: 100%;
+}
+td{
+	padding: 5px;
+}
+.log-span {
+	padding: 0;
+}
+.contentlog {
+	margin: 0;
+}
+.header {
+	background-color: #fff;
+	width: 32%;
+}
+.divMargin {
+	margin-top: 44px;
+}
+.header>span {
+	margin-left: 0;
+}
+td input[type='text'] {
+	height: 32px;
+	margin-bottom: 0;
+}
+</style>
+	</head>
+	<body>
+	<header class="mui-bar mui-bar-nav">
+		<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		<h1 class="mui-title">周计划流程</h1>
+	</header>
+	<div class="divtable divMargin">
+	<form:form  id="inputFormcz"  action="${mctx}/user/userWeekplan/supSave" method="post" cssClass="form-inline">
+	<p style="line-height: 32px;text-align: center;font-size: 16px;color:#12b7f5;">${officeName }  ${name }</p>
+	<span>（<fmt:formatDate value="${userWeekplan.firstdate}" pattern="yyyy-MM" />）月，第（${userWeekplan.weeksign }）周，周计划</span>
+			<table class="logDeTable" border="" cellspacing="0" cellpadding="0">
+				<c:forEach items="${userWeekrecord }" var="now2" varStatus="ii" >
+				<tr>					
+					<td class="header"><span id="date" class="hespan">开始时间：</span></td>
+					<td><span id="" class="contentlog"><c:choose>
+									<c:when test="${now2.beginday=='1' }">周一</c:when>
+									<c:when test="${now2.beginday=='2' }">周二</c:when>
+									<c:when test="${now2.beginday=='3' }">周三</c:when>
+									<c:when test="${now2.beginday=='4' }">周四</c:when>
+									<c:when test="${now2.beginday=='5' }">周五</c:when>
+									<c:when test="${now2.beginday=='6' }">周六</c:when>
+									<c:otherwise>周日</c:otherwise>
+								</c:choose></span></td>
+				</tr>
+				<tr>
+					<td class="header"><span id="date" class="hespan"> 结束时间：</span></td>
+					<td><span id="" class="contentlog"><c:choose>
+									<c:when test="${now2.endday=='1' }">周一</c:when>
+									<c:when test="${now2.endday=='2' }">周二</c:when>
+									<c:when test="${now2.endday=='3' }">周三</c:when>
+									<c:when test="${now2.endday=='4' }">周四</c:when>
+									<c:when test="${now2.endday=='5' }">周五</c:when>
+									<c:when test="${now2.endday=='6' }">周六</c:when>
+									<c:otherwise>周日</c:otherwise></c:choose></span></td>
+				</tr>
+				<tr>
+					<td class="header">
+					<span id="problem" class="hespan">工作计划：</span></td>
+					<td class="">
+					<div class="log-span">
+						<div>${now2.content }</div>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="header">
+					<span id="problem" class="hespan">交付物： </span></td>
+					<td class="">
+					<div class="log-span">
+					<div>${now2.deliverables }</div>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<td class="header"><span id="date" class="hespan">个人权重<span style="color: red;">(1)</span>:</span></td>
+					<td><span id="" class="contentlog"> <input type="text" class="form-control"   id="important"  name="important" maxlength="25" style="width: 90px;"><span class="help-inline"><font color="red">*</font></span>
+					</span></td>
+				</tr>
+				<tr>
+					<td class="header"><span id="date" class="hespan">进度分<span style="color: red;">(60%)</span>:</span></td>
+					<td><span id="" class="contentlog"> <input type="text"  class="form-control"    name="schedule"  style="width: 90px"   maxlength="50"><span class="help-inline"><font color="red">*</font></span></span></td>
+				</tr>
+				<tr>
+					<td></td>
+					<td></td>
+				</tr>
+					<input name="wekid" value="${now2.id}" style="display: none;">							
+			</c:forEach>
+							
+			</table>	
+			<div class="divbt" style="padding-top: 10px;">
+				<input id="btnSubmit1" class="btn col-md-offset-2 btn-keep" type="submit"  value="提 交" style="width: 100%;"/>
+			</div>
+		</form:form>
+		</div>
+		<script type="text/javascript"
+	src="${ctxStatic}/jquery/jquery-1.9.1.min.js"></script>
+	<script type="text/javascript">
+	$("#btnSubmit1").click(function() {
+		$(this).next().val("0");
+		var judge1 = notnull();
+		var judge3 = notnull3();
+		var judge2 =judgeInt();
+		var judge4 =judgeInt1();
+		return judge1  && judge3 &&judge2&&judge4;
+	});
+		function notnull() {
+		var judge = true;
+		$("input[name='important']").each(function() {
+			var str = "";
+			if ($(this).val().trim() == "" && !$(this).is(":hidden")) {
+				judge = false;
+				mui.alert("请填写个人权重！", "系统提示");
+			}
+		});
+		return judge;
+	}
+	
+	
+	function notnull3() {
+		var judge = true;
+		$("input[name='schedule']").each(function() {
+			var str = "";
+			if ($(this).val().trim() == "" && !$(this).is(":hidden")) {
+				judge = false;
+				mui.alert("请填进度分！", "系统提示");
+			}
+		});
+		return judge;
+	}
+	function judgeInt() {
+		var judge = true;
+		$("input[name='schedule']").each(function() {
+			if (!$(this).is(":hidden") && $(this).val() != "") {
+				if (!(/^\d+$/.test($(this).val()))) {
+					judge = false;
+					mui.alert("请填写进度分为正整数！", "系统提示");
+				} 
+			}
+			});
+	
+		return judge;
+	}
+	function judgeInt1() {
+		var judge = true;
+		$("input[name='important']").each(function() {
+			if (!$(this).is(":hidden") && $(this).val() != "") {
+				if (!(/^(0\.(0[1-9]{1}|[1-9]\d?)|1(\.0{1,2})?)$/.test($(this).val()))) {
+					judge = false;
+					mui.alert("请填写个人权重大于0小于1的数！", "系统提示");
+				} 
+			}
+		});
+		return judge;
+	}
+	</script>
+	</body>
+	
+	
+	
+</html>

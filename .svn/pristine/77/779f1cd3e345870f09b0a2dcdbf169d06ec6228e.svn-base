@@ -1,0 +1,41 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.sys.web;
+
+import java.util.Map;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.mytask.OaPlan;
+import com.thinkgem.jeesite.modules.oa.service.mytask.OaPlanService;
+import com.thinkgem.jeesite.modules.oa.service.project.OaProjectService;
+
+/**
+ * 首页控制器
+ * 
+ * @author liuxin
+ * @version 2017-1-10
+ */
+@Controller
+@RequestMapping(value = "${adminPath}${mobilePath}/mobile/sys/index")
+public class IndexControllerMobile extends BaseController {
+	@Autowired
+	private OaPlanService oaPlanService;
+	/**
+	 * 首页访问
+	 */
+	@RequiresPermissions("sys:user:userWorklog:view")
+	@RequestMapping(value = { "index", "" })
+	public String index(Model model,OaPlan oaPlan) {
+		Map<String, String> mapCount = oaPlanService.unfinishedCount(oaPlan.getCurrentUser().getId());
+		model.addAttribute("mapCount", mapCount);
+		return "mobile/modules/sys/index";
+	}
+	
+}

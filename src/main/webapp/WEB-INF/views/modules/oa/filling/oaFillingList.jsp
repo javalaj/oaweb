@@ -1,0 +1,181 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>人事部归档管理</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	//时间大小判断
+	function beforeSearch() {
+		if ($("#querydate1").val() != "" && $("#querydate2").val() != "") {
+			var date1 = new Date($("#querydate1").val());
+			var date2 = new Date($("#querydate2").val());
+			if (date2 < date1) {
+				top.layer.alert('开始时间不能大于结束时间!', {
+					icon : 0,
+					title : '警告'
+				});
+				return false;
+			}
+		}
+		search();
+	}
+	//
+	$(document).ready(function() {
+	});
+	function page(n, s) {
+		$("#pageNo").val(n);
+		$("#pageSize").val(s);
+		$("#searchForm").submit();
+		return false;
+	}
+</script>
+<style type="text/css">
+.inputSize {
+	width: 100px !important;
+}
+</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>人事部归档列表</h5>
+			</div>
+
+			<div class="ibox-content">
+				<!-- 查询条件 -->
+				<div class="row">
+					<div class="col-sm-12">
+						<form:form id="searchForm" modelAttribute="oaFilling"
+							action="${ctx}/oa/filling/oaFilling/findBySame" method="post"
+							class="form-inline">
+							<input id="pageNo" name="pageNo" type="hidden"
+								value="${page.pageNo}" />
+							<input id="pageSize" name="pageSize" type="hidden"
+								value="${page.pageSize}" />
+							<table:sortColumn id="orderBy" name="orderBy"
+								value="${page.orderBy}" callback="sortOrRefresh();" />
+							<!-- 支持排序 -->
+
+
+							<div class="form-group">
+								<label><span>申请种类：</span> <input name="type" type="text"
+									value="${type}" class="form-control input-sm inputSize" /></label>
+								<label><span>归档人：</span>
+								<input name="updateName" type="text" value="${updateName}"
+									class="form-control input-sm inputSize" /> </label>
+								<label><span>发起人：</span> <input
+									name=createName type="text" value="${createName}"
+									class="form-control input-sm inputSize" /> </label>
+								<label><span>归档日期段：</span><input
+									id="querydate1" name="begindate2" type="text" maxlength="20"
+									readonly="readonly" class="laydate-icon form-control"
+									style="background-color: #FFFFFF;"
+									value="<fmt:formatDate value="${begindate2}" pattern="yyyy-MM-dd"/>"
+									onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" />
+								&nbsp;&nbsp;--&nbsp;&nbsp;&nbsp;<input id="querydate2"
+									name="enddate2" type="text" maxlength="20" readonly="readonly"
+									class="laydate-icon form-control"
+									style="background-color: #FFFFFF;"
+									value="<fmt:formatDate value="${enddate2}" pattern="yyyy-MM-dd"/>"
+									onclick="WdatePicker({dateFmt:'yyyy-MM-dd'});" /></label>
+							</div>
+						</form:form>
+					</div>
+				</div>
+
+
+
+				<!-- 工具栏 -->
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="pull-left"><%--
+							<button class="btn btn-white btn-sm " data-toggle="tooltip"
+								data-placement="left" onclick="sortOrRefresh()" title="刷新">
+								<i class="glyphicon glyphicon-repeat"></i> 刷新
+							</button>
+						--%>
+
+						</div>
+						<div class="pull-right">
+							<button class="btn btn-primary btn-rounded btn-outline btn-sm "
+								onclick="beforeSearch()">
+								<i class="fa fa-search"></i> 查询
+							</button>
+							<button class="btn btn-primary btn-rounded btn-outline btn-sm "
+								onclick="reset()">
+								<i class="fa fa-refresh"></i> 重置
+							</button>
+						</div>
+					</div>
+				</div>
+
+
+				<table id="contentTable"
+					class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+					<thead>
+						<tr>
+							<th>申请种类</th>
+							<th>发起日期</th>
+							<th>发起人</th>
+							<th>开始时间</th>
+							<th>结束时间</th>
+							<th>时长</th>
+							<th>归档时间</th>
+							<th>归档人</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach items="${page.list}" var="oaFilling">
+							<tr>
+								<td>${oaFilling.applyType}</td>
+								<td><fmt:formatDate value="${oaFilling.applyDate}"
+										pattern="yyyy-MM-dd " /></td>
+								<td>${oaFilling.applyUser.name}</td>
+								<td><fmt:formatDate value="${oaFilling.beginDate}"
+										pattern="yyyy-MM-dd HH:mm:ss" /></td>
+								<td><fmt:formatDate value="${oaFilling.endDate}"
+										pattern="yyyy-MM-dd HH:mm:ss" /></td>
+								<td>
+								<c:choose>
+								<c:when test="${oaFilling.applyType=='人员增补'}">
+ 									无
+								</c:when>
+								<c:otherwise>
+								${oaFilling.hours}
+								</c:otherwise>
+								</c:choose>
+								</td>
+								<td><fmt:formatDate value="${oaFilling.fillingDate}"
+										pattern="yyyy-MM-dd HH:mm:ss" /></td>
+								<td>${oaFilling.createBy.name}</td>
+								<td>
+								<c:choose>
+								<c:when test="${oaFilling.applyType=='人员增补'}">
+ 									<a href="#"
+									onclick="openDialogView('查看考情详情', '${ctx}/oa/staff/oaStaffupdated/filligview?id=${oaFilling.hours}','80%', '80%')"
+									class="btn btn-info btn-xs"><i class="fa fa-search-plus"></i>
+										查看</a>
+								</c:when>
+								<c:otherwise>
+								<a href="#"
+									onclick="openDialogView('查看考情详情', '${ctx}/oa/filling/oaFilling/form?id=${oaFilling.id}','80%', '80%')"
+									class="btn btn-info btn-xs"><i class="fa fa-search-plus"></i>
+										查看</a>
+								</c:otherwise>
+								</c:choose>
+								</td>
+							</tr>
+						</c:forEach>
+					</tbody>
+				</table>
+				<!-- 分页代码 -->
+				<table:page page="${page}"></table:page>
+				<br /> <br />
+			</div>
+		</div>
+	</div>
+</body>
+</html>

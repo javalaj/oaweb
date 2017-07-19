@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserWorklogDao">
+
+	<sql id="userWorklogColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.workdate AS
+		"workdate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.isdraft AS
+		"isdraft",
+		a.update_date AS "updateDate"
+	</sql>
+
+	<sql id="userWorklogJoins">
+	</sql>
+
+	<select id="get" resultType="UserWorklog">
+		SELECT
+		<include refid="userWorklogColumns" />
+		FROM user_worklog a
+		<include refid="userWorklogJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+
+	<select id="getOtherLogList" resultType="UserWorklog">
+		SELECT b.name AS "createBy.name",
+		<include refid="userWorklogColumns" />
+		FROM user_worklog a LEFT JOIN sys_user b ON b.id = a.create_by
+		<include refid="userWorklogJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by IN ${users}
+			AND
+			a.workdate = #{workdate}
+			AND a.isdraft=#{isdraft}
+			<if test="end != null">
+				AND a.workdate <![CDATA[<=]]>
+				#{end} AND a.update_date <![CDATA[<=]]>
+				#{end}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY b.login_name ASC
+			</otherwise>
+		</choose>
+	</select>
+
+
+	<select id="findList" resultType="UserWorklog">
+		SELECT
+		<include refid="userWorklogColumns" />
+		FROM user_worklog a
+		<include refid="userWorklogJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} and a.create_by=#{createBy.id}
+			<if test="begindate != null">
+				AND a.workdate >= #{begindate}
+			</if>
+			<if test="enddate != null">
+				AND a.workdate <![CDATA[<=]]> #{enddate}
+			</if>
+			<if test="isdraft != null">
+				AND a.isdraft=#{isdraft}
+			</if>
+			<if test="end != null">
+				AND a.workdate <![CDATA[<=]]>
+				#{end} AND a.update_date <![CDATA[<=]]>
+				#{end}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.workdate DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="UserWorklog">
+		SELECT
+		<include refid="userWorklogColumns" />
+		FROM user_worklog a
+		<include refid="userWorklogJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_worklog(
+		id,
+		create_by,
+		workdate,
+		remarks,
+		del_flag,
+		isdraft,
+		update_date
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{workdate},
+		#{remarks},
+		#{delFlag},
+		#{isdraft},
+		#{updateDate}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_worklog SET
+		workdate = #{workdate},
+		remarks = #{remarks},
+		isdraft = #{isdraft},
+		update_date=#{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE user_worklog SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="findPageByDate" resultType="UserWorklog">
+		SELECT
+		<include refid="userWorklogColumns" />
+		FROM user_worklog a
+		<include refid="userWorklogJoins" />
+		WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{userId}
+		<if test="begindate != null and enddate!=null">
+			AND
+			a.workdate BETWEEN
+			#{begindate}
+			AND
+			#{enddate}
+		</if>
+		<if test="end != null">
+			AND a.workdate <![CDATA[<=]]>
+			#{end} AND a.update_date <![CDATA[<=]]>
+			#{end}
+		</if>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<select id="findUserWorklogSubmit" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM user_worklog a
+		<include refid="userWorklogJoins" />
+		<where>
+			a.create_by=#{createBy}
+			AND a.workdate=#{workdate}
+			AND
+			a.del_flag=#{DEL_FLAG_NORMAL}
+			AND
+			a.isdraft=#{isdraft}
+			AND
+			a.update_date>#{begin}
+			AND a.update_date<![CDATA[<]]>#{end}
+		</where>
+	</select>
+	<select id="findByWorkdate" resultType="java.lang.String">
+		SELECT a.id FROM
+		user_worklog a
+		<include refid="userWorklogJoins"></include>
+		<where>a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{createBy.id}
+			AND a.workdate = #{workdate}
+		</where>
+		LIMIT 1
+	</select>
+
+	<select id="findUserState" resultType="java.lang.String">
+		SELECT a.family FROM
+		sys_user a WHERE a.id=#{id}
+	</select>
+
+	<select id="findNotSubmitUserEmail" resultType="NeedEmailUser">
+		SELECT
+		a.email AS
+		"email",
+		a.name As "name"
+		FROM
+		sys_user a
+		LEFT JOIN
+		(SELECT
+		b.id,
+		b.create_by
+		FROM
+		user_worklog b
+		WHERE b.workdate =#{queryDate}
+		AND
+		b.del_flag = '0'
+		AND
+		b.isdraft='1' AND b.update_date BETWEEN
+		#{queryDate} AND #{endDate}) bb
+		ON bb.create_by = a.id
+		WHERE bb.id
+		IS
+		NULL AND a.del_flag = 0
+	</select>
+
+</mapper>

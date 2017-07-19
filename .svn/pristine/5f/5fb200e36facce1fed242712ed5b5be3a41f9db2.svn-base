@@ -1,0 +1,560 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.mytask.OaPlanDao">
+
+	<sql id="oaPlanColumns">
+		a.id AS "id",
+		a.plan_icon AS "planIcon",
+		a.plan_title AS
+		"planTitle",
+		a.parentid AS "parentId",
+		a.content AS "content",
+		a.prefer
+		AS "prefer",
+		a.backfiles AS "backfiles",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.plan_type AS "planType",
+		a.state AS "state",
+		a.isback AS "isback",
+		a.compere AS "compere.id",
+		a.actor AS "actor.id",
+		a.projectid AS "projectid.id",
+		a.taskid AS "taskid",
+		a.tip AS "tip",
+		a.cycle AS "cycle",
+		a.files AS "files",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS
+		"delFlag",
+		a.start_day AS "startDay",
+		a.fact_time AS "factTime",
+		a.issue_state AS "issueState"
+
+	</sql>
+
+	<sql id="oaPlanJoins">
+		LEFT JOIN sys_user u10 ON u10.id = a.compere
+		LEFT JOIN
+		sys_user u11 ON u11.id = a.actor
+	</sql>
+
+	<select id="get" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		WHERE a.id = #{id}
+	</select>
+		<select id="getChild" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		WHERE a.parentid= #{id}
+	</select>
+	
+	
+	<select id="getparlist" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		WHERE a.parentid = #{parentId}
+	</select>
+
+	<select id="findList" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		<where>
+
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by= #{createBy.id }
+
+			<if test="createDate != null and createDate != ''">
+				AND a.create_date = #{createDate}
+			</if>
+		</where>
+		 GROUP BY a.start_day 
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC  
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="pagefindList" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		<where>
+
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by= #{createBy.id }
+
+			<if test="createDate != null and createDate != ''">
+				AND a.create_date = #{createDate}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+		<select id="listhuiyi" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+			WHERE a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by= #{createBy.id } AND a.plan_type='2'
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_plan(
+		id,
+		plan_icon,
+		plan_title,
+		parentid,
+		content,
+		prefer,
+		backfiles,
+		start_time,
+		end_time,
+		plan_type,
+		state,
+		isback,
+		compere,
+		actor,
+		projectid,
+		taskid,
+		tip,
+		cycle,
+		files,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		start_day,
+		issue_state 
+		) VALUES (
+		#{id},
+		#{planIcon},
+
+		#{planTitle},
+		#{parentId},
+		#{content},
+		#{prefer},
+		#{backfiles},
+		#{startTime},
+		#{endTime},
+		#{planType},
+		#{state},
+		#{isback},
+		#{compere.id},
+		#{actor.id},
+		#{projectid.id},
+		#{taskid},
+		#{tip},
+		#{cycle},
+		#{files},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{startDay},
+	    #{issueState}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_plan SET
+		plan_icon = #{planIcon},
+		plan_title = #{planTitle},
+		parentid=#{parentId},
+		content = #{content},
+		prefer=#{prefer},
+		backfiles = #{backfiles},
+		start_time = #{startTime},
+		end_time = #{endTime},
+		plan_type = #{planType},
+		state = #{state},
+		isback = #{isback},
+		compere = #{compere.id},
+		actor = #{actor.id},
+		projectid = #{projectid.id},
+		taskid = #{taskid},
+		tip = #{tip},
+		cycle = #{cycle},
+		files = #{files},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		start_day= #{startDay},
+		issue_state =#{issueState}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_plan SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+	<update id="upisback">
+		UPDATE oa_plan SET
+		isback ='1'
+		WHERE id = #{id}
+	</update>
+
+	<select id="selectDate" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		from oa_plan a where a.start_day LIKE concat('%',#{startDay},'%') AND
+		a.del_flag = 0 AND a.create_by= #{createBy.id }
+
+
+	</select>
+
+	<!-- 查看我的任務 -->
+	<select id="findListTask" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+     where	a.del_flag = '0' AND a.plan_type = 0 AND a.create_by=
+			#{createBy.id }
+			<if test="planTitle != null and planTitle != ''">
+				AND a.plan_title LIKE
+				<if test="dbName == 'mysql'">concat('%',#{planTitle},'%')</if>
+			</if>
+			<if test="actor != null and actor != ''">
+				AND a.actor LIKE
+				<if test="dbName == 'mysql'">concat('%',#{actor.id},'%')</if>
+			</if>
+		order by  a.prefer  asc ,  a.end_time  asc 
+	</select>
+	<select id="indexfindListTask" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+     where	a.del_flag = '0' AND a.plan_type = 0 
+	</select>
+	<!-- 统计我布置的任务 -->
+	<select id="cnmylist" resultMap="stoMap">
+
+		SELECT count(*) as sum from oa_plan WHERE create_by= #{createBy.id } AND
+		plan_type = '0' AND del_flag ='0'
+	</select>
+	<resultMap type="Map" id="stoMap">
+		<result property="sum" column="sum"></result>
+	</resultMap>
+
+
+
+	<sql id="oaPlanJoinss">
+		LEFT JOIN sys_user u10 ON u10.id = a.compere
+		LEFT JOIN
+		sys_user u11 ON u11.id = a.actor
+		LEFT JOIN oa_task_record re on
+		re.OA_Task_ID=a.id
+	</sql>
+
+
+	<!-- 查询我收到任务列表 -->
+	<select id="relist" resultType="OaPlan">
+
+		SELECT
+		<include refid="oaPlanColumns" />
+		from oa_plan a
+		<include refid="oaPlanJoinss" />
+		WHERE
+		re.USER_ID= #{createBy.id } AND a.plan_type = '0' AND a.del_flag ='0' order by  a.prefer asc,  a.end_time  asc 
+	</select>
+
+	<!-- 查询我收到任务状态 -->
+	<select id="statelist" resultType="OaPlan">
+
+		SELECT
+		<include refid="oaPlanColumns" />
+		from oa_plan a
+		WHERE
+		a.create_by= #{createBy.id } AND a.plan_type = '0' AND a.state = #{state} AND a.del_flag ='0' order by  a.prefer asc,  a.end_time  asc 
+	</select>
+
+
+
+	<select id="statea" resultMap="stoMapa">
+
+		SELECT
+		count(*) as suma
+		from oa_plan a
+		WHERE
+		a.create_by= #{createBy.id } AND a.plan_type = '0' AND a.state = '1' AND a.del_flag ='0' AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="stoMapa">
+		<result property="suma" column="suma"></result>
+	</resultMap>
+
+
+	<select id="stateb" resultMap="stoMapb">
+
+		SELECT
+		count(*) as sumb
+		from oa_plan a
+		WHERE
+		a.create_by= #{createBy.id } AND a.plan_type = '0' AND a.state = '2' AND a.del_flag ='0' AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="stoMapb">
+		<result property="sumb" column="sumb"></result>
+	</resultMap>
+
+
+	<select id="statec" resultMap="stoMapc">
+
+		SELECT
+		count(*) as sumc
+		from oa_plan a
+		WHERE
+		a.create_by= #{createBy.id } AND a.plan_type = '0' AND a.state = '3' AND a.del_flag ='0' AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="stoMapc">
+		<result property="sumc" column="sumc"></result>
+	</resultMap>
+
+	<update id="up">
+		UPDATE oa_plan SET
+		state = '2',fact_time = #{factTime},remarks=#{remarks },backfiles=#{backfiles}
+		WHERE id = #{id}
+	</update>
+
+
+
+	<!-- 查看我的任務 -->
+	<select id="ListTask" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoins" />
+		<where>
+			a.del_flag = '0' AND a.plan_type = 0 AND
+			a.create_by= #{createBy.id } and a.state = '1'
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+
+	<update id="upi">
+		UPDATE oa_plan SET
+		state = '3'
+		WHERE id = #{id}
+	</update>
+
+
+	<update id="uphuiyi">
+		UPDATE oa_plan SET
+		state = '3'
+		WHERE id = #{id} and plan_type='2'
+	</update>
+
+
+
+	<sql id="myoaPlanJoinss">
+		LEFT JOIN oa_task_record re on re.OA_Task_ID=a.id
+	</sql>
+	<!-- 我布置的任务统计 -->
+
+
+	<select id="mystatea" resultMap="mystoMapa">
+
+		SELECT
+		count(*) as suma
+		from oa_plan a
+		<include refid="myoaPlanJoinss" />
+		WHERE
+		re.user_id= #{cruserid } AND a.plan_type = '0' AND a.state = '1' AND a.del_flag ='0'  AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="mystoMapa">
+		<result property="suma" column="suma"></result>
+	</resultMap>
+
+
+	<select id="mystateb" resultMap="mystoMapb">
+
+		SELECT
+		count(*) as sumb
+		from oa_plan a
+		<include refid="myoaPlanJoinss" />
+		WHERE 
+		re.user_id= #{cruserid } AND a.plan_type = '0' AND a.state = '2' AND a.del_flag ='0' AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="mystoMapb">
+		<result property="sumb" column="sumb"></result>
+	</resultMap>
+
+
+	<select id="mystatec" resultMap="mystoMapc">
+
+		SELECT
+		count(*) as sumc
+		from oa_plan a
+		<include refid="myoaPlanJoinss" />
+		WHERE
+		re.user_id= #{cruserid } AND a.plan_type = '0' AND a.state = '3' AND a.del_flag ='0' AND a.issue_state='1'
+	</select>
+	<resultMap type="Map" id="mystoMapc">
+		<result property="sumc" column="sumc"></result>
+	</resultMap>
+
+	<sql id="myoaPlanColumns">
+		a.id AS "id",
+		a.plan_icon AS "planIcon",
+		a.plan_title AS
+		"planTitle",
+		a.parentid AS "parentId",
+		a.content AS "content",
+		a.prefer
+		AS "prefer",
+		a.backfiles AS "backfiles",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.plan_type AS "planType",
+		a.state AS "state",
+		a.isback AS "isback",
+		a.compere AS "compere.id",
+		a.actor AS "actor.id",
+		a.projectid AS "projectid.id",
+		a.taskid AS "taskid",
+		a.tip AS "tip",
+		a.cycle AS "cycle",
+		a.files AS "files",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS
+		"delFlag",
+		a.start_day AS "startDay",
+		a.fact_time AS "factTime",
+		re.user_id AS "cruserid",
+		a.issue_state AS "issueState"
+	</sql>
+	<!-- 我收到的任务根据状态查询 -->
+	<select id="mystatelist" resultType="OaPlan">
+
+		SELECT
+		<include refid="myoaPlanColumns" />
+		from oa_plan a
+		<include refid="myoaPlanJoinss" />
+		WHERE
+		re.user_id= #{cruserid } AND a.plan_type = '0' AND a.state = #{state}  AND a.del_flag ='0' order by  a.prefer  asc,  a.end_time  asc 
+	</select>
+	
+	<!-- 查看我收到的ren'wu -->
+		<select id="myfindListTask" resultType="OaPlan">
+		SELECT
+		<include refid="oaPlanColumns" />
+		FROM oa_plan a
+		<include refid="oaPlanJoinss" />
+		where
+			a.del_flag = '0' AND a.plan_type = 0  AND re.user_id= #{cruserid }
+			<if test="planTitle != null and planTitle != ''">
+				AND a.plan_title LIKE
+				<if test="dbName == 'mysql'">concat('%',#{planTitle},'%')</if>
+			</if>
+			<if test="actor != null and actor != ''">
+				AND a.actor LIKE
+				<if test="dbName == 'mysql'">concat('%',#{actor.id},'%')</if>
+			</if>
+			order by  a.prefer  asc ,  a.end_time  asc 
+	</select>
+	
+	
+	
+	<!-- 修改我收到的人物反馈 -->
+	
+	<update id="UpTaksRemarks">
+		UPDATE oa_plan SET
+		backfiles=#{backfiles},
+		remarks=#{remarks }
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 移动端 -->
+	
+	
+<!-- 修改我发出的主任务 -->
+	<update id="mobileUpTaks">
+		UPDATE oa_plan SET
+		plan_title = #{planTitle},
+		content = #{content},
+		start_time = #{startTime},
+		end_time = #{endTime},
+		start_day= #{startDay}
+		
+		WHERE id = #{id}
+	</update>
+	<!-- 修改子任务 -->
+	<update id="mobileUpChildTaks">
+		UPDATE oa_plan SET
+		plan_title = #{planTitle},
+		content = #{content},
+		start_time = #{startTime},
+		end_time = #{endTime},
+		start_day= #{startDay},
+		prefer= #{prefer},
+		remarks=#{remarks }
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+	
+	
+	
+	
+</mapper>

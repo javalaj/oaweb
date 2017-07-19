@@ -1,0 +1,337 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.loan;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.omg.CORBA.ACTIVITY_COMPLETED;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.entity.loan.OaLoanDailyApproval;
+import com.thinkgem.jeesite.modules.oa.entity.loan.OaLoanMain;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.utils.OrdersUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.dao.loan.OaLoanDailyApprovalDao;
+
+/**
+ * 日常借支审批管理Service
+ * @author 李廷龙
+ * @version 2017-01-13
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaLoanDailyApprovalService extends CrudService<OaLoanDailyApprovalDao, OaLoanDailyApproval> {
+	public static final String PROC_DEF_KEY = "oa_loan_daily_approval";
+	public static final String BUSINESS_TABLE = "oa_loan_daily_approval";
+	
+	/**
+	 * 当前登陆人为普通用户
+	 */
+	public static final String USER_TYPE_COMMON = "0";
+	/**
+	 * 当前登陆人为部门副负责人
+	 */
+	public static final String USER_TYPE_VICE = "1";
+	/**
+	 * 当前登陆人为部门主负责人
+	 */
+	public static final String USER_TYPE_CHIEF = "2";
+	@Autowired
+	private ActTaskService actTaskService;
+	
+	@Autowired
+	private OfficeService officeService;
+	
+	@Autowired
+	private OaLoanMainService oaLoanMainService;
+	
+	public OaLoanDailyApproval get(String id) {
+		return super.get(id);
+	}
+	public OaLoanDailyApproval getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+	
+	
+	public List<OaLoanDailyApproval> findList(OaLoanDailyApproval oaLoanDailyApproval) {
+		return super.findList(oaLoanDailyApproval);
+	}
+	
+	public Page<OaLoanDailyApproval> findPage(Page<OaLoanDailyApproval> page, OaLoanDailyApproval oaLoanDailyApproval) {
+		return super.findPage(page, oaLoanDailyApproval);
+	}
+	
+	@Transactional(readOnly = false)
+	public String saveApproval(OaLoanDailyApproval approval) {
+		if (StringUtils.equals("save", approval.getAct().getFlag())) {
+			if (!StringUtils.equals("1", approval.getIsStart())) {
+				approval.setStatus(ActEntity.ACT_STATUS_NOT_START);
+			}
+			User currentUser=UserUtils.getUser();
+			approval.setLoanUser(currentUser);
+			approval.setTitle("日常借支流程【"+UserUtils.getUser().getName()+"】");
+			//保存
+			super.save(approval);
+			return "[日常借支申请][信息保存]操作已完成";
+		}else{
+			//处理
+			if (StringUtils.isBlank(approval.getId())||!StringUtils.equals("1", approval.getIsStart())) {
+				Date now=new Date();
+				User currentUser=UserUtils.getUser();
+				approval.setApprovalTime(now);
+				approval.setLoanUser(currentUser);
+				Office office=officeService.get(UserUtils.getUser().getOffice().getId());
+				User deputyPerson=office.getDeputyPerson();
+				User primaryPerson=office.getPrimaryPerson();
+				String userType=USER_TYPE_COMMON;
+				approval.setStatus(ActEntity.ACT_STATUS_RUNNING);
+				if (primaryPerson!=null&&StringUtils.equals(primaryPerson.getId(), currentUser.getId())) {
+					//当前登陆人为部门主负责人
+					userType=USER_TYPE_CHIEF;
+				}
+				if (StringUtils.equals(USER_TYPE_COMMON,userType)&&deputyPerson!=null&&StringUtils.equals(deputyPerson.getId(), currentUser.getId())) {
+					//当前登陆人为部门副负责人
+					userType=USER_TYPE_VICE;
+				}
+				
+				//1上级审核 2财务副总审核 3总经理审核 x已销毁 y已结案 z日常借支修改 4项目经理审核 5会计审核 6出纳确认 
+				approval.setIsStart("1");
+				approval.setApprovalNo(OrdersUtils.getGenerateOrderNo12("JZ"));
+				SimpleDateFormat myFmt=new SimpleDateFormat("yyyy-MM-dd");
+				approval.setTitle("日常借支流程【"+UserUtils.getUser().getName()+" "+myFmt.format(now)+"】");
+				super.save(approval);
+				String procDefKey = PROC_DEF_KEY;
+				String businessTable = BUSINESS_TABLE;
+				String businessId = approval.getId();
+				String title = approval.getTitle();
+				String procInsId = actTaskService.startProcess(procDefKey, businessTable, businessId, title);
+				String comment = "[日常借支申请]";
+				List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+						.processInstanceId(procInsId).list();
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				if (list.size() > 0) {
+					String taskId = list.get(0).getId();
+					Map<String, Object> vars = Maps.newHashMap();
+					vars.put("apply", UserUtils.getUser().getLoginName());
+					if (StringUtils.equals(userType, USER_TYPE_COMMON)) {
+						User user=UserUtils.get(primaryPerson.getId());
+						vars.put("exam2", user.getLoginName());
+					}else if (StringUtils.equals(userType, USER_TYPE_VICE)) {
+						vars.put("exam3", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam3", ""));
+					}else if (StringUtils.equals(userType, USER_TYPE_CHIEF)) {
+						vars.put("exam4", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam4", ""));
+					}
+					vars.put("flag", "true");
+					vars.put("userType", userType);
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+				}
+				return "[日常借支申请][提交]操作已完成";
+				
+			} else {
+				if (!approval.getAct().isFinishTask()) {
+					
+					Map<String, Object> vars = Maps.newHashMap();
+					vars.put("flag", approval.getAct().getFlag());
+					String taskId = approval.getAct().getTaskId();
+					String procInsId = approval.getAct().getProcInsId();
+					String comment = "default comment";
+					String title = approval.getTitle();
+					
+					String taskDefKey = approval.getAct().getTaskDefKey();
+					if ("exam1".equals(taskDefKey)) {
+						
+						comment = resultComment(approval, "重新申请", "销毁申请", "");
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							User currentUser=UserUtils.getUser();
+							Office office=officeService.get(UserUtils.getUser().getOffice().getId());
+							User deputyPerson=office.getDeputyPerson();
+							User primaryPerson=office.getPrimaryPerson();
+							String userType=USER_TYPE_COMMON;
+							approval.setStatus(ActEntity.ACT_STATUS_RUNNING);
+							if (primaryPerson!=null&&StringUtils.equals(primaryPerson.getId(), currentUser.getId())) {
+								//当前登陆人为部门主负责人
+								userType=USER_TYPE_CHIEF;
+							}
+							if (StringUtils.equals(USER_TYPE_COMMON,userType)&&deputyPerson!=null&&StringUtils.equals(deputyPerson.getId(), currentUser.getId())) {
+								//当前登陆人为部门副负责人
+								userType=USER_TYPE_VICE;
+							}
+							if (StringUtils.equals(userType, USER_TYPE_COMMON)) {
+								User user=UserUtils.get(primaryPerson.getId());
+								vars.put("exam2", user.getLoginName());
+							}else if (StringUtils.equals(userType, USER_TYPE_VICE)) {
+								vars.put("exam3", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam3", Global.getDefaultUser()));
+							}else if (StringUtils.equals(userType, USER_TYPE_CHIEF)) {
+								vars.put("exam4", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam4", Global.getDefaultUser()));
+							}
+							vars.put("userType", userType);
+							
+						}else{
+							Date now=new Date();
+							approval.setApprovalPassTime(now);
+							approval.setStatus(ActEntity.ACT_STATUS_DESTROYED);
+						}
+					} else if ("exam2".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam2Opinion(opinion);
+						String isParchase=approval.getIsPurchase();
+						Double loanMoney=approval.getLoanMoney();
+						comment = resultComment(approval, "通过", "驳回", opinion);
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							vars.put("isPurchase", isParchase);
+							vars.put("loanMoney", loanMoney);
+							if (StringUtils.equals(OaLoanDailyApproval.IS_PARCHASE, isParchase)) {
+								User user=UserUtils.get(approval.getProjectManager().getId());
+								vars.put("exam5", user.getLoginName());
+							}else{
+								if(loanMoney>3000){
+									vars.put("exam4", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam4", Global.getDefaultUser()));
+								}else{
+									vars.put("exam6", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam6", Global.getDefaultUser()));
+								}
+							}
+						}else{
+							approval.setStatus(ActEntity.ACT_STATUS_Edit);
+						}
+					} else if ("exam3".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam3Opinion(opinion);
+						String isParchase=approval.getIsPurchase();
+						Double loanMoney=approval.getLoanMoney();
+						comment = resultComment(approval, "通过", "驳回", opinion);
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							vars.put("isPurchase", isParchase);
+							vars.put("loanMoney", loanMoney);
+							if (StringUtils.equals(OaLoanDailyApproval.IS_PARCHASE, isParchase)) {
+								User user=UserUtils.get(approval.getProjectManager().getId());
+								vars.put("exam5", user.getLoginName());
+							}else{
+								if(loanMoney>3000){
+									vars.put("exam4", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam4", Global.getDefaultUser()));
+								}else{
+									vars.put("exam6", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam6", Global.getDefaultUser()));
+								}
+							}
+						}else{
+							approval.setStatus(ActEntity.ACT_STATUS_Edit);
+						}
+					} else if ("exam4".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam4Opinion(opinion);
+						comment = resultComment(approval, "通过", "驳回", opinion);
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							vars.put("exam6", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam6", Global.getDefaultUser()));
+						}else{
+							approval.setStatus(ActEntity.ACT_STATUS_Edit);
+						}
+					} else if ("exam5".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam5Opinion(opinion);
+						Double loanMoney=approval.getLoanMoney();
+						comment = resultComment(approval, "通过", "驳回", opinion);
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							if(loanMoney>3000){
+								vars.put("exam4", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam4", Global.getDefaultUser()));
+							}else{
+								vars.put("exam6", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam6", Global.getDefaultUser()));
+							}
+						}else{
+							approval.setStatus(ActEntity.ACT_STATUS_Edit);
+						}
+					} else if ("exam6".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam6Opinion(opinion);
+						comment = resultComment(approval, "通过", "驳回", opinion);
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							vars.put("exam7", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "exam7", Global.getDefaultUser()));
+						}else{
+							approval.setStatus(ActEntity.ACT_STATUS_Edit);
+						}
+					} else if ("exam7".equals(taskDefKey)) {
+						String opinion = approval.getRemarksx();
+						approval.setExam7Opinion(opinion);
+						comment = resultComment(approval, "确认结案", "确认结案", opinion);
+						approval.setStatus(ActEntity.ACT_STATUS_COMPLETDD);
+						Date now=new Date();
+						approval.setApprovalPassTime(now);
+					}
+					//结案操作
+					if ("exam7".equals(taskDefKey)) {
+						OaLoanMain oaLoanMain=new OaLoanMain();
+						oaLoanMain.setApprovalTime(approval.getApprovalTime());
+						oaLoanMain.setLoanMoney(approval.getLoanMoney());
+						oaLoanMain.setLoanNo(approval.getApprovalNo());
+						oaLoanMain.setLoanStatus(OaLoanMain.loanStatus_0);
+						oaLoanMain.setLoanType(OaLoanMain.loanType_0);
+						oaLoanMain.setLoanTime(approval.getApprovalPassTime());
+						oaLoanMain.setLoanUser(approval.getLoanUser());
+						oaLoanMainService.save(oaLoanMain);
+					}
+					approval.preUpdate();
+					dao.update(approval);
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+					if ("exam1".equals(taskDefKey)) {
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							return "[日常借支申请][重新申请]操作已完成";
+						}else{
+							return "[日常借支申请][销毁申请]操作已完成";
+						}
+					}else if("exam7".equals(taskDefKey)){
+						return "[日常借支申请][结案]操作已完成";
+					}else{
+						if (StringUtils.equals(approval.getAct().getFlag(), "true")) {
+							return "[日常借支申请][通过申请]操作已完成";
+						}else{
+							return "[日常借支申请][驳回申请]操作已完成";
+						}
+					}
+					
+				}
+			}
+		}
+		return "default message";
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(OaLoanDailyApproval oaLoanDailyApproval) {
+		super.save(oaLoanDailyApproval);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(OaLoanDailyApproval oaLoanDailyApproval) {
+		super.delete(oaLoanDailyApproval);
+	}
+	
+	public static String resultComment(OaLoanDailyApproval oaContractPurchasePayApproval, String successText, String failText,
+			String comment) {
+		String result = failText;
+		if (StringUtils.equals(oaContractPurchasePayApproval.getAct().getFlag(), "true")) {
+			result = successText;
+		}
+		result = "[" + result + "]" + comment;
+		return result;
+	}
+	
+}

@@ -1,0 +1,152 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>资产使用登记</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			
+			
+			
+			$("#inputForm").validate({
+			/* rules: {
+					"operator": {
+				        required: true
+				     }
+				},
+			    messages: {
+			    	"operator": {
+			          required: "必填信息",
+			        }
+			    }, */
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			/* $("input[name='operator']").change(function(){  
+				$(this).valid();  
+			}); */
+		});
+		
+		function claimSubmit()
+		{
+			var count = 0;
+		
+			var current = $("input[name='operator']").length;
+		
+			$("input[name='operator']").each(function() 
+			{
+				if ($(this).val() != null && $(this).val() !='')
+					count++;
+			});
+			
+			if (current != count)
+				top.layer.msg('请填写'+'${assetsSerial.type}'+'申请人');
+			else
+			$("#inputForm").submit();
+				
+		}
+		
+	</script>
+</head>
+<body class="gray-bg">
+
+	<div class="wrapper wrapper-content">
+	<div class="ibox">
+	
+	<div class="ibox-title">
+	<h5>固定资产${assetsSerial.type}单</h5>
+	<ibox:tools/>
+	</div>
+	
+	<div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<div class="row">
+	<div class="col-sm-12">
+
+	<form id="inputForm"  
+	method="post" class="form-horizontal" 
+	action="${ctx}/fixedassets/assetsSerial/claimSave?id=${assetsSerial.id}">
+	<sys:message content="${message}"/>
+	<table class="table table-striped table-bordered  table-hover table-condensed  dataTables-example dataTable no-footer">
+		<thead>
+			<tr>
+				<th style="width: 16%;">资产编号</th>
+				<th style="width: 29%;">资产名称</th>
+				<th style="width: 5%;">数量</th>
+				<th style="width: 5%;">单位</th>
+				<th style="width: 25%;">${assetsSerial.type}人</th>
+				<th style="width: 10%;">电话</th>
+				<!-- <th style="width: 10%;">地址</th> -->
+			</tr>
+		</thead>
+		<tbody>
+		<c:forEach items="${list}" var="vo" varStatus="status">
+				<tr><input type="hidden" name="equId" value="${vo.equId}"/>
+					<input type="hidden" name="operator" value="${vo.create_by}"/>
+					<input type="hidden" name="claimNumber" value="${vo.deviceID}"/>
+					<input type="hidden" name="address" value=" "/>
+					<td align="center">${vo.deviceID}</td>
+					<td align="center">${vo.assetsName}</td>
+					<td align="center">1<input type="hidden" name="assetsId" value="${vo.fixed_id}"/></td>
+					<td align="center">${fns:getDictLabel(vo.unit, 'unit', '')}</td>
+					<td align="center"><%-- <sys:treeselect id="user${status.index}" name="operator" labelValue=""
+					labelName="username" value="" title="用户"
+					url="/sys/office/treeData?type=3" cssClass="form-control required" 
+					allowClear="true" notAllowSelectParent="true"/>
+					<span class="help-inline"><font color="red">*</font> </span> --%>
+					${fns:getUserById(vo.create_by).name} 
+					</td>
+					<td align="center"><input type="text" name="phone" class="form-control "/></td>
+					<!-- <td align="center"></td> -->
+				</tr>
+		</c:forEach>	
+		</tbody>
+	</table>
+		备注说明：
+		<br/>
+		<c:forEach items="${list}" var="vo" varStatus="status">
+			<c:if test="${status.first}">
+			<table>
+				<tr>
+					<td>${vo.remarks}</td>
+					<td><input type="hidden" name="remarks" value="${vo.remarks}"/></td>
+				</tr>
+			</table>
+			</c:if>
+		</c:forEach>
+		
+		<div class="form-actions">
+			<input id="btnSubmit" class="btn btn-primary" type="button" 
+			value="提交" onclick="claimSubmit()"/>&nbsp;
+			<input id="btnCancel" class="btn" type="button" value="返 回" 
+			onclick="window.location='${ctx}/act/task/todo'"/>
+		</div>
+	</form>
+	<c:if test="${not empty assetsSerial.id}">
+			<act:histoicFlow procInsId="${assetsSerial.procInsId}" />
+	</c:if>
+	<br/>
+	</div>
+	</div>
+	
+			<br>
+	<br>
+	</div>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,38 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.user.dao;
+
+import java.util.List;
+import java.util.Map;
+
+import com.thinkgem.jeesite.common.persistence.CrudDao;
+import com.thinkgem.jeesite.common.persistence.annotation.MyBatisDao;
+import com.thinkgem.jeesite.modules.user.entity.UserWeekplan;
+
+/**
+ * 每周计划集合类，没有具体计划细节DAO接口
+ * 
+ * @author liuxin
+ * @version 2016-11-04
+ */
+@MyBatisDao
+public interface UserWeekplanDao extends CrudDao<UserWeekplan> {
+
+	/**
+	 * 通过日期获取下一周计划总数。
+	 */
+	public Integer findCountByPlandate(UserWeekplan userWeekplan);
+	
+	//通过创建者id和周数获取周计划列表
+	public List<UserWeekplan>  indexGetId(UserWeekplan userWeekplan);
+	
+	/**
+	 * 查询公司所有人的绩效考核
+	 */
+	public  List<UserWeekplan> allListWeekPlan(UserWeekplan userWeekplan);
+	
+	public List<UserWeekplan> allListWeekPlanOfficeId(UserWeekplan userWeekplan);
+	
+	public Map<String, String> countWeek(UserWeekplan userWeekplan);
+}

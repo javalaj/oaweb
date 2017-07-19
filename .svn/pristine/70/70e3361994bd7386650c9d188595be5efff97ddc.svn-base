@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.coding.OaCollectCodingDao">
+
+	<sql id="oaCollectCodingColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.user_no AS "userNo",
+		a.coding_begindate AS "codingBegindate",
+		a.coding_enddate AS "codingEnddate",
+		a.working_type AS "workingType",
+		a.else_type AS "elseType",
+		a.time_offset AS "timeOffset"
+	</sql>
+
+	<sql id="oaCollectCodingJoins">
+	</sql>
+
+	<select id="getByUserNoAndDate" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		WHERE a.user_no = #{0} and(
+		date_format(a.coding_begindate,'%Y-%m-%d')
+		= #{1} or date_format(a.coding_enddate,'%Y-%m-%d') = #{1})
+		AND a.del_flag = '0'
+	</select>
+
+	<select id="getListByUserAndDate" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		WHERE a.user_no = #{0} and
+		date_format(a.coding_begindate,'%Y-%m-%d')
+		between
+		#{1} and #{2} order by a.coding_begindate
+		AND a.del_flag = '0'
+	</select>
+	
+	<select id="getListByUserNoAndDate" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		WHERE a.user_no = #{userNo} and
+			date_format(a.coding_begindate,'%Y-%m')=date_format(#{searchDate},'%Y-%m')
+			AND a.del_flag = '0'
+		ORDER BY a.coding_begindate DESC	
+	</select>
+
+	<select id="get" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaCollectCoding">
+		SELECT
+		<include refid="oaCollectCodingColumns" />
+		FROM oa_collect_coding a
+		<include refid="oaCollectCodingJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_collect_coding(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		user_no,
+		coding_begindate,
+		coding_enddate,
+		working_type,
+		else_type,
+		time_offset
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{userNo},
+		#{codingBegindate},
+		#{codingEnddate},
+		#{workingType},
+		#{elseType},
+		#{timeOffset}
+		)
+	</insert>
+		
+	<update id="update">
+		UPDATE oa_collect_coding SET
+		update_by =
+		#{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		user_no = #{userNo},
+		coding_begindate = #{codingBegindate},
+		coding_enddate = #{codingEnddate},
+		working_type = #{workingType},
+		else_type = #{elseType},
+		time_offset = #{timeOffset}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_collect_coding SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="deleteByYearMonth">
+		UPDATE oa_collect_coding SET
+		del_flag ='1'
+		WHERE DATE_FORMAT(coding_begindate, '%Y-%m') = #{yearMonth} OR DATE_FORMAT(coding_enddate, '%Y-%m') = #{yearMonth}
+	</update>
+
+</mapper>

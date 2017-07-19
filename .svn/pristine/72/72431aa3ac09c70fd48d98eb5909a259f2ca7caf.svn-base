@@ -1,0 +1,249 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.project;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.utils.excel.ExportExcel;
+import com.thinkgem.jeesite.modules.oa.entity.contract.OaContractProtocol;
+import com.thinkgem.jeesite.modules.oa.entity.contract.OaContractPurchase;
+import com.thinkgem.jeesite.modules.oa.entity.contract.OaContractSales;
+import com.thinkgem.jeesite.modules.oa.entity.project.OaProject;
+import com.thinkgem.jeesite.modules.oa.entity.project.OaProjectChange;
+import com.thinkgem.jeesite.modules.oa.service.contract.OaContractProtocolService;
+import com.thinkgem.jeesite.modules.oa.service.contract.OaContractPurchaseService;
+import com.thinkgem.jeesite.modules.oa.service.contract.OaContractSalesService;
+import com.thinkgem.jeesite.modules.oa.service.contract.OaContractSubService;
+import com.thinkgem.jeesite.modules.oa.service.project.OaProjectChangeService;
+import com.thinkgem.jeesite.modules.oa.service.project.OaProjectService;
+
+/**
+ * 项目表的管理Controller
+ * @author 李廷龙
+ * @version 2016-11-17
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/project/oaProject")
+public class OaProjectController extends BaseController {
+
+	@Autowired
+	private OaProjectService oaProjectService;
+	
+	@Autowired
+	private OaContractSalesService oaContractSalesService;
+	
+	@Autowired
+	private OaContractPurchaseService oaContractPurchaseService;
+	
+	@Autowired
+	private OaContractProtocolService oaContractProtocolService;
+	
+	@Autowired
+	private OaContractSubService oaContractSubService;
+	
+	@Autowired
+	private OaProjectChangeService oaProjectChangeService;
+	
+	
+	@ModelAttribute
+	public OaProject get(@RequestParam(required=false) String id) {
+		OaProject entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = oaProjectService.get(id);
+		}
+		if (entity == null){
+			entity = new OaProject();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("oa:project:oaProject:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(OaProject oaProject, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaProject> page = oaProjectService.findPage(new Page<OaProject>(request, response), oaProject); 
+		model.addAttribute("page", page);
+		return "modules/oa/project/oaProjectList";
+	}
+	
+	@RequiresPermissions("oa:project:oaProject:view")
+	@RequestMapping(value = {"myList"})
+	public String listBySearchUserId(OaProject oaProject, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaProject> page = oaProjectService.findPageBySearchUserId(new Page<OaProject>(request, response), oaProject); 
+		model.addAttribute("page", page);
+		return "modules/oa/project/myOaProjectList";
+	}
+
+	@RequiresPermissions("oa:project:oaProject:view")
+	@RequestMapping(value = "form")
+	public String form(OaProject oaProject, Model model) {
+		model.addAttribute("oaProject", oaProject);
+		
+		OaContractSales oaContractSales=new OaContractSales();
+		oaContractSales.setProject(oaProject);
+		List<OaContractSales> oaContractSaless=oaContractSalesService.findListByProjectId(oaContractSales);
+		model.addAttribute("oaContractSaless", oaContractSaless);
+		
+		OaContractPurchase oaContractPurchase=new OaContractPurchase();
+		oaContractPurchase.setProject(oaProject);
+		List<OaContractPurchase> oaContractPurchases=oaContractPurchaseService.findListByProjectId(oaContractPurchase);
+		model.addAttribute("oaContractPurchases", oaContractPurchases);
+		
+		OaContractPurchase oaContractSub=new OaContractPurchase();
+		oaContractSub.setProject(oaProject);
+		List<OaContractPurchase> oaContractSubs=oaContractSubService.findListByProjectId(oaContractSub);
+		model.addAttribute("oaContractSubs", oaContractSubs);
+		
+		OaContractProtocol oaContractProtocol=new OaContractProtocol();
+		oaContractProtocol.setProject(oaProject);
+		List<OaContractProtocol> oaContractProtocols=oaContractProtocolService.findListByProjectId(oaContractProtocol);
+		model.addAttribute("oaContractProtocols", oaContractProtocols);
+		return "modules/oa/project/oaProjectForm";
+	}
+	@RequiresPermissions("user")
+	@RequestMapping(value = "statisticsForm")
+	public String statisticsForm(OaProject oaProject, Model model) {
+		model.addAttribute("oaProject", oaProject);
+		return "modules/oa/project/oaProjectStatisticsForm";
+	}
+	
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "statistics")
+	public String statistics(OaProject oaProject, Model model,HttpServletRequest request, HttpServletResponse response,RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, oaProject)){
+			return form(oaProject, model);
+		}
+		List<OaProject> list=oaProjectService.findListAdd(oaProject);
+		model.addAttribute("list", list);
+		model.addAttribute("oaProjectViewCondition", oaProject);
+		addMessage(redirectAttributes, "项目统计成功");
+		return "modules/oa/project/oaProjectStatisticsList";
+	}
+	
+	/**
+	 * 项目统计数据导出
+	 * 
+	 * @param user
+	 * @param request
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("oa:project:oaProject:view")
+	@RequestMapping(value = "export", method = RequestMethod.POST)
+	public String exportFile(OaProject oaProjectSearchCondition, Model model, HttpServletRequest request,
+			HttpServletResponse response, RedirectAttributes redirectAttributes) {
+		try {
+			String fileName = "项目统计数据" + DateUtils.getDate("yyyyMMddHHmmss")
+					+ ".xlsx";
+			List<OaProject> list=oaProjectService.findListAdd(oaProjectSearchCondition);
+			new ExportExcel("项目统计数据", OaProject.class).setDataList(list)
+					.write(response, fileName).dispose();
+			model.addAttribute("list", list);
+			model.addAttribute("oaProjectViewCondition", oaProjectSearchCondition);
+			return null;
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导出项目失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/oa/project/oaProject/statistics?repage";
+	}
+
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "save")
+	@Token(save = true)
+	public String save(OaProject oaProject, Model model, RedirectAttributes redirectAttributes) {
+		if (StringUtils.isBlank(oaProject.getProjectName())){
+			addMessage(model, "项目名称不能为空");
+			return form(oaProject, model);
+		}
+		oaProjectService.save(oaProject);
+		addMessage(redirectAttributes, "保存项目完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	
+	
+	
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaProject oaProject, RedirectAttributes redirectAttributes) {
+		oaProjectService.delete(oaProject);
+		addMessage(redirectAttributes, "删除项目完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "complete")
+	public String complete(OaProject oaProject, RedirectAttributes redirectAttributes) {
+		oaProject.setState(OaProject.STATE_COMPLETED);
+		oaProjectService.save(oaProject);
+		addMessage(redirectAttributes, "操作完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "cancel")
+	public String cancel(OaProject oaProject, RedirectAttributes redirectAttributes) {
+		oaProject.setState(OaProject.STATE_CANCEL);
+		oaProject.setCancelDate(new Date());
+		oaProjectService.save(oaProject);
+		addMessage(redirectAttributes, "操作完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "pause")
+	public String pause(OaProject oaProject, RedirectAttributes redirectAttributes) {
+		oaProject.setState(OaProject.STATE_PAUSE);
+		oaProject.setPauseDate(new Date());
+		oaProjectService.save(oaProject);
+		addMessage(redirectAttributes, "操作完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	@RequiresPermissions("oa:project:oaProject:edit")
+	@RequestMapping(value = "start")
+	public String start(OaProject oaProject, RedirectAttributes redirectAttributes) {
+		oaProject.setState(OaProject.STATE_UNCOMPLETED);
+		oaProjectService.save(oaProject);
+		Date pauseDate=oaProject.getPauseDate();
+		Date currentDate=new Date();
+		Integer day=DateUtils.getUserfulStep(pauseDate, currentDate, 0, null, true);
+		OaProjectChange oaProjectChange=new OaProjectChange();
+		oaProjectChange.setChangeStartDate(pauseDate);
+		oaProjectChange.setChangeEndDate(currentDate);
+		oaProjectChange.setChangeType(OaProjectChange.CHANGE_TYPE_PAUSE);
+		oaProjectChange.setChangeProject(oaProject);
+		oaProjectChange.setChangeDay(-day);
+		oaProjectChangeService.save(oaProjectChange);
+		addMessage(redirectAttributes, "操作完成");
+		return "redirect:"+Global.getAdminPath()+"/oa/project/oaProject/myList?repage";
+	}
+	@RequestMapping(value="getOaProject")
+	public @ResponseBody OaProject getOaProject(String projectId){
+		OaProject entity = null;
+		if (StringUtils.isNotBlank(projectId)){
+			entity = oaProjectService.get(projectId);
+		}
+		return entity;
+	}
+
+}

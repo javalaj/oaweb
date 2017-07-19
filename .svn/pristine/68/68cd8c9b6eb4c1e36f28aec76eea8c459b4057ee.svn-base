@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.FixedAssetsDao">
+    
+	<sql id="fixedAssetsColumns">
+		a.id AS "id",
+		a.assets_name AS "assetsName",
+		a.assets_category AS "assetsCategory",
+		a.serial_number AS "serialNumber",
+		a.brand AS "brand",
+		a.model AS "model",
+		a.amount AS "amount",
+		a.specifications AS "specifications",
+		a.unit_price AS "unitPrice",
+		a.supplier AS "supplier",
+		a.unit AS "unit",
+		a.create_by AS "createBy.id",
+		a.photo AS "photo",
+		a.purchase_date AS "purchaseDate",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.del_flag AS "delFlag",
+		u6.name AS "createBy.name",
+		u8.name AS "updateBy.name"
+	</sql>
+	
+	<sql id="fixedAssetsJoins">
+		LEFT JOIN sys_user u6 ON u6.id = a.create_by
+		LEFT JOIN sys_user u8 ON u8.id = a.update_by
+	</sql>
+    
+	<select id="get" resultType="FixedAssets">
+		SELECT 
+			<include refid="fixedAssetsColumns"/>
+		FROM fixed_assets a
+		<include refid="fixedAssetsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="FixedAssets">
+		SELECT 
+			<include refid="fixedAssetsColumns"/>
+		FROM fixed_assets a
+		<include refid="fixedAssetsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="assetsName != null and assetsName != ''">
+				AND a.assets_name LIKE 
+				<if test="dbName == 'oracle'">'%'||#{assetsName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{assetsName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{assetsName},'%')</if>
+			</if>
+			<if test="serialNumber != null and serialNumber != ''">
+				AND a.serial_number LIKE 
+					<if test="dbName == 'oracle'">'%'||#{serialNumber}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{serialNumber}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{serialNumber},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="FixedAssets">
+		SELECT 
+			<include refid="fixedAssetsColumns"/>
+		FROM fixed_assets a
+		<include refid="fixedAssetsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAssetList" parameterType="String" resultMap="assetResult">
+		select t1.serial_number,t1.assets_name,t1.assets_category,
+		t1.brand,t1.unit,t1.unit_price,t2.account,
+		t2.staff,t2.condition_time
+		from fixed_assets t1 left join 
+		fixed_assets_condition t2 on t1.id = t2.fixed_assets_id
+		and t2.assets_condition = #{type}
+	</select>
+	
+	<resultMap type="com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetVo" id="assetResult">
+		<result property="serialNumber" column="serial_number"/>
+		<result property="assetsName" column="assets_name"/>
+		<result property="assetsCategory" column="assets_category"/>
+		<result property="unit" column="unit"/>
+		<result property="brand" column="brand"/>
+		<result property="unitPrice" column="unit_price"/>
+		<result property="account" column="account"/>
+		<result property="staff" column="staff"/>
+		<result property="conditionTime" column="condition_time"/>
+	</resultMap>
+	
+	<select id="findApplyList" resultType="FixedAssets">
+		SELECT 
+			<include refid="fixedAssetsColumns"/>
+		FROM fixed_assets a
+		<include refid="fixedAssetsJoins"/>
+		<where>
+			a.del_flag = 0
+			and a.id in
+			<foreach item="item" index="index" collection="list"
+			open="(" separator="," close=")">
+			#{item}
+			</foreach> 
+		</where>
+	</select>
+	
+	<select id="findBrand" resultType="String">
+		select label from sys_dict t
+		where t.type = 'equ_brand'
+		and t.value = #{value}
+	</select>
+	
+	<select id="findCategory" resultType="String">
+		select label from sys_dict t
+		where t.type = 'assets_category'
+		and t.value = #{value}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO fixed_assets(
+			id,
+			assets_name,
+			assets_category,
+			serial_number,
+			brand,
+			model,
+			amount,
+			specifications,
+			unit_price,
+			supplier,
+			unit,
+			create_by,
+			photo,
+			purchase_date,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			del_flag
+		) VALUES (
+			#{id},
+			#{assetsName},
+			#{assetsCategory},
+			#{serialNumber},
+			#{brand},
+			#{model},
+			#{amount},
+			#{specifications},
+			#{unitPrice},
+			#{supplier},
+			#{unit},
+			#{createBy.name},
+			#{photo},
+			#{purchaseDate},
+			#{createDate},
+			#{updateBy.name},
+			#{remarks},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE fixed_assets SET 	
+			assets_name = #{assetsName},
+			assets_category = #{assetsCategory},
+			serial_number = #{serialNumber},
+			brand = #{brand},
+			model = #{model},
+			amount = #{amount},
+			specifications = #{specifications},
+			unit_price = #{unitPrice},
+			supplier = #{supplier},
+			unit = #{unit},
+			photo = #{photo},
+			purchase_date = #{purchaseDate},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE fixed_assets SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.sign.OaSignDao">
+    
+	<sql id="oaSignColumns">
+		a.id AS "id",
+		a.title AS "signTitile",
+		a.sign_type AS "signType",
+		a.sign_number AS "signNumber",
+		a.sign_content AS "signContent",
+		a.sign_text AS "signText",
+		a.sign_files AS "signFiles",
+		a.sign_head_opinion AS "signHeadOpinion",
+		a.sign_yf_opinion AS "signYfOpinion",
+		a.sign_js_opinion AS "signJsOpinion",
+		a.sign_sw_opinion AS "signSwOpinion",
+		a.sign_sc_opinion AS "signScOpinion",
+		a.sign_rs_opinion AS "signRsOpinion",
+		a.sign_cw_opinion AS "signCwOpinion",
+		a.sign_ld_opinion AS "signLdOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.isdraft AS "signState",
+		a.complete_date AS "completeDate",
+		a.proc_ins_id AS "procInsId",
+		a.p_name AS pName,
+		a.code AS code,
+		a.type AS type,
+		a.officename AS officeName,
+		a.date AS date,
+		a.del_flag AS delFlag
+		
+	</sql>
+	
+	<sql id="oaSignJoins">
+	</sql>
+    <select id="getByProcInsId" resultType="OaSign">
+		SELECT
+		<include refid="oaSignColumns" />
+		FROM oa_sign a
+		<include refid="oaSignJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaSign">
+		SELECT 
+			<include refid="oaSignColumns"/>
+		FROM oa_sign a
+		<include refid="oaSignJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaSign">
+		SELECT 
+			<include refid="oaSignColumns"/>
+		FROM oa_sign a
+		<include refid="oaSignJoins"/>
+		<where>
+			AND a.create_by=#{createBy.id} AND a.del_flag = 0
+			<if test="signTitile != null and signTitile != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{signTitile}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{signTitile}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{signTitile},'%')</if>
+			</if>
+			<if test="signNumber != null and signNumber != ''">
+				AND a.sign_number LIKE 
+					<if test="dbName == 'oracle'">'%'||#{signNumber}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{signNumber}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{signNumber},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaSign">
+		SELECT 
+			<include refid="oaSignColumns"/>
+		FROM oa_sign a
+		<include refid="oaSignJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_sign(
+			id,
+			title,
+			sign_type,
+			sign_number,
+			sign_content,
+			sign_text,
+			sign_files,
+			sign_head_opinion,
+			sign_yf_opinion,
+			sign_js_opinion,
+			sign_sw_opinion,
+			sign_sc_opinion,
+			sign_rs_opinion,
+			sign_cw_opinion,
+			sign_ld_opinion,
+			create_by,
+			create_date,
+			isdraft,
+			complete_date,
+			proc_ins_id,
+			p_name,
+			 code,
+		type,
+		officeName,
+		date
+		
+		) VALUES (
+			#{id},
+			#{signTitile},
+			#{signType},
+			#{signNumber},
+			#{signContent},
+			#{signText},
+			#{signFiles},
+			#{signHeadOpinion},
+			#{signYfOpinion},
+			#{signJsOpinion},
+			#{signSwOpinion},
+			#{signScOpinion},
+			#{signRsOpinion},
+			#{signCwOpinion},
+			#{signLdOpinion},
+			#{createBy.id},
+			#{createDate},
+			#{signState},
+			#{completeDate},
+			#{procInsId},
+			#{pName},
+			#{code},
+		#{type},
+		#{officeName},
+		#{date}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_sign SET 	
+			title = #{signTitile},
+			sign_type = #{signType},
+			sign_number = #{signNumber},
+			sign_content = #{signContent},
+			sign_text = #{signText},
+			sign_files = #{signFiles},
+			sign_head_opinion = #{signHeadOpinion},
+			sign_yf_opinion = #{signYfOpinion},
+			sign_js_opinion = #{signJsOpinion},
+			sign_sw_opinion = #{signSwOpinion},
+			sign_sc_opinion = #{signScOpinion},
+			sign_rs_opinion = #{signRsOpinion},
+			sign_cw_opinion = #{signCwOpinion},
+			sign_ld_opinion = #{signLdOpinion},
+			isdraft = #{signState},
+			complete_date = #{completeDate},
+			proc_ins_id=#{procInsId},
+			p_name=#{pName},
+			code = #{code}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_sign SET del_flag = 1
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

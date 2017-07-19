@@ -1,0 +1,150 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.user.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.user.entity.UserWeekrecord;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.dao.UserWeekrecordDao;
+
+/**
+ * 周计划计划的细节内容，与周计划一对多关联关系Service
+ * @author liuxin
+ * @version 2016-11-04
+ */
+@Service
+@Transactional(readOnly = true)
+public class UserWeekrecordService extends CrudService<UserWeekrecordDao, UserWeekrecord> {
+	@Autowired
+	ActTaskService actTaskService;
+	@Autowired
+	UserWeekrecordDao dao;
+	public UserWeekrecord get(String id) {
+		return super.get(id);
+	}
+	public boolean isDeal(UserWeekrecord userweekrecord) {
+		if (StringUtils.isBlank(userweekrecord.getId())) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(userweekrecord.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	public List<UserWeekrecord> findList(UserWeekrecord userWeekrecord) {
+		return super.findList(userWeekrecord);
+	}
+	//小组长审核 通过共同id查出对应数据
+	public List<UserWeekrecord> comList(String sameid) {
+		return dao.comList(sameid);
+	}
+	//月绩效审核  通过共同id查出对应数据
+	public List<UserWeekrecord> precomidList(String sameid) {
+		return dao.precomidList(sameid);
+	}
+	
+	//审核过程产生共同的id修改数据
+	@Transactional(readOnly = false)
+	public void upPrecomid(UserWeekrecord userWeekrecord) {
+		dao.upPrecomid(userWeekrecord);
+	}
+	//月绩效审核  通过共同id查出被驳回的数据对应数据
+	public List<UserWeekrecord> turnprecomidList(String sameid) {
+		return dao.turnprecomidList(sameid);
+	}
+	//修改质量分
+	@Transactional(readOnly = false)
+	public void upqualityscore(UserWeekrecord userWeekrecord) {
+		dao.upqualityscore(userWeekrecord);
+	}
+	//修改驳回后重新提交的驳回标示
+	@Transactional(readOnly = false)
+	public void upturndownflag(UserWeekrecord userWeekrecord) {
+		dao.upturndownflag(userWeekrecord);
+	}
+	//修改进度分
+	@Transactional(readOnly = false)
+	public void UPschedule(UserWeekrecord userWeekrecord) {
+		dao.UPschedule(userWeekrecord);
+	}
+	//修改驳回的分数
+	@Transactional(readOnly = false)
+	public void upturndownId(UserWeekrecord userWeekrecord) {
+		dao.upturndownId(userWeekrecord);
+	}
+	public UserWeekrecord  getprecomidListID(String id) {
+		return dao.getprecomidListID(id);
+	}
+	//通过weekplanID获取周计划列表
+	  public List<UserWeekrecord> indexGetList(UserWeekrecord userWeekrecord){
+		  return dao.indexGetList(userWeekrecord);
+	  }
+	
+	@Transactional(readOnly = false)
+	public  void  upweek(UserWeekrecord userWeekrecord){
+		dao.upweek(userWeekrecord);
+	}
+	public  List<UserWeekrecord>  getweekPlanList(UserWeekrecord userWeekrecord){
+		return dao.getweekPlanList(userWeekrecord);
+	}
+	
+	
+	public Page<UserWeekrecord> findPage(Page<UserWeekrecord> page, UserWeekrecord userWeekrecord) {
+		return super.findPage(page, userWeekrecord);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(UserWeekrecord userWeekrecord) {
+		super.save(userWeekrecord);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(UserWeekrecord userWeekrecord) {
+		super.delete(userWeekrecord);
+	}
+	
+	public List<Map<String, Object>> sum(UserWeekrecord userWeekrecord){
+		return dao.sum(userWeekrecord);
+	}
+	
+	public Task getTaskByProcInsId(String procInsId) {
+
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.processInstanceId(procInsId).list();
+		if (list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+	public Task getTaskByprocInsIdPre(String procInsIdPre) {
+
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.processInstanceId(procInsIdPre).list();
+		if (list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+	public List<UserWeekrecord> grouplist(String createid) {
+		return dao.grouplist(createid);
+	}
+	
+	
+	
+}

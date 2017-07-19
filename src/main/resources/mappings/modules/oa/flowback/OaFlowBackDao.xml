@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.flowback.OaFlowBackDao">
+
+	<sql id="oaFlowBackColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS
+		"createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS
+		"updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.proc_ins_id AS "procInsId",
+		a.can_back_id AS "canBackId",
+		a.can_back_node AS "canBackNode",
+		a.resultURL AS "resultURL"
+	</sql>
+
+	<sql id="oaFlowBackJoins">
+	</sql>
+
+
+	<select id="get" resultType="OaFlowBack">
+		SELECT
+		<include refid="oaFlowBackColumns" />
+		FROM oa_flow_back a
+		<include refid="oaFlowBackJoins" />
+		WHERE a.proc_ins_id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaFlowBack">
+		SELECT
+		<include refid="oaFlowBackColumns" />
+		FROM oa_flow_back a
+		<include refid="oaFlowBackJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaFlowBack">
+		SELECT
+		<include refid="oaFlowBackColumns" />
+		FROM oa_flow_back a
+		<include refid="oaFlowBackJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_flow_back(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		proc_ins_id,
+		can_back_id,
+		can_back_node,
+		resultURL
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{procInsId},
+		#{canBackId},
+		#{canBackNode},
+		#{resultURL}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_flow_back SET
+		update_by = #{updateBy.id},
+		update_date =
+		#{updateDate},
+		remarks = #{remarks},
+		can_back_id =
+		#{canBackId},
+		can_back_node = #{canBackNode}
+		<if test="resultURL != null">,resultURL = #{resultURL}</if>
+		WHERE proc_ins_id = #{procInsId}
+	</update>
+
+	<!--物理删除 -->
+	<update id="delete">
+		DELETE FROM oa_flow_back
+		WHERE id = #{id}
+	</update>
+
+	<!--逻辑删除 -->
+	<update id="deleteByLogic">
+		UPDATE oa_flow_back SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<!--删除已办记录 -->
+	<delete id="deleteHaveToDo">
+		DELETE FROM
+		act_hi_taskinst
+		<where>
+			PROC_INST_ID_ = #{procInsId}
+			AND
+			TASK_DEF_KEY_ = #{taskDefKey}
+			AND
+			DURATION_ IS NOT NULL
+			ORDER BY
+			START_TIME_ DESC
+			LIMIT 1
+		</where>
+	</delete>
+
+	<!--删除流程流转信息多余记录1 -->
+	<delete id="deleteFlowInfo1">
+		DELETE FROM
+		act_hi_actinst
+		<where>
+			PROC_INST_ID_ = #{procInsId}
+		AND
+			ACT_ID_ = #{taskDefKey}
+		AND
+			DURATION_ IS NOT NULL
+		ORDER BY
+			START_TIME_ DESC
+		LIMIT 1
+
+
+
+		</where>
+	</delete>
+
+	<!--删除流程流转信息多余记录2 -->
+	<delete id="deleteFlowInfo2">
+		DELETE FROM
+		act_hi_actinst
+		<where>
+			PROC_INST_ID_ = #{procInsId}
+		AND
+			ACT_ID_ != #{taskDefKey}
+		AND
+			DURATION_ IS NULL
+		</where>
+	</delete>
+
+</mapper>

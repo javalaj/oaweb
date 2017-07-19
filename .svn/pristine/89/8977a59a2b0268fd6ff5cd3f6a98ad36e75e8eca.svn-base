@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+
+.divMargin {
+	margin-top: 60px;
+	margin-bottom: 60px;
+}
+
+.xinfoot {
+	margin-bottom: 60px
+}

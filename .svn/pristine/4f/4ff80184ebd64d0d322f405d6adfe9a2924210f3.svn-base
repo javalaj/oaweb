@@ -1,0 +1,69 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity.fixedassets;
+
+import java.util.List;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.thinkgem.jeesite.common.persistence.DataEntity;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+
+/**
+ * 易耗品序列Entity
+ * @author 易耗品序列
+ * @version 2016-12-02
+ */
+public class PerishableSerial extends DataEntity<PerishableSerial> {
+	
+	private static final long serialVersionUID = 1L;
+	private String title;		// 标题
+	private String procInsId;		// 流程相关id
+	private Act act;
+	
+	private List<PerishableApply> applyList;
+	
+	public PerishableSerial() {
+		super();
+	}
+
+	public PerishableSerial(String id){
+		super(id);
+	}
+
+	@Length(min=0, max=255, message="标题长度必须介于 0 和 255 之间")
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	@Length(min=0, max=255, message="流程相关id长度必须介于 0 和 255 之间")
+	public String getProcInsId() {
+		return procInsId;
+	}
+
+	public void setProcInsId(String procInsId) {
+		this.procInsId = procInsId;
+	}
+
+	public Act getAct() {
+		return act;
+	}
+
+	public void setAct(Act act) {
+		this.act = act;
+	}
+
+	public List<PerishableApply> getApplyList() {
+		return applyList;
+	}
+
+	public void setApplyList(List<PerishableApply> applyList) {
+		this.applyList = applyList;
+	}
+	
+}

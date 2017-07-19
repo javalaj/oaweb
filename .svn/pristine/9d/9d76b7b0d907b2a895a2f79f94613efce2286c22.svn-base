@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.mail.OaMailDao">
+
+	<sql id="oaMailColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS
+		"createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS
+		"updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.main_id
+		AS "mainId",a.main_name AS "mainName",
+		a.other_id AS
+		"otherId",a.other_name AS "otherName",
+		a.title AS "title",
+		a.file AS
+		"file",
+		a.content AS "content",a.isdraft AS "isdraft"
+	</sql>
+	<sql id="oaMailJoins">
+	</sql>
+	<sql id="oaMailJoins2">
+		LEFT JOIN sys_user b ON b.id = a.create_by LEFT JOIN
+		sys_office c ON
+		b.office_id = c.id
+	</sql>
+
+	<select id="isdeal" resultType="java.lang.Integer">
+		SELECT
+		COUNT(a.id)
+		FROM oa_mail_record a
+		WHERE a.mail_id = #{mailid}
+		<if test="userid !=null">AND a.create_by = #{userid}</if>
+	</select>
+
+	<select id="get" resultType="OaMail">
+		SELECT b.name AS "createBy.name", c.name AS "createBy.office.name",
+		<include refid="oaMailColumns" />
+		FROM oa_mail a
+		<include refid="oaMailJoins" />
+		<include refid="oaMailJoins2" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaMail">
+		SELECT
+		<include refid="oaMailColumns" />
+		FROM oa_mail a
+		<include refid="oaMailJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaMail">
+		SELECT
+		<include refid="oaMailColumns" />
+		FROM oa_mail a
+		<include refid="oaMailJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_mail(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		main_id,main_name,
+		other_id,other_name,
+		title,
+		file,
+		content,isdraft
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{mainId},#{mainName},
+		#{otherId},#{otherName},
+		#{title},
+		#{file},
+		#{content},#{isdraft}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_mail SET
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		main_id =
+		#{mainId},main_name = #{mainName},
+		other_id = #{otherId}, other_name
+		=
+		#{otherName},
+		title = #{title},
+		file = #{file},
+		content =
+		#{content},isdraft=#{isdraft}
+		WHERE id = #{id}
+	</update>
+
+	<!--物理删除 -->
+	<update id="delete">
+		DELETE FROM oa_mail
+		WHERE id = #{id}
+	</update>
+
+	<!--逻辑删除 -->
+	<update id="deleteByLogic">
+
+		UPDATE oa_mail SET
+		del_flag = #{DEL_FLAG_DELETE}
+
+
+
+		WHERE
+		id = #{id}
+	</update>
+
+</mapper>

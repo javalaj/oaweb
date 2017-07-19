@@ -1,0 +1,268 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.oa.web.qualificationb;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.entity.qualificationb.OaQualificationb;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.oa.service.qualificationb.OaQualificationbService;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.OrdersUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.service.UserFavoriteService;
+
+/**
+ * 资质借用流程Controller
+ * @author niting
+ * @version 2017-01-09
+ */
+@Controller(value="moaQualificationbController")
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/qualificationb/oaQualificationb")
+public class OaQualificationbController extends BaseController {
+
+	@Autowired
+	private OaQualificationbService oaQualificationbService;
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private OfficeService officeService;
+	@Autowired
+	private OaProVacateService oaProVacateService;
+	@Autowired
+	private ActTaskService actTaskService;	
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回交接操作service
+	
+	@ModelAttribute
+	public OaQualificationb get(@RequestParam(required=false) String id) {
+		OaQualificationb entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = oaQualificationbService.get(id);
+		}
+		if (entity == null){
+			entity = new OaQualificationb();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(OaQualificationb oaQualificationb, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaQualificationb> page = oaQualificationbService.findPage(new Page<OaQualificationb>(request, response), oaQualificationb); 
+		model.addAttribute("page", page);
+		return "mobile/modules/oa/qualificationb/oaQualificationbList";
+	}
+
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaQualificationb oaQualificationb, RedirectAttributes redirectAttributes) {
+		oaQualificationbService.delete(oaQualificationb);
+		addMessage(redirectAttributes, "删除资质借用成功");
+		return "redirect:"+Global.getAdminPath()+ Global.getMobilePath()+"/oa/qualificationb/oaQualificationb/?repage";
+	}
+
+	@RequestMapping(value = "view")
+	public String detail(OaQualificationb oaQualificationb, Model model) {
+		oaQualificationb.setCreateBy(systemService.getUser(oaQualificationb.getCreateBy().getId()));// 为页面查询出申请人姓名
+		addt(model,oaQualificationb);
+		model.addAttribute("oaQualificationb", oaQualificationb);
+//		model.addAttribute("createname", UserUtils.get(oaPublicPrivateCars.getCreateBy().getId()).getName());
+		return "mobile/modules/oa/qualificationb/oaQualificationbView";
+	}
+	
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:view")
+	@RequestMapping(value = "form")
+	@Token(save = true)
+	public String form(OaQualificationb oaQualificationb, Model model,String flag) {
+		oaQualificationb = init(oaQualificationb);
+		
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaQualificationb.getProcInsId()));
+		
+		String view = "mobile/modules/oa/qualificationb/oaQualificationbView";
+		if (oaQualificationbService.isDeal(oaQualificationb)) {
+			view = "mobile/modules/oa/qualificationb/oaQualificationbForm";
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaQualificationb.getProcInsId());
+		} else {
+			oaQualificationb.setCreateBy(systemService.getUser(oaQualificationb.getCreateBy().getId()));// 为页面查询出申请人的名字
+		}
+				
+		if (StringUtils.isBlank(oaQualificationb.getId())) {
+			oaQualificationb.setCreateBy(UserUtils.getUser());
+			oaQualificationb.setCreateDate(new Date());
+		}
+		
+		//审核完成后打回创建人是空值重新赋值
+		if(oaQualificationb.getCreateBy().getName()==null){
+			oaQualificationb.setCreateBy(UserUtils.getUser());
+		}
+		
+		//如果申请时，部门显示的是小组名字，则显示小组名字的上级名字。如显示的是oa组，则显示研发部	
+		oaQualificationb.setOfficename(officeService.get(UserUtils.getUser().getOffice().getId()).getName());
+		String officeid = officeService.get(officeService.findOfficeIdByName(oaQualificationb.getOfficename())).getParentId();
+		if(!officeid.equals("0") && !officeid.equals("1")){
+			oaQualificationb.setOfficename(officeService.get(UserUtils.getUser().getOffice().getParentId()).getName());
+		}
+
+		model.addAttribute("oaQualificationb", oaQualificationb);
+		addShoucang(oaQualificationb.getId(), model);
+		addTitle(model, oaQualificationb);
+		addTask(model, oaQualificationb);
+		addt(model,oaQualificationb);
+		return view;
+	}
+
+	
+	
+	/**
+	 * 新建提交，打回修改提交
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 */
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:edit")
+	@RequestMapping("save")
+	@Token(remove = true)
+	public String save(OaQualificationb oaQualificationb, Model model, RedirectAttributes redirectAttributes, String flag) {
+		if (!beanValidator(model, oaQualificationb)) {
+			return form(oaQualificationb, model, "");
+		}
+		oaQualificationb.setFileId(OrdersUtils.getGenerateOrderNo8("CY_ZZJY"));//自动生成编号
+		oaQualificationbService.save(oaQualificationb, flag);
+		if(flag.equals("1")){
+			addMessage(redirectAttributes, "资质借用申请取消");
+		}else{
+			addMessage(redirectAttributes, "资质借用申请成功");
+		}
+		
+//		return "redirect:"+Global.getAdminPath()+ Global.getMobilePath()+"/oa/qualificationb/oaQualificationb/form?id="+oaQualificationb.getId();
+		model.addAttribute("oaQualificationb", oaQualificationb);
+		addt(model,oaQualificationb);
+		//return "mobile/modules/oa/qualificationb/oaQualificationbView";
+		return "redirect:" + Global.getAdminPath()+ Global.getMobilePath() + "/oa/qualificationb/oaQualificationb/form?id=" + oaQualificationb.getId();
+	}
+
+	/**
+	 * 上级审核页面
+	 */
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:view")
+	@RequestMapping("exam")
+	@Token(save = true)
+	public String exam(OaQualificationb oaQualificationb, Model model, int num) {
+		oaQualificationb = init(oaQualificationb);
+		
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaQualificationb.getProcInsId()));
+		
+		oaQualificationb.setCreateBy(UserUtils.get(oaQualificationb.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaQualificationb", oaQualificationb);
+		String view = "mobile/modules/oa/qualificationb/oaQualificationbView";// 默认去查看页面
+		if (oaQualificationbService.isDeal(oaQualificationb)) {
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaQualificationb.getProcInsId());
+			view = "mobile/modules/oa/qualificationb/oaQualificationbExam" + num;// 有权限的人去审核页面
+		}
+		addTitle(model, oaQualificationb);
+		addTask(model, oaQualificationb);
+		addt(model,oaQualificationb);
+		return view;
+	}
+
+	/**
+	 * 审核是否通过 0：不同意 1：同意
+	 */
+	@RequiresPermissions("oa:qualificationb:oaQualificationb:edit")
+	@RequestMapping("dealExam")
+	@Token(remove = true)
+	public String dealexam(OaQualificationb oaQualificationb, Model model, RedirectAttributes redirectAttributes, String exam,
+			int sign) {
+		if (!beanValidator(model, oaQualificationb)) {
+			return exam(oaQualificationb, model, sign);
+		}
+		oaQualificationbService.dealexam(oaQualificationb, exam, sign);
+		addMessage(redirectAttributes, "操作完成！");
+		oaQualificationb.setCreateBy(UserUtils.get(oaQualificationb.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaQualificationb", oaQualificationb);
+		addt(model,oaQualificationb);
+		//return "mobile/modules/oa/qualificationb/oaQualificationbView";
+		return "redirect:" + Global.getAdminPath()+ Global.getMobilePath() + "/oa/qualificationb/oaQualificationb/form?id=" + oaQualificationb.getId();
+	}
+	
+	/**
+	 * 流程结束后的获取实体对象的方法
+	 * 
+	 */
+	private OaQualificationb init(OaQualificationb oaQualificationb) {
+		if (oaQualificationb.getAct() != null && StringUtils.isNotBlank(oaQualificationb.getAct().getProcInsId())) {
+			oaQualificationb = oaQualificationbService.getByProcInsId(oaQualificationb.getAct().getProcInsId());
+		}
+		return oaQualificationb;
+	}
+
+	/** 加入流程标题 */
+	private void addTitle(Model model, OaQualificationb oaQualificationb) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaQualificationb.getId())) {
+			name = UserUtils.get(oaQualificationb.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaQualificationb.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		model.addAttribute("title", "资质借用申请流程【" + name + " " + date + "】");
+	}
+
+	/** 加入工作台对象，用于显示流程图 */
+	private void addTask(Model model,OaQualificationb oaQualificationb) {
+		// 如果流程已启动，给出流程图
+		if (oaQualificationb.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaQualificationb.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaQualificationb.getProcInsId()));
+		}
+	}
+	
+	/** 微信端流程流转信息的显示 */
+	private void addt(Model model,OaQualificationb oaQualificationb){
+		if(StringUtils.isNotBlank(oaQualificationb.getProcInsId())){
+			List<Act> listact = actTaskService.histoicFlowList(oaQualificationb.getProcInsId(), null, null);
+			model.addAttribute("listact",listact);
+		}
+	}
+	
+	@Autowired
+	private UserFavoriteService UserFavoriteService;// 获取当前流程信息是否已经被收藏
+
+	/** 获取当前物质收藏状态 */
+	public void addShoucang(String id, Model model) {
+		if (StringUtils.isNotBlank(id)) {
+			model.addAttribute("shoucang", UserFavoriteService.getShoucangState(id));
+		}
+	}
+}

@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.SupmanagementDao">
+    
+	<sql id="supmanagementColumns">
+		a.id AS "id",
+		a.org_code AS "orgCode",
+		a.sup_name AS "supName",
+		a.telephone AS "telephone",
+		a.tax_number AS "taxNumber",
+		a.address AS "address",
+		a.suppliercontact as "suppliercontact",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"		
+	</sql>
+	
+	<sql id="supmanagementJoins">
+	</sql>
+    
+	<select id="get" resultType="Supmanagement">
+		SELECT 
+			<include refid="supmanagementColumns"/>
+		FROM oa_supmanagement a
+		<include refid="supmanagementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="Supmanagement">
+		SELECT 
+			<include refid="supmanagementColumns"/>
+		FROM oa_supmanagement a
+		<include refid="supmanagementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="orgCode != null and orgCode != ''">
+				AND a.org_code LIKE 
+					<if test="dbName == 'oracle'">'%'||#{orgCode}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{orgCode}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{orgCode},'%')</if>
+			</if>
+			<if test="supName != null and supName != ''">
+				AND a.sup_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{supName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{supName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{supName},'%')</if>
+			</if>
+			<if test="telephone != null and telephone != ''">
+				AND a.telephone LIKE 
+					<if test="dbName == 'oracle'">'%'||#{telephone}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{telephone}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{telephone},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="Supmanagement">
+		SELECT 
+			<include refid="supmanagementColumns"/>
+		FROM oa_supmanagement a
+		<include refid="supmanagementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_supmanagement(
+			id,
+			org_code,
+			sup_name,
+			telephone,
+			tax_number,
+			address,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			suppliercontact
+		) VALUES (
+			#{id},
+			#{orgCode},
+			#{supName},
+			#{telephone},
+			#{taxNumber},
+			#{address},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{suppliercontact}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_supmanagement SET 	
+			org_code = #{orgCode},
+			sup_name = #{supName},
+			telephone = #{telephone},
+			tax_number = #{taxNumber},
+			address = #{address},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			suppliercontact = #{suppliercontact}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_supmanagement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

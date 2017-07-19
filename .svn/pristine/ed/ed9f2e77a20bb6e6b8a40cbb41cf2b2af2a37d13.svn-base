@@ -1,0 +1,488 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.coding;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.dao.coding.OaProVacateDao;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.coding.OaProVacate;
+import com.thinkgem.jeesite.modules.oa.entity.filling.OaFilling;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.OaOvertimeService;
+import com.thinkgem.jeesite.modules.oa.service.filling.OaFillingService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.DictUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 请假流程Service
+ * 
+ * @author lzx
+ * @version 2016-11-10
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaProVacateService extends CrudService<OaProVacateDao, OaProVacate> {
+
+	@Autowired
+	private ActTaskService actTaskService;
+
+	@Autowired
+	private OaNotifyService oaNotifyService;
+
+	@Autowired
+	private OaFillingService oaFillingService;
+
+	@Autowired
+	private OfficeService officeService;
+	@Autowired
+	private OaOvertimeService oaOvertimeService;// 抄送通知的service
+	// OaOvertimeService
+	@Autowired
+	private SystemService systemService;// 用户调休时长修改
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回业务service
+
+	public OaProVacate getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+
+	public OaProVacate get(String id) {
+		return super.get(id);
+	}
+
+	public List<OaProVacate> findList(OaProVacate oaProVacate) {
+		return super.findList(oaProVacate);
+	}
+
+	public Page<OaProVacate> findPage(Page<OaProVacate> page, OaProVacate oaProVacate) {
+		return super.findPage(page, oaProVacate);
+	}
+
+	@Transactional(readOnly = false)
+	public void save(OaProVacate oaProVacate, boolean b, String toSendMessageUserid) {
+		// 保存实体类，这时候没有保存procinsid
+		super.save(oaProVacate);
+		// 初始化工作流中的变量的值，带入vars中放到后面使用
+		Map<String, Object> vars = new HashMap<String, Object>();
+		vars.put("apply", UserUtils.getUser().getLoginName());
+
+		vars.put("upper", ActRouting.getUpper2(UserUtils.getUser().getId()));
+		vars.put("hours", Double.parseDouble(oaProVacate.getVacatedays()));
+		vars.put("next", true);
+		vars.put("skip", false);
+		// vars.put("personnel", ActRouting.getPersonnel());
+		try {
+			vars.put("manager", UserUtils.get(
+					officeService.get(ActRouting.getManager(UserUtils.getUser().getId())).getPrimaryPerson().getId())
+					.getLoginName());
+		} catch (Exception e) {
+			vars.put("manager", "wangying");
+		}
+
+		vars.put("boss", ActRouting.getBoss());
+		vars.put("filling", ActRouting.getFilling());
+		// 新建一个消息对象
+		OaNotify oaNotify = new OaNotify();
+		if (oaProVacate.getProcInsId() == null) {
+			// 第一次申请，启动工作流
+			String procInsId = actTaskService.startProcess("oaProVacate", "oa_pro_vacate", oaProVacate.getId(),
+					oaProVacate.getVacatedesc(), vars);
+			oaProVacate.setProcInsId(procInsId);
+			// 线程暂停两秒
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// 通过procinsid获取任务的列表，一般只有一条，在出现分支或子流程的情况下会有多条，不建议现在配置那种，即并行网关
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.processInstanceId(procInsId).list();
+			if (list.size() > 0) {
+				if (b) {
+					vars.put("flag", true);
+					// 任务完成，跟着流程的线继续走到下一个节点
+					if (vars.get("upper").toString().equals(UserUtils.getUser().getLoginName())
+							&& !vars.get("manager").toString().equals(UserUtils.getUser().getLoginName())) {
+						actTaskService.complete(list.get(0).getId(), procInsId, "【提交】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+						// 流程撤回操作数据设置
+						oaFlowBackService.saveINIT(oaProVacate.getProcInsId(), list.get(0),
+								"/oa/coding/oaProVacate/view?id=" + oaProVacate.getId());
+						vars.put("skip", true);
+						List<Task> list1 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+								.processInstanceId(procInsId).active().list();
+						// 线程暂停一秒
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						actTaskService.complete(list1.get(0).getId(), procInsId, "【同意】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+					} else if (vars.get("manager").toString().equals(UserUtils.getUser().getLoginName())) {
+						actTaskService.complete(list.get(0).getId(), procInsId, "【提交】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+						// 流程撤回操作数据设置
+						oaFlowBackService.saveINIT(oaProVacate.getProcInsId(), list.get(0),
+								"/oa/coding/oaProVacate/view?id=" + oaProVacate.getId());
+						vars.put("skip", true);
+						List<Task> list1 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+								.processInstanceId(procInsId).active().list();
+						// 线程暂停一秒
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						actTaskService.complete(list1.get(0).getId(), procInsId, "【同意】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+						List<Task> list2 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+								.processInstanceId(procInsId).active().list();
+						// 线程暂停一秒
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+						actTaskService.complete(list2.get(0).getId(), procInsId, "【同意】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+					} else {
+						actTaskService.complete(list.get(0).getId(), procInsId, "【提交】" + oaProVacate.getVacatedesc(),
+								oaProVacate.getVacateTitle(), vars);
+						// 流程撤回操作数据设置
+						oaFlowBackService.saveINIT(oaProVacate.getProcInsId(), list.get(0),
+								"/oa/coding/oaProVacate/view?id=" + oaProVacate.getId());
+					}
+
+				} else {
+					vars.put("flag", false);
+					actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【作废】",
+							oaProVacate.getVacateTitle(), vars);
+					// 流程撤回操作数据设置
+					// oaFlowBackService.saveNULL(oaOvertime.getProcInsId());
+				}
+
+			}
+
+		} else {
+			// 打回后重新提交
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.processInstanceId(oaProVacate.getProcInsId()).taskAssignee(UserUtils.getUser().getLoginName())
+					.list();
+			if (b) {
+
+				vars.put("flag", true);
+				if (vars.get("upper").toString().equals(UserUtils.getUser().getLoginName())
+						&& !vars.get("manager").toString().equals(UserUtils.getUser().getLoginName())) {
+					actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(),
+							"【重新提交】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+					vars.put("skip", true);
+					List<Task> list1 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+							.processInstanceId(oaProVacate.getProcInsId()).active().list();
+					// 线程暂停一秒
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					actTaskService.complete(list1.get(0).getId(), oaProVacate.getProcInsId(),
+							"【同意】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+				} else if (vars.get("manager").toString().equals(UserUtils.getUser().getLoginName())) {
+					actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(),
+							"【重新提交】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+					vars.put("skip", true);
+					List<Task> list1 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+							.processInstanceId(oaProVacate.getProcInsId()).active().list();
+					// 线程暂停一秒
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					actTaskService.complete(list1.get(0).getId(), oaProVacate.getProcInsId(),
+							"【同意】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+					List<Task> list2 = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+							.processInstanceId(oaProVacate.getProcInsId()).active().list();
+					// 线程暂停一秒
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					actTaskService.complete(list2.get(0).getId(), oaProVacate.getProcInsId(),
+							"【同意】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+				} else {
+					actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(),
+							"【重新提交】" + oaProVacate.getVacatedesc(), oaProVacate.getVacateTitle(), vars);
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+				}
+
+			} else if (list.size() > 0) {
+				vars.put("flag", false);
+				actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【作废】",
+						oaProVacate.getVacateTitle(), vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+			}
+
+		}
+		if (toSendMessageUserid != null && toSendMessageUserid.length() > 0) {
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/exam?id=" + oaProVacate.getId());// 注入@@proNotify@@作为超链接的注解，前台判断
+			oaNotify.setType("4");// 流程通知配置为4
+			oaNotify.setStatus("1");// 貌似是已发
+			oaNotify.setTitle(oaProVacate.getVacateTitle());
+			oaNotify.setOaNotifyRecordIds(toSendMessageUserid);
+			oaNotifyService.save(oaNotify);
+		}
+	}
+
+	/**
+	 * 判断是否该当前人员处理
+	 * 
+	 * @param id
+	 * @return true/false
+	 */
+	public boolean isDeal(OaProVacate oaProVacate) {
+		System.out.println(oaProVacate.getProcInsId());
+		if (oaProVacate.getProcInsId() == null) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaProVacate.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OaProVacate oaProVacate) {
+		super.delete(oaProVacate);
+	}
+
+	/**
+	 * 审核请假流程
+	 * 
+	 * @param oaProVacate
+	 * @param b
+	 *            true通过false打回
+	 * @param examOpinion
+	 */
+	@Transactional(readOnly = false)
+	public void dealExam(OaProVacate oaProVacate, boolean b, String toSendMessageUserid, String examOpinion) {
+		// 通过procinsid和当前人两个维度取得任务列表，一般只有一条
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.processInstanceId(oaProVacate.getProcInsId()).taskAssignee(UserUtils.getUser().getLoginName()).list();
+		Map<String, Object> vars = new HashMap<String, Object>();
+		OaNotify oaNotify = new OaNotify();
+		if (b) {
+			vars.put("flag", true);
+			vars.put("skip", false);
+			// vars.put("hours", Integer.parseInt(oaProVacate.getVacatedays()));
+			// vars.put("next", true);
+			// // vars.put("personnel", ActRouting.getPersonnel());
+			// try {
+			// vars.put(
+			// "manager",
+			// UserUtils.get(
+			// officeService
+			// .get(ActRouting.getManager(oaProVacate
+			// .getCreateBy().getId()))
+			// .getPrimaryPerson().getId())
+			// .getLoginName());
+			// } catch (Exception e) {
+			// vars.put("manager", "wangying");
+			// }
+			// vars.put("boss", ActRouting.getBoss());
+			// vars.put("filling", ActRouting.getFilling());
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【同意】" + examOpinion, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+			}
+			List<Task> todoList = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.processInstanceId(oaProVacate.getProcInsId()).list();
+			if (todoList.size() > 0) {
+				if (todoList.get(0).getName().equals("数据归档")) {
+					// 注入@@proNotify@@作为超链接的注解，前台判断
+					oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/filling?id=" + oaProVacate.getId());
+				}
+			}
+			// 注入@@proNotify@@作为超链接的注解，前台判断
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/exam?id=" + oaProVacate.getId());
+		} else {
+			vars.put("flag", false);
+			vars.put("hours", Double.parseDouble(oaProVacate.getVacatedays()));
+			vars.put("next", false);
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【不同意】" + examOpinion, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+			}
+			// 发送通知
+			if (oaProVacate.getVacatetype().equals("2")) {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的调休申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】退回",
+						oaProVacate.getCreateBy().getId());
+			} else {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的请假申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】退回",
+						oaProVacate.getCreateBy().getId());
+			}
+			// 打回设置成form，重新提交
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/form?id=" + oaProVacate.getId());// 注入@@proNotify@@作为超链接的注解，前台判断
+		}
+
+		if (toSendMessageUserid != null && toSendMessageUserid.length() > 0) {
+			oaNotify.setType("4");// 流程通知配置为4
+			oaNotify.setStatus("1");// 貌似是已发
+			oaNotify.setTitle("流程流转通知-" + oaProVacate.getVacateTitle());
+			oaNotify.setOaNotifyRecordIds(toSendMessageUserid);
+			oaNotifyService.save(oaNotify);
+		}
+	}
+
+	/**
+	 * 审核请假流程
+	 * 
+	 * @param oaProVacate
+	 * @param b
+	 *            true通过false打回
+	 */
+	@Transactional(readOnly = false)
+	public void dealFilling(OaProVacate oaProVacate, String toSendMessageUserid, String exam, String ftext) {
+		// 通过procinsid和当前人两个维度取得任务列表，一般只有一条
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.processInstanceId(oaProVacate.getProcInsId()).taskAssignee(UserUtils.getUser().getLoginName()).list();
+		Map<String, Object> vars = new HashMap<String, Object>();
+		OaNotify oaNotify = new OaNotify();
+		if (exam.equals("0")) {
+			// 同意
+			vars.put("flag", true);
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【同意】【归档】" + ftext, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNULL(oaProVacate.getProcInsId());
+			}
+			List<Task> todoList = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.processInstanceId(oaProVacate.getProcInsId()).list();
+			if (todoList.size() > 0) {
+				if (todoList.get(0).getName().equals("数据归档")) {
+					// 注入@@proNotify@@作为超链接的注解，前台判断
+					oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/filling?id=" + oaProVacate.getId());
+				}
+			}
+			// 注入@@proNotify@@作为超链接的注解，前台判断
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/coding/oaProVacate/exam?id=" + oaProVacate.getId());
+		} else {
+			// 不同意
+			vars.put("flag", false);
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaProVacate.getProcInsId(), "【不同意】【归档】" + ftext, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNOW(oaProVacate.getProcInsId(), list.get(0));
+			}
+			// 发送通知
+			if (oaProVacate.getVacatetype().equals("2")) {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的调休申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】退回",
+						oaProVacate.getCreateBy().getId());
+			} else {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的请假申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】退回",
+						oaProVacate.getCreateBy().getId());
+			}
+		}
+
+		if (toSendMessageUserid != null && toSendMessageUserid.length() > 0) {
+			oaNotify.setType("4");// 流程通知配置为4
+			oaNotify.setStatus("1");// 貌似是已发
+			oaNotify.setTitle("流程流转通知-" + oaProVacate.getVacateTitle());
+			oaNotify.setOaNotifyRecordIds(toSendMessageUserid);
+			oaNotifyService.save(oaNotify);
+		}
+
+		if (exam.equals("0")) {
+			OaFilling oaFilling = new OaFilling();
+			oaFilling.setApplyDate(oaProVacate.getApplydate());
+			oaFilling.setApplyReason(oaProVacate.getVacatedesc());
+			oaFilling.setApplyType("请假");
+			oaFilling.setApplyTypeLit(DictUtils.getDictLabel(oaProVacate.getVacatetype(), "pro_vacate_type", ""));// 通过数据字典去取得然后存中文
+			System.out.println(DictUtils.getDictLabel(oaProVacate.getVacatetype(), "pro_vacate_type", ""));
+			oaFilling.setApplyUser(oaProVacate.getCreateBy());
+			oaFilling.setFillingDate(new Date());
+			oaFilling.setHours(oaProVacate.getVacatedays());
+			oaFilling.setBeginDate(oaProVacate.getVacatebegindate());
+			oaFilling.setEndDate(oaProVacate.getVacateenddate());
+			oaFillingService.save(oaFilling);
+			/* 更新可调休时长 */
+			systemService.updateResttime(UserUtils.getUser().getId(), "-" + oaFilling.getHours());
+			// 发送通知
+			if (oaProVacate.getVacatetype().equals("2")) {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的调休申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】办结",
+						oaProVacate.getCreateBy().getId());
+			} else {
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/coding/oaProVacate/view?id=" + oaProVacate.getId(),
+						"您提交的请假申请流程【" + DateUtils.formatDate(oaProVacate.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】办结",
+						oaProVacate.getCreateBy().getId());
+			}
+		}
+	}
+
+	public Task getTaskByProcInsId(String procInsId) {
+
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.processInstanceId(procInsId).list();
+		if (list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+
+	/**
+	 * 通过 用户id 请假/调休开始时间，结束时间，删除状态、查出数据条数
+	 * 
+	 * 是否已经存在
+	 */
+	public boolean getByTime(OaProVacate oaProVacate) {
+		oaProVacate.setCreateBy(UserUtils.getUser());
+		if (dao.getByTime(oaProVacate) == 0) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+}

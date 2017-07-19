@@ -1,0 +1,191 @@
+package com.thinkgem.jeesite.modules.oa.service.coding;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.modules.oa.dao.coding.OaViewCodingDao;
+import com.thinkgem.jeesite.modules.oa.entity.coding.OaCollectCoding;
+import com.thinkgem.jeesite.modules.oa.entity.coding.OaViewCoding;
+
+/**
+ * 整理后每日打卡资料Service
+ * 
+ * @author 李廷龙
+ * @version 2016-11-09
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaViewCodingService extends
+		CrudService<OaViewCodingDao, OaViewCoding> {
+
+	@Autowired
+	OaViewCodingDao oaViewCodingDao;
+	
+	public Page<OaViewCoding> getDetailViewByDeptAndTime(
+			Page<OaViewCoding> page, OaViewCoding oaViewCoding) {
+		oaViewCoding.setPage(page);
+		List<OaViewCoding> oaViewCodingList = oaViewCodingDao.getViewByDeptAndTime(oaViewCoding);
+		String timerec = oaViewCoding.getRemarks();
+		
+		String month = timerec.substring(5);
+		
+		String pattern="yyyy-MM-dd";
+		try {
+			Date begin = DateUtils.parseDate(timerec + "-01", pattern);
+			int daysOfMonth = getDaysOfDate(begin);
+			OaCollectCoding[] oaCollectCodings=null;
+			for (OaViewCoding temp : oaViewCodingList) {
+				String userNo=temp.getUserNo();
+				//某人某月的考勤状况
+				List<OaViewCoding> list = oaViewCodingDao.getDetailViewByUserAndTime(userNo,timerec);
+				oaCollectCodings=new OaCollectCoding[daysOfMonth];
+				begin = DateUtils.parseDate(timerec + "-01", pattern);
+				for (int j = 0; j < daysOfMonth; j++) {
+					for (OaViewCoding oaViewCoding2 : list) {
+						if (DateUtils.formatDate(begin, pattern).equals(oaViewCoding2.getDate())) {
+							OaCollectCoding oaCollectCoding=new OaCollectCoding();
+							oaCollectCoding.setWorkingType(oaViewCoding2.getWorkingType());
+							oaCollectCoding.setTimeOffset(oaViewCoding2.getTimeOffset());
+							oaCollectCoding.setCodingBegindate(oaViewCoding2.getCodingBegindate());
+							oaCollectCoding.setCodingEnddate(oaViewCoding2.getCodingEnddate());
+							oaCollectCodings[j]=oaCollectCoding;
+							break;
+						}
+					}
+					begin = getDateAfter(begin, 1);
+				}
+				
+				temp.setOaCollectCodings(oaCollectCodings);
+				
+				Map<String,Object> result = getAverageWorktime(oaCollectCodings,month);
+				
+				Long averageWorktime=(Long) result.get(OaCollectCoding.AVERAGE_WORK_TIME);
+				
+				temp.setAverageWorktime(averageWorktime);
+				
+				temp.setWorkingValidDays((Long) result.get(OaCollectCoding.WORKING_VALID_DAYS));
+				
+				temp.setWorkingHours((Long) result.get(OaCollectCoding.WORKING_HOURS));
+			}
+			page = page.setList(oaViewCodingList);
+
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+
+		return page;
+	}
+	
+	/**
+	 * 月平均工作时长，总工作时间，工作天数
+	 * @param oaCollectCodings
+	 * @return
+	 */
+	private Map<String,Object> getAverageWorktime(OaCollectCoding[] oaCollectCodings,String month)
+	{
+		Long sum = 0L;
+		
+		Long sumday = 0L;
+		
+		Long lunchBreak = DateUtils.getLunchBreak(month);
+		
+		Map<String,Object> resultMap=new HashMap<String, Object>();
+		
+		for (OaCollectCoding oaCollectCoding : oaCollectCodings)
+		{
+			if (oaCollectCoding != null && oaCollectCoding.getTimeOffset() != 0)
+			{
+				sum += oaCollectCoding.getTimeOffset() - lunchBreak;
+				
+				sumday++;
+			}
+		}
+		
+		/*if (sumday != 0)
+		{
+			return (sum/sumday);
+		}*/
+		
+		resultMap.put(OaCollectCoding.WORKING_HOURS, sum);
+		
+		resultMap.put(OaCollectCoding.WORKING_VALID_DAYS, sumday);
+		
+		resultMap.put(OaCollectCoding.AVERAGE_WORK_TIME, sumday != 0 ? sum/sumday : 0L);
+		
+		return resultMap;
+	}
+
+
+	/**
+	 * 获取这个月的天数并生成HTML将周末标红
+	 * 
+	 * @param parse
+	 * @return
+	 */
+	public String[] getDaysAndWeekendOfDateForHTML(Date date) {
+		int dayCount = getDaysOfDate(date);
+		String days[] = new String[dayCount];
+		for (int i = 0; i < days.length; i++) {
+			if (getWeekOfDate(date) == 6 || getWeekOfDate(date) == 0) {
+				days[i] = "<th style='color:red' class='detail'>" + (i + 1) + "</th>";
+			} else {
+				days[i] = "<th class='detail'>" + (i + 1) + "</th>";
+			}
+			date = getDateAfter(date, 1);
+		}
+		return days;
+	}
+
+	/**
+	 * 获取这月的天数
+	 * 
+	 * @param dt
+	 * @return 这月的天数
+	 */
+	public static int getDaysOfDate(Date dt) {
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(dt);
+		calendar.roll(Calendar.DATE, false);
+		return calendar.get(Calendar.DATE);
+	}
+
+	/**
+	 * 得到几天后的时间
+	 * 
+	 * @param d
+	 * @param day
+	 * @return
+	 */
+	public static Date getDateAfter(Date d, int day) {
+		Calendar now = Calendar.getInstance();
+		now.setTime(d);
+		now.set(Calendar.DATE, now.get(Calendar.DATE) + day);
+		return now.getTime();
+	}
+
+	/**
+	 * 获取当前日期是星期几
+	 * 
+	 * @param dt
+	 * @return 当前日期是星期几
+	 */
+	public static int getWeekOfDate(Date dt) {
+		Calendar cal = Calendar.getInstance();
+		cal.setTime(dt);
+		int w = cal.get(Calendar.DAY_OF_WEEK) - 1;
+		if (w < 0)
+			w = 0;
+		return w;
+	}
+}

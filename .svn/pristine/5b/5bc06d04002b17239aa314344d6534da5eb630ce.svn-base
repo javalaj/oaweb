@@ -1,0 +1,1123 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.sys.web;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolationException;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.beanvalidator.BeanValidators;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.mapper.JsonMapper;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.utils.excel.ExportExcel;
+import com.thinkgem.jeesite.common.utils.excel.ImportExcel;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.cms.entity.Article;
+import com.thinkgem.jeesite.modules.cms.service.ArticleService;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.dao.OaNotifyDao;
+import com.thinkgem.jeesite.modules.oa.entity.OaDocument;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.mytask.OaPlan;
+import com.thinkgem.jeesite.modules.oa.entity.project.OaProject;
+import com.thinkgem.jeesite.modules.oa.service.OaDocumentService;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.OaOvertimeService;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.AssetsClaimService;
+import com.thinkgem.jeesite.modules.oa.service.mytask.OaPlanService;
+import com.thinkgem.jeesite.modules.oa.service.project.OaProjectService;
+import com.thinkgem.jeesite.modules.sys.dao.RoleDao;
+import com.thinkgem.jeesite.modules.sys.dao.UserDao;
+import com.thinkgem.jeesite.modules.sys.entity.Menu;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.Role;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.DictUtils;
+import com.thinkgem.jeesite.modules.sys.utils.MyDateUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.entity.UserFavorite;
+import com.thinkgem.jeesite.modules.user.entity.UserWorklogVo;
+import com.thinkgem.jeesite.modules.user.service.UserFavoriteService;
+import com.thinkgem.jeesite.modules.user.service.UserWorkrecordService;
+
+/**
+ * 用户Controller
+ * 
+ * @author liaijun
+ * @version 2013-10-18
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/sys/user")
+public class UserController extends BaseController {
+	@Autowired
+	private UserWorkrecordService userWorkrecordService;
+	@Autowired
+	private UserDao userDao;
+	@Autowired
+	private RoleDao roleDao;
+	@Autowired
+	private OaOvertimeService oaOvertimeService;// 加班service，查询剩余调休时间
+
+	@Autowired
+	private OaNotifyService oaNotifyService;
+
+	@Autowired
+	private ArticleService articleService;
+
+	@Autowired
+	private ActTaskService actTaskService;
+
+	@Autowired
+	private OaDocumentService oaDocumentService;
+
+	@Autowired
+	private OaPlanService oaPlanService;
+	@Autowired
+	private OaNotifyDao oaNotifyDao;
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private UserFavoriteService userFavoriteService;
+	@Autowired
+	private AssetsClaimService assetsClaimService;
+	@Autowired
+	private OfficeService officeService;
+	private ActRouting actRouting;
+
+	@Autowired
+	private OaProjectService oaProjectService;
+
+	@ModelAttribute
+	public User get(@RequestParam(required = false) String id) {
+		if (StringUtils.isNotBlank(id)) {
+			return systemService.getUser(id);
+		} else {
+			return new User();
+		}
+	}
+
+	/**
+	 * 用户管理
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "userIndex" })
+	public String userIndex(User user, Model model) {
+		return "modules/sys/userIndex";
+	}
+
+	/**
+	 * 用户日程
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "plan" })
+	public String plan(User user, Model model) {
+		return "modules/sys/myPlan";
+	}
+
+	/**
+	 * 显示用户列表
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(User user, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<User> page = systemService.findUser(new Page<User>(request, response), user);
+		model.addAttribute("page", page);
+		return "modules/sys/userList";
+	}
+
+	/**
+	 * 跳转到员工档案管理页面
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "profile" })
+	public String profile(User user, Model model) {
+		return "modules/sys/profileIndex";
+	}
+
+	/**
+	 * 员工档案列表(在职)
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "profileList" })
+	public String profileList(User user, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<User> page = systemService.findProfile(new Page<User>(request, response), user);
+		try {
+			String userIds=UserUtils.getByLoginName(DictUtils.getDictValue("wangying", "tipMan", "")).getId();
+			OaNotify oaNotify1 = new OaNotify();
+			oaNotify1.setSelf(true);
+			User currentUser=new User();
+			currentUser.setId(userIds);
+			oaNotify1.setCurrentUser(currentUser);
+			List<OaNotify> oaList=oaNotifyDao.findList(oaNotify1);
+		for(User u:userDao.getProfile(user)){
+			 SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+			   String pdate = format.format(u.getPdate());//转正时间
+			   String enddate = format.format(u.getContractEnd());//合同结束时间
+			String today= format.format(new Date());//当前日期
+			String predate = format.format(com.thinkgem.jeesite.modules.sys.utils.DateUtils.getDate(pdate, 7));//转正前七天
+			String precdate=format.format(com.thinkgem.jeesite.modules.sys.utils.DateUtils.getDate(enddate, 7));//合同到期时间前7天
+			//员工转正提醒
+			if(today.equals(predate)){
+				String ptitle=u.getName()+"转正日期为"+pdate+",请注意提前办理转正手续。";
+				Boolean pflag=true;
+				for(OaNotify a:oaList){
+					if(a.getTitle().equals(ptitle)){
+						System.out.println("转正标题：============================"+a.getTitle());
+						 pflag=false;
+						 break;
+					}else{
+						continue;
+					}
+				}
+				System.out.println("转正提醒标识：============================"+pflag);
+				if(pflag==true){
+				OaNotify oaNotify = new OaNotify();
+				oaNotify.setContent(u.getName()+"转正日期为"+pdate+",请注意提前办理转正手续。");//转正提醒
+				oaNotify.setType("4");// 协同通知配置为4
+				oaNotify.setStatus("1");// 发布状态
+				oaNotify.setTitle(ptitle);
+				oaNotify.setOaNotifyRecordIds(userIds);
+				oaNotifyService.save(oaNotify);
+				}
+				
+			}
+			//合同到期提醒
+			if(today.equals(precdate)){
+				String ctitle=u.getName()+"劳动合同即将于"+enddate+"到期,请注意提前办理续签手续。";
+				Boolean cflag=true;
+				for(OaNotify a:oaList){
+					if(a.getTitle().equals(ctitle)){					
+						 cflag=false;
+						 break;
+					}else{
+						continue;
+					}
+				}
+				if(cflag==true){
+				OaNotify oaNotify = new OaNotify();
+				oaNotify.setContent(u.getName()+"劳动合同即将于"+enddate+"到期,请注意提前办理续签手续。");//转正提醒
+				oaNotify.setType("4");// 协同通知配置为4
+				oaNotify.setStatus("1");// 发布状态
+				oaNotify.setTitle(ctitle);
+				oaNotify.setOaNotifyRecordIds(userIds);
+				oaNotifyService.save(oaNotify);
+				}
+				
+			}
+		}
+			} catch (NullPointerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}catch (ParseException e) {
+				// TODO: handle exception
+			}
+		model.addAttribute("page", page);		
+		return "modules/sys/profileList";
+	}
+	/**
+	 * 员工档案列(离职)
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "profileOutState"})
+	public String profileOutState(User user, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<User> page = systemService.findProfileOutState(new Page<User>(request, response), user);
+		model.addAttribute("page", page);
+		return "modules/sys/profileOutList";
+	}
+
+	/**
+	 * 员工档案 添加页面
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = "profileForm")
+	public String profileForm(User user, Model model) {
+		if (user.getCompany() == null || user.getCompany().getId() == null) {
+			user.setCompany(UserUtils.getUser().getCompany());
+		}
+		if (user.getOffice() == null || user.getOffice().getId() == null) {
+			user.setOffice(UserUtils.getUser().getOffice());
+		}
+		model.addAttribute("user", user);
+		model.addAttribute("allRoles", systemService.findAllRole());
+		return "modules/sys/profileForm";
+	}
+
+	/**
+	 * json响应用户数据
+	 */
+	@ResponseBody
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "listData" })
+	public Page<User> listData(User user, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<User> page = systemService.findUser(new Page<User>(request, response), user);
+		return page;
+	}
+
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = "form")
+	public String form(User user, Model model) {
+		if (user.getCompany() == null || user.getCompany().getId() == null) {
+			user.setCompany(UserUtils.getUser().getCompany());
+		}
+		if (user.getOffice() == null || user.getOffice().getId() == null) {
+			user.setOffice(UserUtils.getUser().getOffice());
+		}
+		List<User> listUser = systemService.findAllList();
+		model.addAttribute("listUser", listUser);
+		model.addAttribute("user", user);
+		model.addAttribute("allRoles", systemService.findAllRole());
+		return "modules/sys/userForm";
+	}
+	//修改员工档案
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "saveProfile")
+	public String saveProfile(User user, HttpServletRequest request, Model model, RedirectAttributes redirectAttributes) {
+		if (Global.isDemoMode()) {
+			addMessage(redirectAttributes, "演示模式，不允许操作！");
+			return "redirect:profileList";
+		}						
+		// 保存用户信息
+		systemService.updateProfileInfo(user);
+		// 清除当前用户缓存
+		if (user.getLoginName().equals(UserUtils.getUser().getLoginName())) {
+			UserUtils.clearCache();
+		}
+		addMessage(redirectAttributes, "修改员工档案成功");
+		return "redirect:profileList";
+	}
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "save")
+	public String save(User user, HttpServletRequest request, Model model, RedirectAttributes redirectAttributes) {
+		if (Global.isDemoMode()) {
+			addMessage(redirectAttributes, "演示模式，不允许操作！");
+			return "redirect:" + adminPath + "/sys/user/list?repage";
+		}
+		// 修正引用赋值问题，不知道为何，Company和Office引用的一个实例地址，修改了一个，另外一个跟着修改。
+		user.setCompany(new Office(request.getParameter("company.id")));
+		user.setOffice(new Office(request.getParameter("office.id")));
+		// 如果新密码为空，则不更换密码
+		if (StringUtils.isNotBlank(user.getNewPassword())) {
+			user.setPassword(SystemService.entryptPassword(user.getNewPassword()));
+		}
+		if (!beanValidator(model, user)) {
+			return form(user, model);
+		}
+		if (!"true".equals(checkLoginName(user.getOldLoginName(), user.getLoginName()))) {
+			addMessage(model, "保存用户'" + user.getLoginName() + "'失败，登录名已存在");
+			return form(user, model);
+		}
+		// 角色数据有效性验证，过滤不在授权内的角色
+		List<Role> roleList = Lists.newArrayList();
+		List<String> roleIdList = user.getRoleIdList();
+		for (Role r : systemService.findAllRole()) {
+			if (roleIdList.contains(r.getId())) {
+				roleList.add(r);
+			}
+		}
+		user.setRoleList(roleList);
+		// 保存用户信息
+		systemService.saveUser(user);
+		// 清除当前用户缓存
+		if (user.getLoginName().equals(UserUtils.getUser().getLoginName())) {
+			UserUtils.clearCache();
+			// UserUtils.getCacheMap().clear();
+		}
+		addMessage(redirectAttributes, "保存用户'" + user.getLoginName() + "'成功");
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "delete")
+	public String delete(User user, RedirectAttributes redirectAttributes) {
+		if (Global.isDemoMode()) {
+			addMessage(redirectAttributes, "演示模式，不允许操作！");
+			return "redirect:" + adminPath + "/sys/user/list?repage";
+		}
+		if (UserUtils.getUser().getId().equals(user.getId())) {
+			addMessage(redirectAttributes, "删除用户失败, 不允许删除当前用户");
+		} else if (User.isAdmin(user.getId())) {
+			addMessage(redirectAttributes, "删除用户失败, 不允许删除超级管理员用户");
+		} else {
+			systemService.deleteUser(user);
+			addMessage(redirectAttributes, "删除用户成功");
+		}
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+	/**
+	 * 批量删除用户
+	 */
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "deleteAll")
+	public String deleteAll(String ids, RedirectAttributes redirectAttributes) {
+		String idArray[] = ids.split(",");
+		for (String id : idArray) {
+			User user = systemService.getUser(id);
+			if (Global.isDemoMode()) {
+				addMessage(redirectAttributes, "演示模式，不允许操作！");
+				return "redirect:" + adminPath + "/sys/user/list?repage";
+			}
+			if (UserUtils.getUser().getId().equals(user.getId())) {
+				addMessage(redirectAttributes, "删除用户失败, 不允许删除当前用户");
+			} else if (User.isAdmin(user.getId())) {
+				addMessage(redirectAttributes, "删除用户失败, 不允许删除超级管理员用户");
+			} else {
+				systemService.deleteUser(user);
+				addMessage(redirectAttributes, "删除用户成功");
+			}
+		}
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+	/**
+	 * 导出用户数据
+	 * 
+	 * @param user
+	 * @param request
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = "export", method = RequestMethod.POST)
+	public String exportFile(User user, HttpServletRequest request, HttpServletResponse response,
+			RedirectAttributes redirectAttributes) {
+		try {
+			String fileName = "用户数据" + DateUtils.getDate("yyyyMMddHHmmss") + ".xlsx";
+			Page<User> page = systemService.findUser(new Page<User>(request, response, -1), user);
+			new ExportExcel("用户数据", User.class).setDataList(page.getList()).write(response, fileName).dispose();
+			return null;
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导出用户失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+	/**
+	 * 导出通讯录
+	 * 
+	 * @param user
+	 * @param request
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = "export1", method = RequestMethod.POST)
+	public String exportContacts(User user, HttpServletRequest request, HttpServletResponse response,
+			RedirectAttributes redirectAttributes) {
+		try {
+			String fileName = "公司通讯录" + DateUtils.getDate("yyyy-MM-dd") + ".xlsx";
+			Page<User> page = systemService.findUser(new Page<User>(request, response, -1), user);
+			new ExportExcel("通讯录", User.class).setDataList(page.getList()).write(response, fileName).dispose();
+			return null;
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导出通讯录失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/sys/user/contacts?repage";
+	}
+
+	/**
+	 * 导入用户数据
+	 * 
+	 * @param file
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "import", method = RequestMethod.POST)
+	public String importFile(MultipartFile file, RedirectAttributes redirectAttributes) {
+		if (Global.isDemoMode()) {
+			addMessage(redirectAttributes, "演示模式，不允许操作！");
+			return "redirect:" + adminPath + "/sys/user/list?repage";
+		}
+		try {
+			int successNum = 0;
+			int failureNum = 0;
+			StringBuilder failureMsg = new StringBuilder();
+			ImportExcel ei = new ImportExcel(file, 1, 0);
+			List<User> list = ei.getDataList(User.class);
+			for (User user : list) {
+				try {
+					if ("true".equals(checkLoginName("", user.getLoginName()))) {
+						user.setPassword(SystemService.entryptPassword("123456"));
+						BeanValidators.validateWithException(validator, user);
+
+						// String mobile = "1" +
+						// user.getMobile().substring(user.getMobile().lastIndexOf(".")
+						// + 1,user.getMobile().lastIndexOf("E"));
+						// String mobilei = null;
+						// if (mobile.length() < 11) {
+						// mobilei = mobile + 0 + "";
+						// user.setMobile(mobilei);
+						// } else {
+						// user.setMobile(mobile);
+						// }
+
+						systemService.saveUser(user);
+						successNum++;
+					} else {
+						failureMsg.append("<br/>登录名 " + user.getLoginName() + " 已存在; ");
+						failureNum++;
+					}
+				} catch (ConstraintViolationException ex) {
+					failureMsg.append("<br/>登录名 " + user.getLoginName() + " 导入失败：");
+					List<String> messageList = BeanValidators.extractPropertyAndMessageAsList(ex, ": ");
+					for (String message : messageList) {
+						failureMsg.append(message + "; ");
+						failureNum++;
+					}
+				} catch (Exception ex) {
+					failureMsg.append("<br/>登录名 " + user.getLoginName() + " 导入失败：" + ex.getMessage());
+				}
+			}
+			if (failureNum > 0) {
+				failureMsg.insert(0, "，失败 " + failureNum + " 条用户，导入信息如下：");
+			}
+			addMessage(redirectAttributes, "已成功导入 " + successNum + " 条用户" + failureMsg);
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导入用户失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+	/**
+	 * 下载导入用户数据模板
+	 * 
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = "import/template")
+	public String importFileTemplate(HttpServletResponse response, RedirectAttributes redirectAttributes) {
+		try {
+			String fileName = "用户数据导入模板.xlsx";
+			List<User> list = Lists.newArrayList();
+			list.add(UserUtils.getUser());
+			new ExportExcel("用户数据", User.class, 2).setDataList(list).write(response, fileName).dispose();
+			return null;
+		} catch (Exception e) {
+			addMessage(redirectAttributes, "导入模板下载失败！失败信息：" + e.getMessage());
+		}
+		return "redirect:" + adminPath + "/sys/user/list?repage";
+	}
+
+	/**
+	 * 验证登录名是否有效
+	 * 
+	 * @param oldLoginName
+	 * @param loginName
+	 * @return
+	 */
+	@ResponseBody
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "checkLoginName")
+	public String checkLoginName(String oldLoginName, String loginName) {
+		if (loginName != null && loginName.equals(oldLoginName)) {
+			return "true";
+		} else if (loginName != null && systemService.getUserByLoginName(loginName) == null) {
+			return "true";
+		}
+		return "false";
+	}
+
+	/**
+	 * 验证工号是否有效
+	 * 
+	 * @param oldLoginName
+	 * @param loginName
+	 * @return
+	 */
+	@ResponseBody
+	@RequiresPermissions("sys:user:edit")
+	@RequestMapping(value = "checkNo")
+	public String checkNo(String oldNo, String no) {
+		if (no != null && no.equals(oldNo)) {
+			return "true";
+		} else if (no != null && systemService.getUserByUserNo(no) == null) {
+			return "true";
+		}
+		return "false";
+	}
+
+	/**
+	 * 用户信息显示及保存
+	 * 
+	 * @param user
+	 * @param model
+	 * @return
+	 * @throws ParseException
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "info")
+	public String info(User user, HttpServletResponse response, Model model) throws Exception {
+
+		// 获取当前用户
+		User currentUser = UserUtils.getUser();
+		// 获取上级领导登录名
+		String upperOneLoginName = null;
+		/*User userUpper = null;
+		try {
+			upperOneLoginName = actRouting.getUpper2(UserUtils.getUser().getCurrentUser().getId());
+			// 判断上级领导是否是当前登录者
+			if (upperOneLoginName.equals(UserUtils.getUser().getCurrentUser().getLoginName())) {
+
+				Office parentOffice = officeService.get(UserUtils.getUser().getCurrentUser().getOffice().getParentId());
+
+				upperOneLoginName = UserUtils.get(parentOffice.getPrimaryPerson().getId()).getLoginName();
+			}
+			userUpper = systemService.getUserByLoginName(upperOneLoginName);
+			currentUser.setUpperOne(userUpper.getName());
+		} catch (Exception e) {
+			// TODO: handle exception
+		}*/
+
+		/*// 获取所有用户，在页面进行身份证验证是否是唯一的。
+		List<User> listUser = systemService.findAllList();
+		model.addAttribute("listUser", listUser);
+
+		// 获取所有部门
+		List<Office> officeList = officeService.findAll();
+		// 查找每个部门下的所有人
+		List<List<User>> users = new ArrayList<List<User>>();
+		for (int i = 0; i < officeList.size(); i++) {
+			List<User> userl = new ArrayList<User>();
+			userl = systemService.findUserByOfficeId(officeList.get(i).getId());
+			users.add(userl);
+		}
+		model.addAttribute("offices", officeList);
+		model.addAttribute("users", users);*/
+
+		//根据出生日期计算年龄
+		Date currentdate = new Date();
+		Calendar c1=Calendar.getInstance();  
+	    Calendar c2=Calendar.getInstance();
+	   
+	    c1.setTime(currentdate);
+	    try {
+	    	c2.setTime(currentUser.getBirthday());
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	   	    
+	    int year1 = c1.get(Calendar.YEAR); 
+	    int month1 = c1.get(Calendar.MONTH)+1; 
+	    int date1 = c1.get(Calendar.DATE); 
+	    
+	    int year2 = c2.get(Calendar.YEAR); 
+	    int month2 = c2.get(Calendar.MONTH)+1; 
+	    int date2 = c2.get(Calendar.DATE);
+	    
+	    int age = year1-year2;
+	    if(month2>month1){	    	
+	    	age=age-1;
+	    }if(month2==month1 && date2>date1){
+	    	age=age-1;
+	    }
+	    	    
+    	String age1 = String.valueOf(age);
+    	if(age1.equals("0")){
+    		age1=null;
+    	}
+    	
+		// 修改个人信息
+		if (StringUtils.isNotBlank(user.getName())) { // isNotBlank字符串判断，判断user.getName()是不是空的,如果不是空的就进入方法
+			if (Global.isDemoMode()) {
+				model.addAttribute("message", "演示模式，不允许操作！");
+				return "modules/sys/userInfo";
+			}
+			// 如果user不为空，保存信息
+			currentUser.setEmail(user.getEmail());
+			currentUser.setPhone(user.getPhone());
+			currentUser.setQq(user.getQq());
+			currentUser.setWorklocation(user.getWorklocation());
+			currentUser.setPhoto(user.getPhoto());
+			systemService.updateUserInfo(currentUser);
+			model.addAttribute("message", "保存用户信息成功");
+		}
+
+		// 查询个人领用或借用等涉及到的固定资产
+		HashMap<String, String> paramMap = new HashMap<String, String>();
+		paramMap.put("claimant", currentUser.getName());
+		// 涉及到的固定资产集合
+		List<Map<String, Object>> resultMap = assetsClaimService.getAll(paramMap);
+		model.addAttribute("resultMap", resultMap);
+		model.addAttribute("user", currentUser);
+		model.addAttribute("Global", new Global());
+		model.addAttribute("age", age1);//年龄
+		// --liuxin 剩余调休时间
+		model.addAttribute("restTime", systemService.selectResttime(UserUtils.getUser().getId()));
+		return "modules/sys/userInfo";
+	}
+
+	/**
+	 * 返回用户信息
+	 * 
+	 * @return
+	 */
+	@RequiresPermissions("user")
+	@ResponseBody
+	@RequestMapping(value = "infoData")
+	public User infoData() {
+		return UserUtils.getUser();
+	}
+
+	/**
+	 * 修改个人用户密码
+	 * 
+	 * @param oldPassword
+	 * @param newPassword
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("user")
+	@RequestMapping(value = "modifyPwd")
+	public String modifyPwd(String oldPassword, String newPassword, Model model) {
+		User user = UserUtils.getUser();
+		if (StringUtils.isNotBlank(oldPassword) && StringUtils.isNotBlank(newPassword)) {
+			if (Global.isDemoMode()) {
+				model.addAttribute("message", "演示模式，不允许操作！");
+				return "modules/sys/userModifyPwd";
+			}
+			if (SystemService.validatePassword(oldPassword, user.getPassword())) {
+				systemService.updatePasswordById(user.getId(), user.getLoginName(), newPassword);
+				model.addAttribute("message", "修改密码成功");
+			} else {
+				model.addAttribute("message", "修改密码失败，旧密码错误");
+			}
+		}
+		model.addAttribute("user", user);
+		return "modules/sys/userModifyPwd";
+	}
+
+	@RequiresPermissions("user")
+	@ResponseBody
+	@RequestMapping(value = "treeData")
+	public List<Map<String, Object>> treeData(@RequestParam(required = false) String officeId,
+			HttpServletResponse response) {
+		List<Map<String, Object>> mapList = Lists.newArrayList();
+		List<User> list = systemService.findUserByOfficeId(officeId);
+		for (int i = 0; i < list.size(); i++) {
+			User e = list.get(i);
+			Map<String, Object> map = Maps.newHashMap();
+			map.put("id", "u_" + e.getId());
+			map.put("pId", officeId);
+			map.put("name", StringUtils.replace(e.getName(), " ", ""));
+			mapList.add(map);
+		}
+		return mapList;
+	}
+
+	// @InitBinder
+	// public void initBinder(WebDataBinder b) {
+	// b.registerCustomEditor(List.class, "roleList", new
+	// PropertyEditorSupport(){
+	// @Autowired
+	// private SystemService systemService;
+	// @Override
+	// public void setAsText(String text) throws IllegalArgumentException {
+	// String[] ids = StringUtils.split(text, ",");
+	// List<Role> roles = new ArrayList<Role>();
+	// for (String id : ids) {
+	// Role role = systemService.getRole(Long.valueOf(id));
+	// roles.add(role);
+	// }
+	// setValue(roles);
+	// }
+	// @Override
+	// public String getAsText() {
+	// return Collections3.extractToString((List) getValue(), "id", ",");
+	// }
+	// });
+	// }
+
+	/**
+	 * 已发事项首页
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "indexForTosendList" })
+	public String indexForTosendList(HttpServletRequest request, HttpServletResponse response, Model model) {
+
+		/*------------------已发事项开始-----------------------*/
+		Page<Act> actPage = new Page<Act>(request, response);
+
+		actPage = actTaskService.tosendList(actPage, new Act());
+
+		model.addAttribute("actPage", actPage);
+		/*------------------已发事项结束-----------------------*/
+
+		return "modules/sys/tosendList";
+	}
+
+	/**
+	 * 用户首页
+	 */
+	@RequiresPermissions("sys:user:view")
+	@RequestMapping(value = { "index" })
+	public String index(HttpServletRequest request, HttpServletResponse response, Model model, Act act) {
+		UserUtils.clearCache();
+		System.out.println("1");
+		initTodo(request, response, model, act);
+		// initIndex(request, response, model);
+		//
+		// initOverview(request, response, model);
+		//
+		// initShortcut(request, response, model);
+		//
+		// initWorkColumn(request, response, model);
+
+		return "modules/sys/index";
+	}
+
+	/**
+	 * 初始化代办事项
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initTodo(HttpServletRequest request, HttpServletResponse response, Model model, Act act) {
+		List<Act> actlist = actTaskService.todoList(act);
+		List<Act> list = new ArrayList<Act>();
+		for (int i = 0; i < 6; i++) {
+			list.add(actlist.get(i));
+		}
+		model.addAttribute("list", list);
+	}
+
+	/**
+	 * 初始化公告
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initIndex(HttpServletRequest request, HttpServletResponse response, Model model) {
+		/*------------------通知公告开始-----------------------*/
+		OaNotify oaNotify = new OaNotify();
+
+		oaNotify.setSelf(true);
+
+		Page<OaNotify> oaNotifyPage = oaNotifyService.find(new Page<OaNotify>(request, response), oaNotify);
+
+		model.addAttribute("oaNotifyPage", oaNotifyPage);
+		/*------------------通知公告结束-----------------------*/
+
+		/*------------------新闻中心开始-----------------------*/
+		Page<Article> articlePage = articleService.findPage(new Page<Article>(request, response), new Article(), true);
+
+		model.addAttribute("articlePage", articlePage);
+		/*------------------新闻中心结束-----------------------*/
+
+		/*------------------我的收藏开始-----------------------*/
+		UserFavorite userFavorite = new UserFavorite();
+
+		userFavorite.setCreateBy(UserUtils.getUser());
+
+		Page<UserFavorite> userFavoritePage = userFavoriteService.findPage(new Page<UserFavorite>(request, response),
+				userFavorite);
+
+		model.addAttribute("userFavoritePage", userFavoritePage);
+		/*------------------我的收藏结束-----------------------*/
+
+		/*------------------文档中心开始-----------------------*/
+		Page<OaDocument> oaDocumentPage = oaDocumentService.findPage(new Page<OaDocument>(request, response),
+				new OaDocument());
+
+		List<OaDocument> list = oaDocumentPage.getList();
+
+		for (int i = 0; i < list.size(); i++) {
+			String uid = list.get(i).getCreateBy().getId();
+
+			User createBy = UserUtils.get(uid);// 通过用户id获取用户信息
+
+			list.get(i).setCreateBy(createBy);
+		}
+
+		oaDocumentPage.setList(list);
+
+		model.addAttribute("oaDocumentPage", oaDocumentPage);
+		/*------------------文档中心结束-----------------------*/
+
+		/*------------------我的日程开始-----------------------*/
+		OaPlan oaPlan = new OaPlan();
+
+		oaPlan.setCreateBy(oaPlan.getCurrentUser());
+
+		Page<OaPlan> oaPlanPage = oaPlanService.findPage(new Page<OaPlan>(request, response), oaPlan);
+
+		List<OaPlan> lit = oaPlanPage.getList();
+		for (int i = 0; i < lit.size(); i++) {
+
+			lit.get(i).setPlanTitle(lit.get(i).getPlanTitle().substring(0, 2));
+		}
+		oaPlanPage.setList(lit);
+
+		model.addAttribute("oaPlanPage", oaPlanPage);
+		/*------------------我的日程结束-----------------------*/
+	}
+
+	/**
+	 * 初始化概览
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initOverview(HttpServletRequest request, HttpServletResponse response, Model model) {
+		/*---------------------一周概览开始--------------------*/
+
+		/*--------------------协调开始-----------------------*/
+		Date beginTime = MyDateUtils.getBeginDate();
+
+		Date endTime = new Date();
+
+		Act act = new Act();
+
+		act.setBeginDate(beginTime);
+
+		act.setEndDate(endTime);
+
+		List<Act> todoList = actTaskService.todoList(act);
+
+		model.addAttribute("taskTodo", todoList.size());
+
+		Page<Act> page = new Page<Act>(request, response);
+
+		page = actTaskService.historicList(page, act);
+
+		model.addAttribute("taskHistoric", page.getCount());
+
+		/*--------------------协调结束-----------------------*/
+
+		/*--------------------任务开始-----------------------*/
+		Integer myPlanDo = systemService.queryMyPlan(UserUtils.getUser().getId(), beginTime, endTime, "2");
+		OaPlan oaPlan = new OaPlan();
+		Map<String, String> mapi = oaPlanService.recnmylist(oaPlan.getCurrentUser().getId());
+		Integer myPlanUndo = systemService.queryMyPlan(UserUtils.getUser().getId(), beginTime, endTime, "1");
+
+		model.addAttribute("myPlanDo", myPlanDo);
+		model.addAttribute("mapi", mapi);
+		model.addAttribute("myPlanUndo", myPlanUndo);
+		/*--------------------任务结束-----------------------*/
+
+		/*--------------------会议开始-----------------------*/
+		Integer sponsoredCongress = systemService.queryCongressSponsored(UserUtils.getUser().getId(), beginTime,
+				endTime);
+
+		Integer attendCongress = systemService.queryCongressAttend(UserUtils.getUser().getId(), beginTime, endTime);
+
+		model.addAttribute("sponsoredCongress", sponsoredCongress);
+
+		model.addAttribute("attendCongress", attendCongress);
+		/*--------------------会议结束-----------------------*/
+
+		/*--------------------收藏开始-----------------------*/
+		Integer newFavorite = systemService.queryNewFavorite(UserUtils.getUser().getId(), beginTime, endTime);
+
+		Integer delFavorite = systemService.queryDelFavorite(UserUtils.getUser().getId(), beginTime, endTime);
+
+		Integer sumFavorite = systemService.querySumFavorite(UserUtils.getUser().getId());
+
+		model.addAttribute("newFavorite", newFavorite);
+
+		model.addAttribute("delFavorite", delFavorite);
+
+		model.addAttribute("sumFavorite", sumFavorite);
+		/*--------------------收藏结束-----------------------*/
+
+		/*--------------------问题开始-----------------------*/
+		Integer isDone = systemService.queryWorkLog("0", UserUtils.getUser().getId(), beginTime, endTime);
+
+		Integer isNotDone = systemService.queryWorkLog("1", UserUtils.getUser().getId(), beginTime, endTime);
+
+		model.addAttribute("isDone", isDone);
+
+		model.addAttribute("isNotDone", isNotDone);
+		/*--------------------问题结束-----------------------*/
+
+		/*---------------------一周概览结束--------------------*/
+	}
+
+	/**
+	 * 初始化快捷栏
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initShortcut(HttpServletRequest request, HttpServletResponse response, Model model) {
+		Integer meeting = systemService.queryMeeting(UserUtils.getUser().getId(), new Date());
+
+		Integer project = oaProjectService.getProjectsCountBySearchUserId(UserUtils.getUser().getId());
+
+		List<Act> todoList = actTaskService.todoList(new Act());
+
+		model.addAttribute("taskTodoShort", todoList.size());
+
+		model.addAttribute("meeting", meeting);
+
+		model.addAttribute("project", project);
+	}
+
+	/**
+	 * 初始化工作栏
+	 * 
+	 * @param request
+	 * @param response
+	 * @param model
+	 */
+	public void initWorkColumn(HttpServletRequest request, HttpServletResponse response, Model model) {
+		/*-----------------------------我的任务开始-------------------------------*/
+		OaPlan oaPlan = new OaPlan();
+
+		request.getSession().removeAttribute("th");
+
+		oaPlan.setCreateBy(oaPlan.getCurrentUser());
+		SimpleDateFormat sfd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		List<OaPlan> listi = oaPlanService.ListTask(oaPlan);
+		for (int i = 0; i < listi.size(); i++) {
+			OaPlan oaPlani = listi.get(i);
+			try {
+				// 判断没有完成的任务
+				if (!oaPlani.getState().equals("2")) {
+					if (sfd.parse(oaPlani.getEndTime()).getTime() < new Date().getTime()) {
+						oaPlanService.upi(oaPlani.getId());
+					}
+				}
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} // 开始日期
+
+		}
+		Page<OaPlan> pagei = oaPlanService.findListTask(new Page<OaPlan>(request, response), oaPlan);
+		model.addAttribute("WorkColumnPage", pagei);
+		Page<OaPlan> page = oaPlanService.findListTask(new Page<OaPlan>(request, response), oaPlan);
+		List<OaPlan> list = page.getList();
+		for (int i = 0; i < list.size(); i++) {
+			String uid = list.get(i).getCreateBy().getId();
+			String pid = list.get(i).getProjectid().getId();
+			String[] acid = list.get(i).getActor().getId().split(",");
+			String[] acnme = new String[acid.length];
+			for (int j = 0; j < acid.length; j++) {
+				acnme[j] = UserUtils.get(acid[j]).getName();
+			}
+			User use = new User();
+			String namee = StringUtils.join(acnme, ",");
+			use.setName(namee);
+			list.get(i).setActor(use);
+			User createBy = UserUtils.get(uid);// 通过用户id获取用户信息
+
+			list.get(i).setCreateBy(createBy);
+
+			if (!pid.equals("0") & !pid.equals("")) {
+				OaProject oaProject = oaProjectService.get(pid);
+				list.get(i).setProjectid(oaProject);
+			}
+		}
+		Map<String, String> map = oaPlanService.cnmylist(oaPlan);// 我布置的任务
+		Map<String, String> mapi = oaPlanService.recnmylist(oaPlan.getCurrentUser().getId());
+		Map<String, String> mapa = oaPlanService.statea(oaPlan);// 进行中
+		Map<String, String> mapb = oaPlanService.stateb(oaPlan);// 完成
+		Map<String, String> mapc = oaPlanService.statec(oaPlan);// 已超期
+		pagei.setList(list);
+		model.addAttribute("map", map);
+		model.addAttribute("mapi", mapi);
+		model.addAttribute("mapa", mapa);
+		model.addAttribute("mapb", mapb);
+		model.addAttribute("mapc", mapc);
+
+		/*-----------------------------我的任务结束-------------------------------*/
+
+		/*-----------------------------我的问题开始-------------------------------*/
+		Integer isDone = systemService.queryWorkLogForWorkColumn("0", UserUtils.getUser().getId());
+
+		Integer isNotDone = systemService.queryWorkLogForWorkColumn("1", UserUtils.getUser().getId());
+
+		model.addAttribute("isDoneWorkColumn", isDone);
+
+		model.addAttribute("isNotDoneWorkColumn", isNotDone);
+
+		List<UserWorklogVo> UserWorklogVoList = userWorkrecordService
+				.findListForWorkColumn(UserUtils.getUser().getId());
+
+		model.addAttribute("UserWorklogVoList", UserWorklogVoList);
+		/*-----------------------------我的问题结束-------------------------------*/
+	}
+
+	@RequiresPermissions("user")
+	@RequestMapping(value = "tosendList")
+	@ResponseBody
+	public String tosendList(HttpServletRequest request, HttpServletResponse response) {
+		Page<Act> actPage = new Page<Act>(request, response);
+
+		actPage = actTaskService.tosendList(actPage, new Act());
+
+		return JsonMapper.getInstance().toJson(actPage.getList());
+	}
+
+	/**
+	 * 获取树结构json数据
+	 * 
+	 * @param extId
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("user")
+	@ResponseBody
+	@RequestMapping(value = "treeDataForMenu")
+	public List<Map<String, Object>> treeDataForMenu(@RequestParam(required = false) String extId,
+			HttpServletResponse response) {
+		List<Map<String, Object>> mapList = Lists.newArrayList();
+		List<Menu> list = systemService.findAllMenu();
+		for (int i = 0; i < list.size(); i++) {
+			Menu e = list.get(i);
+
+			if ("1".equals(e.getIsShow()))
+				if (StringUtils.isBlank(extId) || (extId != null && !extId.equals(e.getId())
+						&& e.getParentIds().indexOf("," + extId + ",") == -1)) {
+					Map<String, Object> map = Maps.newHashMap();
+					map.put("id", e.getId());
+					map.put("pId", e.getParentId());
+					map.put("name", e.getName());
+					mapList.add(map);
+				}
+		}
+		return mapList;
+	}
+
+}

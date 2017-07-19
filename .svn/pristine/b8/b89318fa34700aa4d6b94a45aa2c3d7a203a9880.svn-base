@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.project.OaProjectDocumentDao">
+    
+	<sql id="oaProjectDocumentColumns">
+		a.id AS "id",
+		a.project_file AS "projectFile",
+		a.update_user_id AS "updateUser.id",
+		a.upload_user_id AS "uploadUser.id",
+		a.file_version AS "fileVersion",
+		a.project_id AS "project.id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u1.name AS "updateUser.name",
+		u1.login_name AS "updateUser.loginName",
+		u3.name AS "uploadUser.name",
+		u3.login_name AS "uploadUser.loginName",
+		u6.name AS "createBy.name",
+		u6.login_name AS "createBy.loginName",
+		u8.name AS "updateBy.name",
+		u8.login_name AS "updateBy.loginName"
+	</sql>
+	
+	<sql id="oaProjectDocumentJoins">
+		LEFT JOIN oa_project b ON b.id = a.project_id
+		LEFT JOIN sys_user u1 ON u1.id = a.update_user_id
+		LEFT JOIN sys_user u3 ON u3.id = a.upload_user_id
+		LEFT JOIN sys_user u6 ON u6.id = a.create_by
+		LEFT JOIN sys_user u8 ON u8.id = a.update_by
+	</sql>
+    
+	<select id="get" resultType="OaProjectDocument">
+		SELECT 
+			<include refid="oaProjectDocumentColumns"/>
+		FROM oa_project_document a
+		<include refid="oaProjectDocumentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaProjectDocument">
+		SELECT 
+			<include refid="oaProjectDocumentColumns"/>
+		FROM oa_project_document a
+		<include refid="oaProjectDocumentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="project != null and project.id != null and project.id != ''">
+				AND a.project_id = #{project.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaProjectDocument">
+		SELECT 
+			<include refid="oaProjectDocumentColumns"/>
+		FROM oa_project_document a
+		<include refid="oaProjectDocumentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_project_document(
+			id,
+			project_file,
+			upload_user_id,
+			file_version,
+			project_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{projectFile},
+			#{uploadUser.id},
+			#{fileVersion},
+			#{project.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_project_document SET 	
+			project_file = #{projectFile},
+			update_user_id = #{updateUser.id},
+			file_version = (file_version+1)+"",
+			project_id = #{project.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_project_document SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE project_id = #{project.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

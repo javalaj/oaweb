@@ -1,0 +1,136 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>借支还款信息管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		var validateForm;
+		function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+			
+		  if(validateForm.form()){
+		  	$("#inputForm").submit();
+		  	return true;
+		  }
+		  return false;
+		}
+		$(document).ready(function() {
+			var oaLoanRepaymentId="${oaLoanRepayment.loanMain.id}";
+			//$("#name").focus();
+			validateForm=$("#inputForm").validate({
+				rules: {
+				    "repaymentMoney": {
+				    	 checkLeftMoney: [oaLoanRepaymentId,"#hasRepaymentMoney","#notRepaymentMoney"]
+					 }
+				},
+				submitHandler: function(form){
+					oaLoading('操作正在进行中，请耐心等待');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+		$.validator.addMethod('checkLeftMoney', function (value, element,params){
+			var tag=false;
+			$.ajax({
+				type: "POST",
+				async: false,
+				url: "${ctx}/oa/loan/oaLoanRepayment/checkLeftMoney",
+				data: {inputMoney: value,loanMainId:params[0]},
+				dataType: "json",
+				success: function(data){
+					if(data.status=="ok"){
+						$(params[1]).html(data.hasRepaymentMoney);
+						$(params[2]).html(data.notRepaymentMoney);
+						if(value>0&&value<=data.notRepaymentMoney){
+							tag=true;
+						}
+					}
+				}
+			});
+		    return tag;
+		},"输入金额不得大于未还款金额");
+	</script>
+</head>
+<body>
+	
+	<form:form id="inputForm" modelAttribute="oaLoanRepayment" action="${ctx}/oa/loan/oaLoanRepayment/save" method="post" class="form-horizontal" style="padding:10px;">
+		<form:hidden path="id" />
+		<form:hidden path="loanMain.id"/>
+		<form:hidden path="loanMain.loanUser.id"/>
+		<sys:message content="${message}"/>
+		<table class="table table-condensed dataTables-example dataTable no-footer myoa-newitem-table">
+		   <tbody>
+		      <tr>
+		         <td>	
+		        	借支单号
+		         </td>
+		         <td>
+		         	${oaLoanRepayment.loanMain.loanNo}
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	借支金额
+		         </td>
+		         <td>
+		         	${oaLoanRepayment.loanMain.loanMoney}
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	已还款金额
+		         </td>
+		         <td id="hasRepaymentMoney">
+		         	${oaLoanRepayment.hasRepaymentMoney}
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	未还款金额
+		         </td>
+		         <td id="notRepaymentMoney">
+		         	${oaLoanRepayment.notRepaymentMoney}
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	销账类型 <span class="help-inline"><font color="red">*</font> </span>
+		         </td>
+		         <td>
+		         	<form:select path="repaymentType" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true">
+						<form:options items="${fns:getDictList('OaLoanRepayment_repaymentType')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+					</form:select>
+					
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	金额 <span class="help-inline"><font color="red">*</font> </span>
+		         </td>
+		         <td>
+						<form:input path="repaymentMoney" htmlEscape="false" min="0" max="9999999" class="form-control number required"/>
+						
+		         </td>
+		      </tr>
+		      <tr>
+		         <td>	
+		        	报销单号
+		         </td>
+		         <td>
+					<form:input path="billingNo" htmlEscape="false" maxlength="64" class="form-control "/>
+		         </td>
+		      </tr>
+		   </tbody>
+		   </table> 
+	</form:form>
+</body>
+</html>

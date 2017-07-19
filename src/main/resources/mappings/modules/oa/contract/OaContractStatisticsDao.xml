@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractStatisticsDao">
+    
+	<select id="findOaContractSalesStatisticsList" resultType="OaContractStatistics">
+		SELECT 
+		    op.project_no AS projectNo,
+		    op.project_name AS projectName,
+		    sdv.label AS projectStageLabel,
+		    op.expected_money AS expectedMoney,
+		    ocs.contract_no AS contractNo,
+		    ocs.contract_name AS contractName,
+		    IFNULL(ocs.contract_money, 0) AS contractMoney,
+		    IFNULL(ocssbmv.sum_billing_money, 0) AS completedMoney,
+		    (IFNULL(ocs.contract_money, 0) - IFNULL(ocssbmv.sum_billing_money, 0)) AS leftMoney,
+		    op.establishment_time AS establishmentTime
+		FROM
+		    oa_contract_sales ocs
+		        LEFT JOIN
+		    oa_project op ON op.id = ocs.project_id
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(ocss.billing_money) AS sum_billing_money,
+		            ocss.contract_sales_id
+		    FROM
+		        oa_contract_sales_stage ocss
+		    WHERE
+		        ocss.del_flag = #{DEL_FLAG_NORMAL}
+		    GROUP BY ocss.contract_sales_id) ocssbmv ON ocssbmv.contract_sales_id = ocs.id
+		        LEFT JOIN
+		    (SELECT 
+		        sd.label AS label, sd.value AS value
+		    FROM
+		        sys_dict sd
+		    WHERE
+		        sd.del_flag = #{DEL_FLAG_NORMAL}
+		            AND sd.type = 'oa_project_projectStage') sdv ON sdv.value = op.project_stage
+		WHERE
+		    ocs.del_flag = #{DEL_FLAG_NORMAL}
+		    <if test="projectName != null and projectName != ''">
+				AND op.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<if test="contractType != null and contractType != ''">
+				 AND op.contract_type = #{contractType}
+			</if>
+			<if test="beginEstablishmentTime != null and beginEstablishmentTime != '' ">
+				<![CDATA[AND op.establishment_time>=#{beginEstablishmentTime} ]]>
+			</if>
+			<if test="endEstablishmentTime != null and endEstablishmentTime != ''">
+				<![CDATA[AND op.establishment_time<=#{endEstablishmentTime} ]]>
+			</if>
+	        ORDER BY op.project_no ASC,ocs.contract_no ASC,op.create_date DESC;
+	</select>
+	
+	<select id="findOaContractPurchaseStatisticsList" resultType="OaContractStatistics">
+		SELECT 
+		    op.project_no AS projectNo,
+		    op.project_name AS projectName,
+		    sdv.label AS projectStageLabel,
+		    op.expected_money AS expectedMoney,
+		    ocp.contract_no AS contractNo,
+		    ocp.contract_name AS contractName,
+		    IFNULL(ocp.contract_money, 0) AS contractMoney,
+		    IFNULL(ocpspmv.sum_pay_money, 0) AS completedMoney,
+		    (IFNULL(ocp.contract_money, 0) - IFNULL(ocpspmv.sum_pay_money, 0)) AS leftMoney,
+		    op.establishment_time AS establishmentTime
+		FROM
+		    oa_contract_purchase ocp
+		        LEFT JOIN
+		    oa_project op ON op.id = ocp.project_id
+		        LEFT JOIN
+		    (SELECT 
+		        SUM(ocps.pay_money) AS sum_pay_money,
+		            ocps.contract_purchase_id
+		    FROM
+		        oa_contract_purchase_stage ocps
+		    WHERE
+		        ocps.del_flag = #{DEL_FLAG_NORMAL}
+		        AND ocps.pay_stage_status = '3'
+		    GROUP BY ocps.contract_purchase_id) ocpspmv ON ocpspmv.contract_purchase_id = ocp.id
+		        LEFT JOIN
+		    (SELECT 
+		        sd.label AS label, sd.value AS value
+		    FROM
+		        sys_dict sd
+		    WHERE
+		        sd.del_flag = #{DEL_FLAG_NORMAL}
+		            AND sd.type = 'oa_project_projectStage') sdv ON sdv.value = op.project_stage
+		WHERE
+		    ocp.del_flag = #{DEL_FLAG_NORMAL}
+		    <if test="projectName != null and projectName != ''">
+				AND op.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<if test="contractType != null and contractType != ''">
+				 AND op.contract_type = #{contractType}
+			</if>
+			<if test="beginEstablishmentTime != null and beginEstablishmentTime != '' ">
+				<![CDATA[AND op.establishment_time>=#{beginEstablishmentTime} ]]>
+			</if>
+			<if test="endEstablishmentTime != null and endEstablishmentTime != ''">
+				<![CDATA[AND op.establishment_time<=#{endEstablishmentTime} ]]>
+			</if>
+	        ORDER BY op.project_no ASC,ocp.contract_no ASC,op.create_date DESC;
+	</select>
+	
+</mapper>

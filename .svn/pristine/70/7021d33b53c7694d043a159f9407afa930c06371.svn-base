@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.publicprivatecar.OaPublicPrivateCarsDao">
+    
+	<sql id="oaPublicPrivateCarsColumns">
+		a.id AS "id",
+		a.officename AS "officename",
+		a.usescope AS "usescope",
+		a.usereason AS "usereason",
+		a.starttime AS "starttime",
+		a.endtime AS "endtime",
+		a.gokilometer AS "gokilometer",
+		a.backkilometer AS "backkilometer",
+		a.destination AS "destination",
+		a.picture AS "picture",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname1 AS "examname1",
+		a.examtext1 AS "examtext1",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.fileId as "fileId"
+	</sql>
+	
+	<sql id="oaPublicPrivateCarsJoins">
+	</sql>
+    
+	<select id="get" resultType="OaPublicPrivateCars">
+		SELECT 
+			<include refid="oaPublicPrivateCarsColumns"/>
+		FROM oa_public_private_cars a
+		<include refid="oaPublicPrivateCarsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaPublicPrivateCars">
+    	select 
+    		<include refid="oaPublicPrivateCarsColumns"/>
+    	from oa_public_private_cars a 
+    		<include refid="oaPublicPrivateCarsJoins"/>
+    	where a.proc_ins_id = #{procInsId}
+    </select>
+	
+	<select id="findList" resultType="OaPublicPrivateCars">
+		SELECT 
+			<include refid="oaPublicPrivateCarsColumns"/>
+		FROM oa_public_private_cars a
+		<include refid="oaPublicPrivateCarsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaPublicPrivateCars">
+		SELECT 
+			<include refid="oaPublicPrivateCarsColumns"/>
+		FROM oa_public_private_cars a
+		<include refid="oaPublicPrivateCarsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_public_private_cars(
+			id,
+			officename,
+			usescope,
+			usereason,
+			starttime,
+			endtime,
+			gokilometer,
+			backkilometer,
+			destination,
+			picture,
+			examname,
+			examtext,
+			examname1,
+			examtext1,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			fileId
+		) VALUES (
+			#{id},
+			#{officename},
+			#{usescope},
+			#{usereason},
+			#{starttime},
+			#{endtime},
+			#{gokilometer},
+			#{backkilometer},
+			#{destination},
+			#{picture},
+			#{examname},
+			#{examtext},
+			#{examname1},
+			#{examtext1},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{fileId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_public_private_cars SET 	
+			officename = #{officename},
+			usescope = #{usescope},
+			usereason = #{usereason},
+			starttime = #{starttime},
+			endtime = #{endtime},
+			gokilometer = #{gokilometer},
+			backkilometer = #{backkilometer},
+			destination = #{destination},
+			picture = #{picture},
+			examname = #{examname},
+			examtext = #{examtext},
+			examname1 = #{examname1},
+			examtext1 = #{examtext1},
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			fileId = #{fileId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_public_private_cars SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,54 @@
+package com.thinkgem.jeesite.modules.iim.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.iim.dao.IimChatGroupUserDao;
+import com.thinkgem.jeesite.modules.iim.entity.IimChatGroup;
+import com.thinkgem.jeesite.modules.iim.entity.IimChatGroupUser;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+
+@Service
+@Transactional(readOnly = true)
+public class IimChatGroupUserService extends CrudService<IimChatGroupUserDao, IimChatGroupUser> {
+	@Autowired
+	private IimChatGroupUserDao iimChatGroupUserDao;
+	
+	
+	
+	/**
+	 * 根据当前用户获取所在的群信息列表
+	 * @param user
+	 * @return
+	 */
+	
+	public List<IimChatGroup> getGroupByuser(User user){
+		return iimChatGroupUserDao.getGroupByuser(user);
+	}
+	
+	/***
+	 * 根据组获取组下所有群成员
+	 * @param group
+	 * @return
+	 */
+	public List<User> getUserBygroup(IimChatGroup group){
+		return iimChatGroupUserDao.getUserBygroup(group);
+	}
+	
+	
+	
+	/***
+	 * 根据组ID以及当前用户ID
+	 * @param group
+	 * @return
+	 */
+	public List<Map<String, Object>> getUserBygroupID(IimChatGroupUser groupuser){
+		return iimChatGroupUserDao.getUserBygroupID(groupuser);
+	}
+	
+}

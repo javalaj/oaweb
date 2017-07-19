@@ -1,0 +1,133 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.fixedassetpurchase;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassetpurchase.ApplyFixedAssets;
+import com.thinkgem.jeesite.modules.oa.service.fixedassetpurchase.ApplyFixedAssetsService;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 固定资产申购Controller
+ * @author zf
+ * @version 2017-01-09
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/fixedassetpurchase/applyFixedAssets")
+public class ApplyFixedAssetsController extends BaseController {
+
+	@Autowired
+	private ApplyFixedAssetsService applyFixedAssetsService;
+	
+	@ModelAttribute
+	public ApplyFixedAssets get(@RequestParam(required=false) String id) {
+		ApplyFixedAssets entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = applyFixedAssetsService.get(id);
+		}
+		if (entity == null){
+			entity = new ApplyFixedAssets();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("oa:fixedassetpurchase:applyFixedAssets:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(ApplyFixedAssets applyFixedAssets, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<ApplyFixedAssets> page = applyFixedAssetsService.findPage(new Page<ApplyFixedAssets>(request, response), applyFixedAssets); 
+		model.addAttribute("page", page);
+		return "modules/oa/fixedassetpurchase/applyFixedAssetsList";
+	}
+
+	@RequiresPermissions("oa:fixedassetpurchase:applyFixedAssets:view")
+	@RequestMapping(value = "form")
+	public String form(ApplyFixedAssets applyFixedAssets, Model model) 
+	{
+		String formView = "modules/oa/fixedassetpurchase/applyFixedAssetsForm";
+		
+		model.addAttribute("applyFixedAssets", applyFixedAssets);
+		
+		if (!StringUtils.equals(ActEntity.ACT_IS_START, applyFixedAssets.getIsStart()))
+			return formView;
+		
+		if (StringUtils.equals(ActEntity.ACT_STATUS_NOT_START, applyFixedAssets.getIsStart())
+				||WorkflowUtils.isDeal(applyFixedAssets.getId(), applyFixedAssets.getProcInsId()))
+		{
+			Act act = applyFixedAssets.getAct();
+			
+			if (StringUtils.isEmpty(act.getTaskDefKey()))
+			{
+				if (StringUtils.equals(applyFixedAssets.getStatus(), ApplyFixedAssets.MODIFY))
+					act.setTaskDefKey("exam1");
+				else
+					act.setTaskDefKey("exam");
+			}
+			
+			applyFixedAssets.setAct(act);
+			
+			model.addAttribute("applyFixedAssets", applyFixedAssets);
+			
+			return formView;
+		}
+		
+		if (StringUtils.equals(applyFixedAssets.getAct().getStatus(),  "finish"))
+			applyFixedAssets = applyFixedAssetsService.getByProcInsId(applyFixedAssets.getAct().getProcInsId());
+		
+		return "modules/oa/fixedassetpurchase/applyFixedAssetsFormView";
+	}
+
+	@RequiresPermissions("oa:fixedassetpurchase:applyFixedAssets:edit")
+	@RequestMapping(value = "save")
+	public String save(ApplyFixedAssets applyFixedAssets, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, applyFixedAssets)){
+			return form(applyFixedAssets, model);
+		}
+		String message="default";
+		
+		message = applyFixedAssetsService.savePurchase(applyFixedAssets);
+		
+		addMessage(redirectAttributes, message);
+		
+		if (StringUtils.equals("save", applyFixedAssets.getAct().getFlag())) 
+			model.addAttribute("applyFixedAssets", applyFixedAssets);
+//			return "redirect:" + adminPath + "/act/task/todo/";
+			return "redirect:"+Global.getAdminPath()+"/oa/fixedassetpurchase/applyFixedAssets/?repage";			
+		
+	}
+	
+	@RequiresPermissions("oa:fixedassetpurchase:applyFixedAssets:view")
+	@RequestMapping(value = "print")
+	public String print(ApplyFixedAssets applyFixedAssets, Model model) 
+	{
+		model.addAttribute("applyFixedAssets", applyFixedAssets);
+		
+		return "modules/oa/fixedassetpurchase/applyFixedAssetsFormPrint";
+	}
+	
+	@RequiresPermissions("oa:fixedassetpurchase:applyFixedAssets:edit")
+	@RequestMapping(value = "delete")
+	public String delete(ApplyFixedAssets applyFixedAssets, RedirectAttributes redirectAttributes) {
+		applyFixedAssetsService.delete(applyFixedAssets);
+		addMessage(redirectAttributes, "删除固定资产申购成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/fixedassetpurchase/applyFixedAssets/?repage";
+	}
+
+}

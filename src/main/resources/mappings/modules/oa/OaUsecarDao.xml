@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaUsecarDao">
+    
+	<sql id="oaUsecarColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.file_id AS "fileId",
+		a.department AS "department",
+		a.usetime AS "usetime",
+		a.usereason AS "usereason",
+		a.destination AS "destination",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname2 AS "examname2",
+		a.examtext2 AS "examtext2",
+		a.usescope AS "usescope",
+		a.destinationchange AS "destinationchange",
+		a.platenum AS "platenum",
+		a.driver AS "driver",
+		a.gotime AS "gotime",
+		a.backtime AS "backtime",
+		a.gokilometer AS "gokilometer",
+		a.backkilometer AS "backkilometer",
+		a.safearrive AS "safearrive",
+		a.fillingName as "fillingName",
+		a.fillingTime as "fillingTime"
+	</sql>
+	
+	<sql id="oaUsecarJoins">
+	</sql>
+     
+    <select id="getByProcInsId" resultType="OaUsecar">
+    	select 
+    		<include refid="oaUsecarColumns"/>
+    	from oa_usecar a 
+    		<include refid="oaUsecarJoins"/>
+    	where a.proc_ins_id = #{procInsId}
+    </select>
+    
+     
+    
+	<select id="get" resultType="OaUsecar">
+		SELECT 
+			<include refid="oaUsecarColumns"/>
+		FROM oa_usecar a
+		<include refid="oaUsecarJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaUsecar">
+		SELECT 
+			<include refid="oaUsecarColumns"/>
+		FROM oa_usecar a
+		<include refid="oaUsecarJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaUsecar">
+		SELECT 
+			<include refid="oaUsecarColumns"/>
+		FROM oa_usecar a
+		<include refid="oaUsecarJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_usecar(
+			id,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			file_id,
+			department,
+			usetime,
+			usereason,
+			destination,
+			examname,
+			examtext,
+			examname2,
+			examtext2,
+			usescope,
+			destinationchange,
+			platenum,
+			driver,
+			gotime,
+			backtime,
+			gokilometer,
+			backkilometer,
+			safearrive,
+			fillingName,
+			fillingTime
+		) VALUES (
+			#{id},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{fileId},
+			#{department},
+			#{usetime},
+			#{usereason},
+			#{destination},
+			#{examname},
+			#{examtext},
+			#{examname2},
+			#{examtext2},
+			#{usescope},
+			#{destinationchange},
+			#{platenum},
+			#{driver},
+			#{gotime},
+			#{backtime},
+			#{gokilometer},
+			#{backkilometer},
+			#{safearrive},
+			#{fillingName},
+			#{fillingTime}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_usecar SET 	
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			file_id = #{fileId},
+			department = #{department},
+			usetime = #{usetime},
+			usereason = #{usereason},
+			destination = #{destination},
+			examname = #{examname},
+			examtext = #{examtext},
+			examname2 = #{examname2},
+			examtext2 = #{examtext2},
+			usescope = #{usescope},
+			destinationchange = #{destinationchange},
+			platenum = #{platenum},
+			driver = #{driver},
+			gotime = #{gotime},
+			backtime = #{backtime},
+			gokilometer = #{gokilometer},
+			backkilometer = #{backkilometer},
+			safearrive = #{safearrive},
+			fillingName = #{fillingName},
+			fillingTime = #{fillingTime}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_usecar SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

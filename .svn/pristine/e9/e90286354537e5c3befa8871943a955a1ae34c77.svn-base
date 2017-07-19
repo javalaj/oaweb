@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaOvertimeDao">
+
+	<sql id="oaOvertimeColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.fileid AS "fileid",
+		a.time AS "time",
+		a.starttime AS "starttime",
+		a.endtime AS "endtime",
+		a.reason AS
+		"reason",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.officename AS "officename"
+	</sql>
+
+	<sql id="oaOvertimeJoins">
+	</sql>
+	<select id="getByProcInsId" resultType="OaOvertime">
+		SELECT
+		<include refid="oaOvertimeColumns" />
+		FROM oa_overtime a
+		<include refid="oaOvertimeJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaOvertime">
+		SELECT
+		<include refid="oaOvertimeColumns" />
+		FROM oa_overtime a
+		<include refid="oaOvertimeJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaOvertime">
+		SELECT
+		<include refid="oaOvertimeColumns" />
+		FROM oa_overtime a
+		<include refid="oaOvertimeJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaOvertime">
+		SELECT
+		<include refid="oaOvertimeColumns" />
+		FROM oa_overtime a
+		<include refid="oaOvertimeJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_overtime(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		fileid,
+		time,
+		starttime,
+		endtime,
+		reason,
+		examname,
+		examtext,
+		officename
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{fileid},
+		#{time},
+		#{starttime},
+		#{endtime},
+		#{reason},
+		#{examname},
+		#{examtext},
+		#{officename}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_overtime SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		fileid = #{fileid},
+		time = #{time},
+		starttime = #{starttime},
+		endtime = #{endtime},
+		reason = #{reason},
+		examname = #{examname},
+		examtext = #{examtext},
+		officename = #{officename}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_overtime SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="getRestTimeById" resultType="java.lang.String">
+		SELECT
+		SUM(r.resttime)
+		FROM
+		(
+		(SELECT
+		SUM(a.hours) AS resttime
+		FROM
+		oa_filling a
+		WHERE a.apply_type
+		= '加班' AND a.apply_user=#{userId})
+		UNION ALL
+		(SELECT
+		-SUM(a.hours) AS
+		resttime
+		FROM
+		oa_filling a
+		WHERE a.apply_type_lit = '调休' AND
+		a.apply_user=#{userId})
+		) r
+	</select>
+
+</mapper>

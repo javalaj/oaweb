@@ -1,0 +1,140 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<%@page language="java" import="java.util.Date"%>
+<html>
+<head>
+<title>印章使用申请</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+		$(document).ready(
+			function() {
+				$("#btnCancle2").click(function(){
+					$("#flag").val("1");
+					
+				})
+			//$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="ibox-title">
+		<span style="font-size: 18px;font-weight: bold;">编辑-印章使用流程</span>
+		<div class="ibox-tools">
+			<!-- <a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a> -->
+		</div>
+	</div>
+ 	
+	<br />
+	<form:form id="inputForm" modelAttribute="oaSealUse"
+		action="${ctx}/oa/oaSealUse/save" method="post"
+		class="form-horizontal">
+		<legend>${title }</legend>
+		<input type="hidden" name="token" value="${token }">
+		
+		<input type="hidden" name="flag" value="0" id="flag">
+		<form:hidden path="id" />
+		<form:hidden path="procInsId" />
+		<sys:message content="${message}" />
+
+
+		<div class="control-group">
+			<label class="control-label">编号：</label>
+			<div class="controls">
+				<form:input path="fileId" htmlEscape="false" maxlength="100"
+					 class="form-control" disabled="true" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申请人姓名：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.createBy.name}" disabled  class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">所在部门：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.officeName}" class="form-control" disabled style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申请日期：</label>
+			<div class="controls">
+				<input name="createDate"  id="gotime" type="text" readonly="readonly" maxlength="20" class="laydate-icon form-control layer-date input-sm required"
+					value="<fmt:formatDate value="${oaSealUse.createDate}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+					onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" style="background-color: #FFFFFF;" style="width:40%;"/>
+				<span class="help-inline"><font color="red">*</font> </span>	
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">印章类型：</label>
+			<div class="controls">
+				<input type="checkbox" class="i-checks" name="sealType" checked="checked" value="印章"/><font>&nbsp;印章</font>
+				<input type="checkbox" class="i-checks" name="sealType" value="合同章"><font>&nbsp;合同章</font>
+				<%-- <form:checkboxes path="sealType" items="${fns:getDictList('sealType')}" 
+					itemLabel="label" itemValue="value" htmlEscape="false" /> --%>
+			</div>
+		</div>
+		
+		<div class="control-group">
+			<label class="control-label">是否携带外出：</label>
+			<div class="controls">
+				<input type="radio" class="i-checks" name="isout" checked="checked" value="是"/><font>&nbsp;是</font>
+				<input type="radio" class="i-checks" name="isout" value="否"/><font>&nbsp;否</font>				
+				<%-- <form:radiobuttons path="isout" items="${fns:getDictList('isOut')}"
+					itemLabel="label" itemValue="value" htmlEscape="false"/> --%>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">摘要(事项)：</label>
+			<div class="controls">
+				<form:input path="matter" htmlEscape="false" maxlength="100" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+
+		<div class="form-actions" style="text-align:left; margin-top:15px;margin-bottom: 15px;">
+			<shiro:hasPermission name="oa:oaSealUse:edit">
+				<input id="btnSubmit" class="btn btn-primary" type="submit"
+					value="提交" />&nbsp;&nbsp;&nbsp;&nbsp;
+			</shiro:hasPermission>
+			<c:if test="${not empty oaSealUse.id}">
+				<input id="btnCancle2" class="btn btn-primary" type="submit"
+					value="取消申请" />&nbsp;&nbsp;&nbsp;&nbsp;
+			</c:if>
+			<input id="btnCancel" class="btn" type="button" value="返 回"
+				onclick="history.go(-1)" />
+		</div>
+		<c:if test="${task != null}">
+				&nbsp;<input
+				onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+				class="btn" type="button" value="流程跟踪" />
+		</c:if>
+	</form:form>
+	<c:if test="${not empty oaSealUse.id}">
+		<act:histoicFlow procInsId="${oaSealUse.procInsId}" />
+	</c:if>
+</body>
+</html>

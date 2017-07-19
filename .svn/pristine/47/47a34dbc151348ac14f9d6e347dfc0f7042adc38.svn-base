@@ -1,0 +1,96 @@
+html, body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, button,form, fieldset, legend, input, textarea, p, blockquote, th, td, a, img, span {
+	margin: 0;
+	padding: 0;
+}
+
+html{
+	font-family: 微软雅黑;
+	font-size: 62.5%;
+}
+
+body {
+	width: 100%;
+	height: 100%;
+	font-size: 1.6rem;
+	background-color: #fff !important;
+}
+
+input, select, button, textarea, a {
+	outline: none;
+}
+
+.inputs {
+	margin-bottom: 0px !important;
+    padding:0px !important;
+    height: 32px !important; 
+    line-height: 32px !important;
+}
+
+.selects{
+	border: 1px solid #ddd !important;
+    width: 100%;
+    margin-bottom: 0px;
+    padding: 0px;
+	-webkit-appearance:menulist-button;
+}
+.mui-content{
+	height: 100%;
+}
+
+ul, ol, li {
+	list-style-type: none;
+}
+
+a {
+	text-decoration: none;
+}
+
+input, select, textarea {
+	border: 1px solid #ddd;
+	font-size: 14px;
+}
+
+
+/* button 样式 */
+
+.btnapp {
+	font-size: 1.6rem;
+	font-family: 微软雅黑;
+	padding: .5rem 1.6rem;
+	border-radius: 4px;
+}
+.btn-submit, .btn-draft {
+	background-color: #32a5e7;
+	border: 1px solid #32a5e7;
+	color: #fff;
+}
+.btn-next {
+	background-color: #eee;
+	border: 1px solid #ccc;
+	color: #333;
+}
+.bottom .btn-draft {
+	float: right;
+}
+
+.btn-submit:hover, .btn-draft:hover {
+	background-color: #8cccf0;
+	border: 1px solid #8cccf0;
+}
+
+.btn-next:hover {
+	background-color: #ccc;
+}
+
+.btn-clock {
+	background-color: #ffa800;
+	border: 1px solid #ffa800;
+	color: #fff;
+}
+.btn-clock:hover {
+	background-color: #ffbd3e;
+}
+/* button 样式 */
+.required {
+	border-color: #fdcfcf !important;
+}

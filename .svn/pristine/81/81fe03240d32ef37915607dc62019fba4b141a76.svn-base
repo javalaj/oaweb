@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.PerishableHistoryDao">
+    
+	<sql id="perishableHistoryColumns">
+		a.id AS "id",
+		a.perishable_id AS "perishableProducts.id",
+		b.item_category AS "perishableProducts.itemCategory",
+		b.serial_number AS "perishableProducts.serialNumber",
+		b.item_name AS "perishableProducts.itemName",
+		b.unit AS "perishableProducts.unit",
+		b.unit_price AS "perishableProducts.unit_price",
+		a.type AS "type",
+		a.amount AS "amount",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="perishableHistoryJoins">
+		LEFT JOIN perishable_products b ON b.id = a.perishable_id
+	</sql>
+    
+	<select id="get" resultType="PerishableHistory">
+		SELECT 
+			<include refid="perishableHistoryColumns"/>
+		FROM perishable_history a
+		<include refid="perishableHistoryJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PerishableHistory">
+		SELECT 
+			<include refid="perishableHistoryColumns"/>
+		FROM perishable_history a
+		<include refid="perishableHistoryJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+				AND a.create_date BETWEEN #{beginCreateDate} AND date_add(#{endCreateDate},interval '23 59' HOUR_MINUTE)
+			</if>
+			<if test="perishableProducts != null and perishableProducts.itemCategory != null and perishableProducts.itemCategory != ''">
+				AND b.item_category = #{perishableProducts.itemCategory}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PerishableHistory">
+		SELECT 
+			<include refid="perishableHistoryColumns"/>
+		FROM perishable_history a
+		<include refid="perishableHistoryJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO perishable_history(
+			id,
+			perishable_id,
+			type,
+			amount,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{perishableProducts.id},
+			#{type},
+			#{amount},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE perishable_history SET 	
+			perishable_id = #{perishableProducts.id},
+			type = #{type},
+			amount = #{amount},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE perishable_history SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

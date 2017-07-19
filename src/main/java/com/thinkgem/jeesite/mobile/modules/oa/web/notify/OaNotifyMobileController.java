@@ -1,0 +1,452 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.oa.web.notify;
+
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.mapper.JsonMapper;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.mobile.modules.oa.web.notify.util.NotifyUtil;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.user.entity.UserFavorite;
+import com.thinkgem.jeesite.modules.user.service.UserFavoriteService;
+
+/**
+ * 通知公告Controller
+ * 
+ * @author liaijun
+ * @version 2014-05-16
+ */
+@Controller
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/oaNotify")
+public class OaNotifyMobileController extends BaseController {
+
+	@Autowired
+	private OaNotifyService oaNotifyService;
+	@Autowired
+	private UserFavoriteService userFavoriteService;
+
+	@ModelAttribute
+	public OaNotify get(@RequestParam(required = false) String id) {
+		OaNotify entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaNotifyService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaNotify();
+		}
+		return entity;
+	}
+
+	//绑定对象属性
+	@InitBinder("oaNotify")
+	public void initBinder(WebDataBinder binder)
+	{
+		binder.setFieldDefaultPrefix("oaNotify.");
+	}
+	
+	/**
+	 * 通告列表
+	 * 
+	 * @param oaNotify
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("oa:oaNotify:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model) {
+
+		//内部公告
+		oaNotify.setType("5");
+		
+		oaNotify.setMobile(true);
+		
+		oaNotify.setCreateBy(oaNotify.getCurrentUser());
+		Page<OaNotify> page = oaNotifyService.findList(
+				new Page<OaNotify>(request, response), oaNotify);
+		model.addAttribute("page", page);
+		return "mobile/modules/oa/oaNotify/Notice_1";
+
+	}
+
+	/**
+	 * 通告发布列表(移动端controller)
+	 * 
+	 * @param oaNotify
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("oa:oaNotify:view")
+	@RequestMapping(value = {"allList"})
+	public String allList(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model)
+	{
+
+		
+		/*--------------------------通告列表开始-----------------------------------*/				
+				oaNotify.setMobile(true);
+		oaNotify.setCreateBy(oaNotify.getCurrentUser());
+		
+		Page<OaNotify> page = oaNotifyService.findList(
+				new Page<OaNotify>(request, response), oaNotify);
+		
+		model.addAttribute("page", page);
+		
+		/*--------------------------通告列表结束-----------------------------------*/
+		
+		/*--------------------------我的通告开始-----------------------------------*/
+		/*oaNotify.setSelf(true);
+
+		Page<OaNotify> pageSelf = oaNotifyService.find(
+				new Page<OaNotify>(request, response), oaNotify);
+		
+		model.addAttribute("pageSelf", pageSelf);*/
+		/*--------------------------我的通告结束-----------------------------------*/
+		
+
+		return "mobile/modules/oa/oaNotify/mobileNoticeList";
+
+	}
+	/**
+	 * 我的通告
+	 * 
+	 * @param oaNotify
+	 * @param request
+	 * @param response
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("oa:oaNotify:view")
+	@RequestMapping(value = {"myNoticeList"})
+	public String myNoticeList(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model)
+	{
+
+		
+		/*--------------------------我的通告开始-----------------------------------*/				
+				oaNotify.setMobile(true);
+				oaNotify.setSelf(true);	
+				
+				//Integer num = NotifyUtil.getMyNotifyNum();
+				
+				Page<OaNotify> page = oaNotifyService.findMyList(new Page<OaNotify>(request, response), oaNotify);
+				model.addAttribute("page", page);
+				return "mobile/modules/oa/oaNotify/mobileMyNoticeList";
+
+
+
+	}
+	
+	
+	@RequiresPermissions("oa:oaNotify:view")
+	@RequestMapping(value = "form")
+	public String form(OaNotify oaNotify, Model model) {
+		if (StringUtils.isNotBlank(oaNotify.getId())) {
+			oaNotify = oaNotifyService.getRecordList(oaNotify);
+			User createBy = UserUtils.get(oaNotify.getCreateBy().getId());// 通过用户id获取用户信息
+			
+			oaNotify.setCreateBy(createBy);
+		}
+
+		model.addAttribute("oaNotify", oaNotify);
+		return "mobile/modules/oa/oaNotify/mobileNoticeForm";
+
+	}
+
+	@RequiresPermissions("oa:oaNotify:edit")
+	@RequestMapping(value = "save")
+	public String save(OaNotify oaNotify, Model model, 
+			RedirectAttributes redirectAttributes) {
+		try {
+			if (!beanValidator(model, oaNotify)) {
+				return form(oaNotify, model);
+			}
+			// 如果是修改，但状态为已发布，则不能再进行操作
+			if (StringUtils.isNotBlank(oaNotify.getId())) {
+				OaNotify e = oaNotifyService.get(oaNotify.getId());
+				if ("1".equals(e.getStatus())) {
+					addMessage(redirectAttributes, "已发布，不能操作！");
+					return "redirect:" + adminPath + "/oa/oaNotify/form?id=" + oaNotify.getId();
+				}
+			}
+			
+			oaNotifyService.save(oaNotify);
+		/*	addMessage(redirectAttributes, "通知" + oaNotify.getTitle() + "成功");*/
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		return "redirect:allList";
+	}
+
+	/**
+	 * 删除
+	 */
+/*	@RequiresPermissions("oa:oaNotify:edit")*/
+	@RequestMapping(value = "delete")
+	public String delete(OaNotify oaNotify, RedirectAttributes redirectAttributes) {
+		oaNotifyService.delete(oaNotify);
+		addMessage(redirectAttributes, "删除公告成功！");
+		return "redirect:allList";
+	}
+
+	/**
+	 * 批量删除
+	 * 
+	 * @param request
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+/*	@RequiresPermissions("oa:oaNotify:edit")*/
+	@RequestMapping(value = "/deletemore", method = RequestMethod.POST)
+	public String deleteMore(HttpServletRequest request, HttpServletResponse response,
+			RedirectAttributes redirectAttributes) {
+		String items = request.getParameter("delitems");
+		String[] item = items.split(",");
+		for (int i = 0; i < item.length; i++) {
+			OaNotify oaNotify = new OaNotify();
+			oaNotify.setId(item[i]);
+			oaNotifyService.delete(oaNotify);
+		}
+		addMessage(redirectAttributes, "删除公告成功");
+		return "redirect:list";
+	}
+
+	/**
+	 * 批量收藏
+	 * 
+	 * @param request
+	 * @param response
+	 * @param redirectAttributes
+	 * @return
+	 */
+	/*@RequiresPermissions("oa:oaNotify:edit")*/
+	@RequestMapping(value = "/store", method = RequestMethod.POST)
+	public String store(HttpServletRequest request, HttpServletResponse response,
+			RedirectAttributes redirectAttributes) {
+		String items = request.getParameter("delitem");
+		String[] item = items.split(",");
+		for (int i = 0; i < item.length; i++) {
+			OaNotify oaNotify = oaNotifyService.get(item[i]);
+			String title = oaNotify.getTitle();
+			String type = "通知公告";
+			String sign = item[i];
+			String url = "/oa/oaNotify/view?id=" + item[i];
+			UserFavorite userFavorite = new UserFavorite();
+			userFavorite.setTitle(title);// 设置收藏标题
+			userFavorite.setType(type);// 设置收藏类型
+			userFavorite.setUrl(url);// 设置收藏url
+			userFavorite.setSign(sign);
+			userFavoriteService.save(userFavorite);
+		}
+		return "redirect:list";
+	}
+
+	/**
+	 * 收藏
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestMapping(value = "collection")
+	@ResponseBody
+	public String collection(HttpServletRequest request,
+			HttpServletResponse response)
+	{
+		String id = request.getParameter("id");
+		
+		OaNotify oaNotify = oaNotifyService.get(id);
+		
+		String title = oaNotify.getTitle();
+		
+		String type = "通知公告";
+		
+		String sign = id;
+		
+		String url = "/oa/oaNotify/view?id=" + id;
+		
+		UserFavorite userFavorite = new UserFavorite();
+		
+		userFavorite.setTitle(title);// 设置收藏标题
+		
+		userFavorite.setType(type);// 设置收藏类型
+		
+		userFavorite.setUrl(url);// 设置收藏url
+		
+		userFavorite.setSign(sign);
+		
+		userFavoriteService.save(userFavorite);
+		
+		return JsonMapper.getInstance().toJson(true);
+	}
+	
+	/**
+	 * 我的通知列表
+	 */
+	@RequestMapping(value = "self")
+	public String selfList(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model) {
+		oaNotify.setSelf(true);
+
+		//内部公告
+		oaNotify.setType("5");
+		
+		Page<OaNotify> page = oaNotifyService.find(
+				new Page<OaNotify>(request, response), oaNotify);
+		model.addAttribute("page", page);
+		return "mobile/modules/oa/oaNotify/My_TongGao_01";
+	}
+
+	/**
+	 * 我的各消息列表
+	 */
+	@RequestMapping(value = "message")
+	public String messageList(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model) {
+		
+		oaNotify.setSelf(true);
+
+		oaNotify.setMess(true);
+		
+		oaNotify.setMobile(true);
+		
+		Page<OaNotify> page = oaNotifyService.find(new Page<OaNotify>(request, response), oaNotify);
+		
+		model.addAttribute("page", page);
+		
+		return "mobile/modules/oa/oaNotify/message";
+	}	
+
+	/**
+	 * 我的消息列表
+	 */
+	@RequestMapping(value = "messageAll")
+	public String messageAll(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model) {
+		
+		oaNotify.setSelf(true);
+
+		oaNotify.setMess(true);
+		
+		oaNotify.setNotRead(true);
+		
+		Map<String, Integer> messageMap = NotifyUtil.getMessageMap(oaNotify);
+		
+		model.addAttribute("messageMap", messageMap);
+		
+		return "mobile/modules/oa/oaNotify/message";
+	}	
+	
+	/**
+	 * 我的通知列表-数据
+	 */
+	@RequiresPermissions("oa:oaNotify:view")
+	@RequestMapping(value = "selfData")
+	@ResponseBody
+	public Page<OaNotify> listData(OaNotify oaNotify, HttpServletRequest request, 
+			HttpServletResponse response, Model model) {
+		
+		oaNotify.setSelf(true);
+		
+		Page<OaNotify> page = oaNotifyService.find(
+				new Page<OaNotify>(request, response), oaNotify);
+		return page;
+	}
+
+	/**
+	 * 查看我的通知
+	 */
+	@RequestMapping(value = "view")
+	public String view(OaNotify oaNotify, Model model,String from,
+			String pageNo,String pageSize) {
+		model.addAttribute("from", from);
+		if (StringUtils.isNotBlank(oaNotify.getId())) {
+			oaNotifyService.updateReadFlag(oaNotify);
+			oaNotify = oaNotifyService.getRecordList(oaNotify);
+			User createBy = UserUtils.get(oaNotify.getCreateBy().getId());// 通过用户id获取用户信息
+			oaNotify.setCreateBy(createBy);
+			/*oaNotify.setReadNum(String.valueOf(oaNotifyService.findCount(oaNotify)));*///已读通告数目
+			/*String content=oaNotify.getContent().replace("&lt;p&gt;", "").replace("&lt;/p&gt;","").trim();
+			oaNotify.setContent(content);*/
+			model.addAttribute("oaNotify", oaNotify);
+			
+			model.addAttribute("pageNo", pageNo);
+			
+			model.addAttribute("pageSize", pageSize);
+			
+			return "mobile/modules/oa/oaNotify/GangGao_XingQing";
+		}
+		return "redirect:" + adminPath + mobilePath + "/oa/oaNotify/self?repage";
+	}
+
+	/**
+	 * 查看我的通知-数据
+	 */
+	@RequestMapping(value = "viewData")
+	@ResponseBody
+	public OaNotify viewData(OaNotify oaNotify, Model model) {
+		if (StringUtils.isNotBlank(oaNotify.getId())) {
+			oaNotifyService.updateReadFlag(oaNotify);
+			return oaNotify;
+		}
+		return null;
+	}
+
+	/**
+	 * 查看我的通知-发送记录
+	 */
+	@RequestMapping(value = "viewRecordData")
+	@ResponseBody
+	public OaNotify viewRecordData(OaNotify oaNotify, Model model) {
+		if (StringUtils.isNotBlank(oaNotify.getId())) {
+			oaNotify = oaNotifyService.getRecordList(oaNotify);
+			return oaNotify;
+		}
+		return null;
+	}
+
+	/**
+	 * 获取我的通知数目
+	 */
+	@RequestMapping(value = "self/count")
+	@ResponseBody
+	public String selfCount(OaNotify oaNotify, Model model) {
+		oaNotify.setSelf(true);
+		oaNotify.setReadFlag("0");
+		return String.valueOf(oaNotifyService.findCount(oaNotify));
+	}
+	
+	@RequestMapping(value = "errorView")
+	public String errorView()
+	{
+		return "error/407";
+	}
+}

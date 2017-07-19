@@ -1,0 +1,143 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>申请用车详情</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+// 					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+	</script>
+</head>
+<body>		
+<!-- <ul class="nav nav-tabs"> -->
+<!-- 		<li class="active"><a -->
+<%-- 			href="${ctx}/oa/oaUsecar/form?id=${oaUsecar.id}">查看-用车申请</a></li> --%>
+<!-- 	</ul> -->
+	<br />
+<form:form id="inputForm" modelAttribute="oaUsecar" action="#" method="post" class="form-horizontal">
+	<legend>${title }</legend>
+	
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">文件编号：${oaUsecar.fileId }</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">所在部门：${oaUsecar.department }</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">申&nbsp;&nbsp;请&nbsp;&nbsp;人：${oaUsecar.createBy.name}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">用车时间：
+			<fmt:formatDate value="${oaUsecar.usetime}"
+ 				pattern="yyyy-MM-dd HH:mm:ss" /> 
+		</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">用车原因：${oaUsecar.usereason}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">目&nbsp;&nbsp;的&nbsp;&nbsp;地：${oaUsecar.destination}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">	
+		用车范围：${oaUsecar.usescope}	
+		</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">人事签字：${oaUsecar.examname}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">人事意见：${oaUsecar.examtext}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">变更目的地：${oaUsecar.destinationchange }</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">人事签字（变后）：${oaUsecar.examname2}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">人事意见（变后）：${oaUsecar.examtext2}</div>
+	</div>	
+	<div class="control-group">
+			<label class="control-label"></label>
+			<div class="controls">
+				车&nbsp;&nbsp;牌&nbsp;&nbsp;号：${oaUsecar.platenum}
+			</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">司&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;机：${oaUsecar.driver }</div>
+	</div>
+	<div class="control-group">
+			<label class="control-label"></label>
+			<div class="controls">	出发时间：
+				<fmt:formatDate value="${oaUsecar.gotime}"
+  					pattern="yyyy-MM-dd HH:mm:ss" /> 
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label"></label>
+			<div class="controls">返回时间：
+				<fmt:formatDate value="${oaUsecar.backtime}"
+  					pattern="yyyy-MM-dd HH:mm:ss" /> 
+			</div>
+		</div>	
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">起始公里数：${oaUsecar.gokilometer }</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">返回公里数：${oaUsecar.backkilometer}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">安全到达：${oaUsecar.safearrive}</div>
+	</div>
+	<div class="control-group">
+		<label class="control-label"></label>
+		<div class="controls">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注：${oaUsecar.remarks}</div>
+	</div>	
+	
+	<div class="form-actions">
+		<input id="btnCancel" class="btn" type="button" value="返 回"
+			onclick="history.go(-1)" />
+		<c:if test="${task != null}">
+				&nbsp;<input onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn" type="button" value="流程跟踪" />
+		</c:if>
+	</div>
+	</form:form>
+	<c:if test="${not empty oaUsecar.id}">
+		<act:histoicFlow procInsId="${oaUsecar.procInsId}" />
+	</c:if>
+</body>
+</html>

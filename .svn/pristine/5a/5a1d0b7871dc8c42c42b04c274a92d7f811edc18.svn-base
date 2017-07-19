@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.computersubsidy.ComputerSubsidyDao">
+    
+	<sql id="computerSubsidyColumns">
+		a.id AS "id",
+		a.proposer AS "proposer",
+		a.entry_time AS "entryTime",
+		a.formal_time AS "formalTime",
+		a.purchase_time AS "purchaseTime",
+		a.apply_time AS "applyTime",
+		a.computer_configure AS "computerConfigure",
+		a.personnel_signature AS "personnelSignature",
+		a.deputy_manager_signature AS "deputyManagerSignature",
+		a.invoice_duplicate AS "invoiceDuplicate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.dept AS "dept",
+		a.proc_ins_id AS "procInsId",
+		a.title as "title"
+	</sql>
+	
+	<sql id="computerSubsidyJoins">
+	</sql>
+    
+	<select id="get" resultType="ComputerSubsidy">
+		SELECT 
+			<include refid="computerSubsidyColumns"/>
+		FROM computer_subsidy a
+		<include refid="computerSubsidyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ComputerSubsidy">
+		SELECT 
+			<include refid="computerSubsidyColumns"/>
+		FROM computer_subsidy a
+		<include refid="computerSubsidyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="proposer != null and proposer != ''">
+				AND a.proposer LIKE 
+					<if test="dbName == 'oracle'">'%'||#{proposer}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{proposer}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{proposer},'%')</if>
+			</if>
+			<if test="applyTime != null and applyTime != ''">
+				AND a.apply_time = #{applyTime}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ComputerSubsidy">
+		SELECT 
+			<include refid="computerSubsidyColumns"/>
+		FROM computer_subsidy a
+		<include refid="computerSubsidyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO computer_subsidy(
+			id,
+			proposer,
+			entry_time,
+			formal_time,
+			purchase_time,
+			apply_time,
+			computer_configure,
+			personnel_signature,
+			deputy_manager_signature,
+			invoice_duplicate,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			dept,
+			proc_ins_id,
+			title
+		) VALUES (
+			#{id},
+			#{proposer},
+			#{entryTime},
+			#{formalTime},
+			#{purchaseTime},
+			#{applyTime},
+			#{computerConfigure},
+			#{personnelSignature},
+			#{deputyManagerSignature},
+			#{invoiceDuplicate},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{dept},
+			#{procInsId},
+			#{title}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE computer_subsidy SET 	
+			proposer = #{proposer},
+			entry_time = #{entryTime},
+			formal_time = #{formalTime},
+			purchase_time = #{purchaseTime},
+			apply_time = #{applyTime},
+			computer_configure = #{computerConfigure},
+			personnel_signature = #{personnelSignature},
+			deputy_manager_signature = #{deputyManagerSignature},
+			invoice_duplicate = #{invoiceDuplicate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			dept = #{dept},
+			proc_ins_id = #{procInsId},
+			title = #{title}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE computer_subsidy SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.doc.OaDocReadApplyDao">
+    
+	<sql id="oaDocReadApplyColumns">
+		a.id AS "id",
+		a.doc_id AS "doc.id",
+		a.lend_status AS "lendStatus",
+		a.lend_user_id AS "lendUser.id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		od.title AS "doc.title",
+		od.keyword AS "doc.keyword",
+		od.doc_type AS "doc.docType",
+		su.name AS "lendUser.name",
+		su2.name AS "doc.createBy.name"
+	</sql>
+	
+	<sql id="oaDocReadApplyJoins">
+		LEFT JOIN oa_doc od ON od.id = a.doc_id
+		LEFT JOIN sys_user su ON su.id = a.lend_user_id
+		LEFT JOIN sys_user su2 ON su2.id = od.create_by
+	</sql>
+    
+	<select id="get" resultType="OaDocReadApply">
+		SELECT 
+			<include refid="oaDocReadApplyColumns"/>
+		FROM oa_doc_read_apply a
+		<include refid="oaDocReadApplyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaDocReadApply">
+		SELECT 
+			<include refid="oaDocReadApplyColumns"/>
+		FROM oa_doc_read_apply a
+		<include refid="oaDocReadApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="doc != null and doc.id != null and doc.id != ''">
+				AND a.doc_id = #{doc.id}
+			</if>
+			<if test="lendStatus != null and lendStatus != ''">
+				AND a.lend_status = #{lendStatus}
+			</if>
+			<if test="lendUser != null and lendUser.id != null and lendUser.id != ''">
+				AND a.lend_user_id = #{lendUser.id}
+			</if>
+			<if test="doc != null and doc.title != null and doc.title != ''">
+				AND od.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{doc.title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{doc.title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{doc.title},'%')</if>
+			</if>
+			<if test="doc != null and doc.keyword != null and doc.keyword != ''">
+				AND od.keyword LIKE 
+					<if test="dbName == 'oracle'">'%'||#{doc.keyword}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{doc.keyword}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{doc.keyword},'%')</if>
+			</if>
+			<if test="doc != null and doc.docType != null and doc.docType != ''">
+				AND od.doc_type = #{doc.docType}
+			</if>
+			<if test="doc != null and doc.createBy != null and doc.createBy.id != null and doc.createBy.id != ''">
+				AND od.create_by = #{doc.createBy.id}
+			</if>
+			AND od.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getOaDocReadApplyListCount" resultType="Integer">
+		SELECT 
+			COUNT(a.id) as listCount
+		FROM oa_doc_read_apply a
+		<include refid="oaDocReadApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="doc != null and doc.id != null and doc.id != ''">
+				AND a.doc_id = #{doc.id}
+			</if>
+			<if test="lendStatus != null and lendStatus != ''">
+				AND a.lend_status = #{lendStatus}
+			</if>
+			<if test="lendUser != null and lendUser.id != null and lendUser.id != ''">
+				AND a.lend_user_id = #{lendUser.id}
+			</if>
+			<if test="doc != null and doc.title != null and doc.title != ''">
+				AND od.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{doc.title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{doc.title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{doc.title},'%')</if>
+			</if>
+			<if test="doc != null and doc.keyword != null and doc.keyword != ''">
+				AND od.keyword LIKE 
+					<if test="dbName == 'oracle'">'%'||#{doc.keyword}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{doc.keyword}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{doc.keyword},'%')</if>
+			</if>
+			<if test="doc != null and doc.docType != null and doc.docType != ''">
+				AND od.doc_type = #{doc.docType}
+			</if>
+			<if test="doc != null and doc.createBy != null and doc.createBy.id != null and doc.createBy.id != ''">
+				AND od.create_by = #{doc.createBy.id}
+			</if>
+			AND od.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+	</select>
+	
+	<select id="findAllList" resultType="OaDocReadApply">
+		SELECT 
+			<include refid="oaDocReadApplyColumns"/>
+		FROM oa_doc_read_apply a
+		<include refid="oaDocReadApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getTotalReadApplyByDocCreateById" resultType="Integer">
+		SELECT 
+			IFNULL(COUNT(a.id), 0) as totalReadApply
+		FROM oa_doc_read_apply a
+		LEFT JOIN oa_doc od ON od.id = a.doc_id
+		WHERE a.del_flag='0'
+		AND od.create_by = #{docCreateById}
+		AND a.lend_status = '0'
+		AND od.del_flag = '0'
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_doc_read_apply(
+			id,
+			doc_id,
+			lend_status,
+			lend_user_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{doc.id},
+			#{lendStatus},
+			#{lendUser.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_doc_read_apply SET 	
+			doc_id = #{doc.id},
+			lend_status = #{lendStatus},
+			lend_user_id = #{lendUser.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_doc_read_apply SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

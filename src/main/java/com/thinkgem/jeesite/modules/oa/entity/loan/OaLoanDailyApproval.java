@@ -1,0 +1,254 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity.loan;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.thinkgem.jeesite.modules.oa.oaUtils.MoneyUtils;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+
+/**
+ * 日常借支审批管理Entity
+ * @author 李廷龙
+ * @version 2017-01-13
+ */
+public class OaLoanDailyApproval extends ActEntity<OaLoanDailyApproval> {
+	
+	private static final long serialVersionUID = 1L;
+	private String isPurchase;		// 是否用于采购
+	private User loanUser;		// 借款人
+	private User projectManager;		// 项目经理
+	private String loanReason;		// 借支事由
+	private Double loanMoney;		// 借支金额
+	private String title;		// 标题
+	private String exam2Opinion;		// 部门负责人意见
+	private String exam3Opinion;		// 财务副总意见
+	private String exam4Opinion;		// 总经理意见
+	private String exam5Opinion;		// 项目经理意见
+	private String exam6Opinion;		// 会计意见
+	private String exam7Opinion;		// 出纳意见
+	private Date approvalTime;		// 申请时间
+	private Date approvalPassTime;		// 审批通过时间
+	private String status;		// 审批状态（0：未送审；1：部门副总审批；2：人力资源审批；3：行政人事副总审批；x：已结案；y：已销毁）
+	private String isStart;		// 是否已进入流程（0：未开启；1：已开启）
+	private String approvalNo;		// 申请单号
+	
+	private String remarksx;
+	private String loanUserOfficeName;
+	private String loanUserParentOfficeName;
+	
+	private String loanMoneyBIG;		// 借支金额
+	
+	private String currentUserId;
+	
+	/**
+	 * 采购
+	 */
+	public static final String IS_PARCHASE="1";
+	
+	/**
+	 * 非采购
+	 */
+	public static final String IS_NOT_PARCHASE="0";
+	
+	public String getCurrentUserId() {
+		return currentUserId;
+	}
+
+	public void setCurrentUserId(String currentUserId) {
+		this.currentUserId = currentUserId;
+	}
+
+	public String getLoanMoneyBIG() {
+		this.loanMoneyBIG=MoneyUtils.convertMoney(this.loanMoney);
+		return loanMoneyBIG;
+	}
+
+	public String getLoanUserParentOfficeName() {
+		return loanUserParentOfficeName;
+	}
+
+	public void setLoanUserParentOfficeName(String loanUserParentOfficeName) {
+		this.loanUserParentOfficeName = loanUserParentOfficeName;
+	}
+
+	public String getLoanUserOfficeName() {
+		return loanUserOfficeName;
+	}
+
+	public void setLoanUserOfficeName(String loanUserOfficeName) {
+		this.loanUserOfficeName = loanUserOfficeName;
+	}
+
+	public String getRemarksx() {
+		return remarksx;
+	}
+
+	public void setRemarksx(String remarksx) {
+		this.remarksx = remarksx;
+	}
+
+	public OaLoanDailyApproval() {
+		super();
+	}
+
+	public OaLoanDailyApproval(String id){
+		super(id);
+	}
+
+	@Length(min=0, max=1, message="是否用于采购长度必须介于 0 和 1 之间")
+	public String getIsPurchase() {
+		return isPurchase;
+	}
+
+	public void setIsPurchase(String isPurchase) {
+		this.isPurchase = isPurchase;
+	}
+	
+	public User getLoanUser() {
+		return loanUser;
+	}
+
+	public void setLoanUser(User loanUser) {
+		this.loanUser = loanUser;
+	}
+	
+	public User getProjectManager() {
+		return projectManager;
+	}
+
+	public void setProjectManager(User projectManager) {
+		this.projectManager = projectManager;
+	}
+	
+	@Length(min=0, max=500, message="借支事由长度必须介于 0 和 500 之间")
+	public String getLoanReason() {
+		return loanReason;
+	}
+	public void setLoanReason(String loanReason) {
+		this.loanReason = loanReason;
+	}
+	
+	
+	public Double getLoanMoney() {
+		return loanMoney;
+	}
+
+	public void setLoanMoney(Double loanMoney) {
+		this.loanMoney = loanMoney;
+	}
+
+	@Length(min=0, max=100, message="标题长度必须介于 0 和 100 之间")
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+	
+	@Length(min=0, max=200, message="部门负责人意见长度必须介于 0 和 200 之间")
+	public String getExam2Opinion() {
+		return exam2Opinion;
+	}
+
+	public void setExam2Opinion(String exam2Opinion) {
+		this.exam2Opinion = exam2Opinion;
+	}
+	
+	@Length(min=0, max=200, message="财务副总意见长度必须介于 0 和 200 之间")
+	public String getExam3Opinion() {
+		return exam3Opinion;
+	}
+
+	public void setExam3Opinion(String exam3Opinion) {
+		this.exam3Opinion = exam3Opinion;
+	}
+	
+	@Length(min=0, max=200, message="总经理意见长度必须介于 0 和 200 之间")
+	public String getExam4Opinion() {
+		return exam4Opinion;
+	}
+
+	public void setExam4Opinion(String exam4Opinion) {
+		this.exam4Opinion = exam4Opinion;
+	}
+	
+	@Length(min=0, max=200, message="项目经理意见长度必须介于 0 和 200 之间")
+	public String getExam5Opinion() {
+		return exam5Opinion;
+	}
+
+	public void setExam5Opinion(String exam5Opinion) {
+		this.exam5Opinion = exam5Opinion;
+	}
+	
+	@Length(min=0, max=200, message="会计意见长度必须介于 0 和 200 之间")
+	public String getExam6Opinion() {
+		return exam6Opinion;
+	}
+
+	public void setExam6Opinion(String exam6Opinion) {
+		this.exam6Opinion = exam6Opinion;
+	}
+	
+	@Length(min=0, max=200, message="出纳意见长度必须介于 0 和 200 之间")
+	public String getExam7Opinion() {
+		return exam7Opinion;
+	}
+
+	public void setExam7Opinion(String exam7Opinion) {
+		this.exam7Opinion = exam7Opinion;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getApprovalTime() {
+		return approvalTime;
+	}
+
+	public void setApprovalTime(Date approvalTime) {
+		this.approvalTime = approvalTime;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getApprovalPassTime() {
+		return approvalPassTime;
+	}
+
+	public void setApprovalPassTime(Date approvalPassTime) {
+		this.approvalPassTime = approvalPassTime;
+	}
+	
+	
+	@Length(min=0, max=1, message="审批状态（0：未送审；1：部门副总审批；2：人力资源审批；3：行政人事副总审批；x：已结案；y：已销毁）长度必须介于 0 和 1 之间")
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
+	@Length(min=0, max=1, message="是否已进入流程（0：未开启；1：已开启）长度必须介于 0 和 1 之间")
+	public String getIsStart() {
+		return isStart;
+	}
+
+	public void setIsStart(String isStart) {
+		this.isStart = isStart;
+	}
+	
+	@Length(min=0, max=64, message="申请单号长度必须介于 0 和 64 之间")
+	public String getApprovalNo() {
+		return approvalNo;
+	}
+
+	public void setApprovalNo(String approvalNo) {
+		this.approvalNo = approvalNo;
+	}
+	
+}

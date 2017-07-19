@@ -1,0 +1,225 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web;
+
+import java.io.UnsupportedEncodingException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.OaPcSubsidy;
+import com.thinkgem.jeesite.modules.oa.service.OaPcSubsidyService;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 个人电脑补贴申请流程业务表Controller
+ * 
+ * @author liuxin
+ * @version 2016-11-30
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/oaPcSubsidy")
+public class OaPcSubsidyController extends BaseController {
+
+	@Autowired
+	private OaPcSubsidyService oaPcSubsidyService;
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private OaProVacateService oaProVacateService;
+
+	@ModelAttribute
+	public OaPcSubsidy get(@RequestParam(required = false) String id) {
+		OaPcSubsidy entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaPcSubsidyService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaPcSubsidy();
+		}
+		return entity;
+	}
+
+	@RequiresPermissions("oa:oaPcSubsidy:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaPcSubsidy oaPcSubsidy, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaPcSubsidy> page = oaPcSubsidyService.findPage(new Page<OaPcSubsidy>(request, response), oaPcSubsidy);
+		model.addAttribute("page", page);
+		return "modules/oa/oaPcSubsidyList";
+	}
+
+	@RequiresPermissions("oa:oaPcSubsidy:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaPcSubsidy oaPcSubsidy, RedirectAttributes redirectAttributes) {
+		oaPcSubsidyService.delete(oaPcSubsidy);
+		addMessage(redirectAttributes, "删除个人电脑补贴申请成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/oaPcSubsidy/?repage";
+	}
+
+	/**
+	 * 新建，打回，页面
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:view")
+	@RequestMapping(value = "form")
+	@Token(save = true)
+	public String form(OaPcSubsidy oaPcSubsidy, Model model, String flag) {
+		oaPcSubsidy = init(oaPcSubsidy);
+		String view = "modules/oa/oaPcSubsidyView";// 默认去查看页面
+		if (oaPcSubsidyService.isDeal(oaPcSubsidy) && !"view".equals(flag)) {
+			view = "modules/oa/oaPcSubsidyForm";// 有权限的人去修改页面
+		} else {
+			oaPcSubsidy.setCreateBy(systemService.getUser(oaPcSubsidy.getCreateBy().getId()));// 为页面查询出申请人的名字
+		}
+		model.addAttribute("oaPcSubsidy", oaPcSubsidy);
+		addTitle(model, oaPcSubsidy);
+		addTask(model, oaPcSubsidy);
+		return view;
+	}
+
+	/**
+	 * 新建提交，打回修改提交
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 * 
+	 * @throws UnsupportedEncodingException
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:edit")
+	@RequestMapping(value = "save")
+	@Token(remove = true)
+	public String save(OaPcSubsidy oaPcSubsidy, Model model, RedirectAttributes redirectAttributes, String flag)
+			throws UnsupportedEncodingException {
+		// oaPcSubsidy.setImgUrl(URLDecoder.decode(oaPcSubsidy.getImgUrl(),
+		// "UTF-8"));// 对传过来的加码中文路径，解码，已得到中文路径，解决浏览器兼容性问题
+		if (!beanValidator(model, oaPcSubsidy)) {
+			return form(oaPcSubsidy, model, "");
+		}
+		oaPcSubsidyService.save(oaPcSubsidy, flag);
+		addMessage(redirectAttributes, "个人电脑补贴申请成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/oaPcSubsidy/form?id=" + oaPcSubsidy.getId() + "&flag=view";
+	}
+
+	/**
+	 * 固定资产管理员审核页面
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:view")
+	@RequestMapping(value = "exam")
+	@Token(save = true)
+	public String exam(OaPcSubsidy oaPcSubsidy, Model model) {
+		oaPcSubsidy = init(oaPcSubsidy);
+		oaPcSubsidy.setCreateBy(systemService.getUser(oaPcSubsidy.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaPcSubsidy", oaPcSubsidy);
+		String view = "modules/oa/oaPcSubsidyView";// 默认去查看页面
+		if (oaPcSubsidyService.isDeal(oaPcSubsidy)) {
+			view = "modules/oa/oaPcSubsidyExam";// 有权限的人去审核页面
+		}
+		addTitle(model, oaPcSubsidy);
+		addTask(model, oaPcSubsidy);
+		return view;
+	}
+
+	/**
+	 * 固定资产管理员审核提交处理
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:edit")
+	@RequestMapping(value = "dealExam")
+	@Token(remove = true)
+	public String dealExam(OaPcSubsidy oaPcSubsidy, Model model, RedirectAttributes redirectAttributes, String exam) {
+		if (!beanValidator(model, oaPcSubsidy)) {
+			return exam(oaPcSubsidy, model);
+		}
+		oaPcSubsidyService.dealExam(oaPcSubsidy, exam, "1");
+		addMessage(redirectAttributes, "审核个人电脑补贴申请成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/oaPcSubsidy/form?id=" + oaPcSubsidy.getId() + "&flag=view";
+	}
+
+	/**
+	 * 人事行政部副总审核页面
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:view")
+	@RequestMapping(value = "exam2")
+	@Token(save = true)
+	public String exam2(OaPcSubsidy oaPcSubsidy, Model model) {
+		oaPcSubsidy = init(oaPcSubsidy);
+		oaPcSubsidy.setCreateBy(systemService.getUser(oaPcSubsidy.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaPcSubsidy", oaPcSubsidy);
+		String view = "modules/oa/oaPcSubsidyView";// 默认去查看页面
+		if (oaPcSubsidyService.isDeal(oaPcSubsidy)) {
+			view = "modules/oa/oaPcSubsidyExam2";// 有权限的人去审核页面
+		}
+		addTitle(model, oaPcSubsidy);
+		addTask(model, oaPcSubsidy);
+		return view;
+	}
+
+	/**
+	 * 人事行政部副总审核提交处理
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 */
+	@RequiresPermissions("oa:oaPcSubsidy:edit")
+	@RequestMapping(value = "dealExam2")
+	@Token(remove = true)
+	public String dealExam2(OaPcSubsidy oaPcSubsidy, Model model, RedirectAttributes redirectAttributes, String exam) {
+		if (!beanValidator(model, oaPcSubsidy)) {
+			return exam2(oaPcSubsidy, model);
+		}
+		oaPcSubsidyService.dealExam(oaPcSubsidy, exam, "2");
+		addMessage(redirectAttributes, "审核个人电脑补贴申请成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/oaPcSubsidy/form?id=" + oaPcSubsidy.getId() + "&flag=view";
+	}
+
+	/**
+	 * 流程结束后的获取实体对象的方法
+	 * 
+	 */
+	private OaPcSubsidy init(OaPcSubsidy oaPcSubsidy) {
+		if (oaPcSubsidy.getAct() != null && StringUtils.isNotBlank(oaPcSubsidy.getAct().getProcInsId())) {
+			oaPcSubsidy = oaPcSubsidyService.getByProcInsId(oaPcSubsidy.getAct().getProcInsId());
+		}
+		return oaPcSubsidy;
+	}
+
+	/** 加入流程标题 */
+	private void addTitle(Model model, OaPcSubsidy oaPcSubsidy) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaPcSubsidy.getId())) {
+			name = UserUtils.get(oaPcSubsidy.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaPcSubsidy.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		model.addAttribute("title", "个人电脑补贴申请流程【" + name + " " + date + "】");
+	}
+
+	/** 加入工作台对象，用于显示流程图 */
+	private void addTask(Model model, OaPcSubsidy oaPcSubsidy) {
+		// 如果流程已启动，给出流程图
+		if (oaPcSubsidy.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaPcSubsidy.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaPcSubsidy.getProcInsId()));
+		}
+	}
+
+}

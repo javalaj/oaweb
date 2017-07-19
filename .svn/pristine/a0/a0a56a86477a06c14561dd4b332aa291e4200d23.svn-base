@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.AssetsEquipmentDao">
+    
+	<sql id="assetsEquipmentColumns">
+		a.id AS "id",
+		a.assets_number AS "fixedAssets.id",
+		b.assets_name as "fixedAssets.assetsName",
+		b.serial_number as "fixedAssets.serialNumber",
+		b.assets_category as "fixedAssets.assetsCategory",
+		b.brand as "fixedAssets.brand",
+		b.amount as "fixedAssets.amount",
+		b.specifications as "fixedAssets.specifications",
+		b.supplier as "fixedAssets.supplier",
+		b.photo as "fixedAssets.photo",
+		b.unit_price as "fixedAssets.unitPrice",
+		b.unit as "fixedAssets.unit",
+		b.model as "fixedAssets.model",
+		b.purchase_date as "fixedAssets.purchaseDate",
+		b.create_date as "fixedAssets.createDate",
+		a.serial_number AS "serialNumber",
+		a.assets_number AS "assetsNumber",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.del_flag AS "delFlag",
+		a.euq_condition AS "condition",
+		a.equ_staff AS "equStaff",
+		a.claim_time AS "claimTime",
+		a.scrap_time AS "scrapTime"
+	</sql>
+	
+	<sql id="assetsEquipmentJoins">
+	LEFT JOIN fixed_assets b ON b.id = a.assets_number
+	</sql>
+    
+	<select id="get" resultType="AssetsEquipment">
+		SELECT 
+			<include refid="assetsEquipmentColumns"/>
+		FROM assets_equipment a
+			<include refid="assetsEquipmentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="AssetsEquipment">
+		SELECT 
+			<include refid="assetsEquipmentColumns"/>
+		FROM assets_equipment a
+			<include refid="assetsEquipmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="fixedAssets != null and fixedAssets.serialNumber != null and fixedAssets.serialNumber != ''">
+				AND b.serial_number LIKE 
+					<if test="dbName == 'oracle'">'%'||#{fixedAssets.serialNumber}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{fixedAssets.serialNumber}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{fixedAssets.serialNumber},'%')</if>
+			</if>
+			<if test="fixedAssets != null and fixedAssets.assetsName != null and fixedAssets.assetsName != ''">
+				AND b.assets_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{fixedAssets.assetsName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{fixedAssets.assetsName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{fixedAssets.assetsName},'%')</if>
+			</if>
+			<choose>
+				<when test="beginTime != null and endTime != null and beginTime != '' and endTime != ''">
+					AND b.purchase_date BETWEEN #{beginTime} AND #{endTime}
+				</when>	
+				<when test="endTime != null and endTime != ''">
+					AND b.purchase_date <![CDATA[<=]]> #{endTime}
+				</when>
+				<when test="beginTime != null and beginTime != ''">
+					AND b.purchase_date <![CDATA[>=]]> #{beginTime}
+				</when>	
+				<otherwise>
+				
+				</otherwise>	
+			</choose>			
+			<choose>
+				<when test="claimBeginTime != null and claimEndTime != null and claimBeginTime != '' and claimEndTime != ''">
+					AND a.claim_time BETWEEN #{claimBeginTime} AND #{claimEndTime}
+				</when>	
+				<when test="claimEndTime != null and claimEndTime != ''">
+					AND a.claim_time <![CDATA[<=]]> #{claimEndTime}
+				</when>
+				<when test="claimBeginTime != null and claimBeginTime != ''">
+					AND a.claim_time <![CDATA[>=]]> #{claimBeginTime}
+				</when>	
+				<otherwise>
+				
+				</otherwise>	
+			</choose>
+			<choose>
+				<when test="scrapBeginTime != null and scrapEndTime != null and scrapBeginTime != '' and scrapEndTime != ''">
+					AND a.update_date BETWEEN #{scrapBeginTime} AND #{scrapEndTime}
+				</when>	
+				<when test="scrapEndTime != null and scrapEndTime != ''">
+					AND a.update_date <![CDATA[<=]]> #{scrapEndTime}
+				</when>
+				<when test="scrapBeginTime != null and scrapBeginTime != ''">
+					AND a.update_date <![CDATA[>=]]> #{scrapBeginTime}
+				</when>	
+				<otherwise>
+				
+				</otherwise>	
+			</choose>
+			
+			<if test="condition != null and condition != ''">
+				AND a.euq_condition = #{condition}
+			</if>
+			<if test="serialNumber != null and serialNumber != ''">
+				AND a.serial_number = #{serialNumber}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="AssetsEquipment">
+		SELECT 
+			<include refid="assetsEquipmentColumns"/>
+		FROM assets_equipment a
+			<include refid="assetsEquipmentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findDeviceID" resultType="String">
+		select t.serial_number from assets_equipment t
+		where t.assets_number = #{0}
+		and t.euq_condition = '在库'
+		limit #{1}
+	</select>
+	
+	<select id="findIdByAssetsId" resultType="String">
+		select t.id from assets_equipment t
+		where t.assets_number = #{0}
+		and t.euq_condition = '在库'
+		limit #{1}
+	</select>
+	
+
+	
+	<update id="updateCondition">
+		update assets_equipment t 
+		set t.euq_condition = #{type},
+		t.equ_staff = #{staff}
+		where t.id in 
+		<foreach item="item" index="index" collection="ids"
+			open="(" separator="," close=")">
+			#{item}
+		</foreach>
+	</update>
+	
+	<update id="updateConditionOne">
+		update assets_equipment t 
+		set t.euq_condition = #{0} where t.id = #{1}
+	</update>
+	
+	<update id="updateConditionByDeviceID">
+		update assets_equipment t 
+		set t.euq_condition = #{0},
+		t.equ_staff = #{1} 
+		where t.serial_number = #{2}
+	</update>
+	
+	<update id="updateStaff">
+		update assets_equipment t 
+		set t.equ_staff = #{0},
+			t.claim_time = #{2} 
+		where t.serial_number = #{1}
+	</update>
+	
+	<update id="updateStaffById">
+		update assets_equipment t 
+		set t.equ_staff = #{0},
+			t.claim_time = #{2} 
+		where t.id = #{1}
+	</update>
+	
+	<insert id="insert">
+		INSERT INTO assets_equipment(
+			id,
+			serial_number,
+			assets_number,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			del_flag,
+			euq_condition,
+			equ_staff,
+			claim_time,
+			scrap_time
+		) VALUES (
+			#{id},
+			#{serialNumber},
+			#{assetsNumber},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{remarks},
+			#{updateDate},
+			#{delFlag},
+			#{condition},
+			#{equStaff},
+			#{claimTime},
+			#{scrapTime}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE assets_equipment SET 	
+			serial_number = #{serialNumber},
+			assets_number = #{assetsNumber},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate},
+			euq_condition = #{condition},
+			equ_staff = #{equStaff},
+			claim_time = #{claimTime},
+			scrap_time = #{scrapTime}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE assets_equipment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

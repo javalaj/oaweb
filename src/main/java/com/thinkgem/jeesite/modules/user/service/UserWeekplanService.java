@@ -1,0 +1,77 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.user.service;
+
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.modules.user.entity.UserWeekplan;
+import com.thinkgem.jeesite.modules.user.dao.UserWeekplanDao;
+
+/**
+ * 每周计划集合类，没有具体计划细节Service
+ * 
+ * @author liuxin
+ * @version 2016-11-04
+ */
+@Service
+@Transactional(readOnly = true)
+public class UserWeekplanService extends CrudService<UserWeekplanDao, UserWeekplan> {
+
+	public UserWeekplan get(String id) {
+		return super.get(id);
+	}
+
+	public List<UserWeekplan> findList(UserWeekplan userWeekplan) {
+		return super.findList(userWeekplan);
+	}
+
+	public Page<UserWeekplan> findPage(Page<UserWeekplan> page, UserWeekplan userWeekplan) {
+		return super.findPage(page, userWeekplan);
+	}
+
+	@Transactional(readOnly = false)
+	public void save(UserWeekplan userWeekplan) {
+		super.save(userWeekplan);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(UserWeekplan userWeekplan) {
+		super.delete(userWeekplan);
+	}
+
+	/**
+	 * 通过日期获取下一周计划总数。
+	 */
+	public Integer findCountByPlandate(UserWeekplan userWeekplan) {
+		return dao.findCountByPlandate(userWeekplan);
+		// return 0;
+	}
+	
+
+	//通过创建者id和周数获取周计划中的weekplanID
+	public List<UserWeekplan>  indexGetId(UserWeekplan userWeekplan){
+		return dao.indexGetId(userWeekplan);
+	}
+	
+	public  Page<UserWeekplan> allListWeekPlan(Page<UserWeekplan> page, UserWeekplan userWeekplan){
+		userWeekplan.setPage(page);
+		page.setList(dao.allListWeekPlan(userWeekplan));
+		return page;
+	}
+	
+	public List<UserWeekplan> allListWeekPlanOfficeId(UserWeekplan userWeekplan){
+		return dao.allListWeekPlanOfficeId(userWeekplan); 
+	}
+	
+	public Map<String, String> countWeek(UserWeekplan userWeekplan){
+		return dao.countWeek(userWeekplan); 
+	}
+
+}

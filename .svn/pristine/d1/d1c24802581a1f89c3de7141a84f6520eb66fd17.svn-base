@@ -1,0 +1,371 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>员工转正申请管理</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document).ready(
+			function() {
+				$("#btnCancle2").click(function() {
+					$("#flag").val("1");
+				});
+
+				//加载自已的验证方法
+				xin_validate();
+				//保单验证
+				$("#inputForm")
+						.validate(
+								{
+									rules : {
+										phone : {
+											required : true,
+											mobile_num:['']
+											
+										},
+										tryoutDate : {
+											required : true
+										},
+										formalDate : {
+											required : true,
+											min_date : $("#tryoutDate")[0]
+										},
+
+										tryoutSalary : {
+											required : true,
+											number_1 : [ "" ]
+										},
+
+										formalSalary : {
+											required : true,
+											number_1 : [ "" ]
+										},
+
+										age : {
+											required : true,
+											min : 0,
+											max : 100
+										}
+									},
+									messages : {
+										formalDate : {
+											required : "必填信息",
+											min_date : "时间必须大于或等于入职时间"
+										}
+									},
+									submitHandler : function(form) {
+										//	oaLoading('正在提交，请稍等...');
+										form.submit();
+									},
+									errorContainer : "#messageBox",
+									errorPlacement : function(error, element) {
+										$("#messageBox").text("输入有误，请先更正。");
+										if (element.is(":checkbox")
+												|| element.is(":radio")
+												|| element.parent().is(
+														".input-append")) {
+											error.appendTo(element.parent()
+													.parent());
+										} else {
+											error.insertAfter(element);
+										}
+									}
+								});
+			});
+
+	//$("#name").focus();
+	/* $("#btnSubmit").click(function() {
+		return notnull1();
+	}); */
+	//
+	/* //表单数据控制
+	function notnull1() {
+		var judge = true;
+		//时间控制
+		var min = new Date($("input[name=tryoutDate]").val());
+		var max = new Date($("input[name=formalDate]").val());
+		if ($("input[name=tryoutDate]").val() == "") {
+			$("input[name=tryoutDate]").next().children().text("必填信息 *");
+			judge = false;
+		} else {
+			$("input[name=tryoutDate]").next().children().text("*");
+		}
+		if ($("input[name=formalDate]").val() == "") {
+			$("input[name=formalDate]").next().children().text("必填信息 *");
+			judge = false;
+		} else {
+			$("input[name=formalDate]").next().children().text("*");
+		}
+		if (min > max) {
+			$("input[name=formalDate]").next().children().text("时间错误 *");
+			judge = false;
+		} else {
+			$("input[name=endtime]").next().children().text("*");
+		}
+		//控制工资1
+		if ($("input[name=tryoutSalary]").val() != "") {
+			if ($("input[name=tryoutSalary]").val() % 1 === 0
+					&& $("input[name=tryoutSalary]").val() >= 1) {
+				$("input[name=tryoutSalary]").next().children().text("*");
+			} else {
+				$("input[name=tryoutSalary]").next().children().text(
+						"请输入大于0的整数 *");
+				judge = false;
+			}
+		} else {
+			$("input[name=tryoutSalary]").next().children().text("必填信息 *");
+			judge = false;
+		}
+		//控制工资2
+		if ($("input[name=formalSalary]").val() != "") {
+			if ($("input[name=formalSalary]").val() % 1 === 0
+					&& $("input[name=formalSalary]").val() >= 1) {
+				$("input[name=formalSalary]").next().children().text("*");
+			} else {
+				$("input[name=formalSalary]").next().children().text(
+						"请输入大于0的整数 *");
+				judge = false;
+			}
+		} else {
+			$("input[name=formalSalary]").next().children().text("必填信息 *");
+			judge = false;
+		}
+		//控制年龄
+		if ($("input[name=age]").val() != "") {
+			if ($("input[name=age]").val() % 1 === 0
+					&& $("input[name=age]").val() >= 1
+					&& $("input[name=age]").val() <= 100) {
+				$("input[name=age]").next().children().text("");
+			} else {
+				$("input[name=age]").next().children().text("请输入1到100的整数");
+				judge = false;
+			}
+		} else {
+			$("input[name=age]").next().children().text("");
+		}
+		//控制电话,不控制，因为个人信息控制过了.
+		return judge;
+	} */
+</script>
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/liuxin/css/liucheng.css">
+	<style>
+		.table tr td:nth-of-type(2n-1){
+			text-align:center;
+		}
+		.table tr td textarea.form-control{
+			width:100%;
+			height:100px;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title printHidden">
+				<h5>${title}</h5>
+			</div>
+			<div class="ibox-content">
+				<%--
+				<ul class="nav nav-tabs">
+					<li class="active"><a
+						href="${ctx}/oa/oaEmployeeFormal/form?id=${oaEmployeeFormal.id}">编辑-员工转正申请</a></li>
+				</ul>
+				<br />
+				 --%>
+				<form:form id="inputForm" modelAttribute="oaEmployeeFormal"
+					action="${ctx}/oa/oaEmployeeFormal/save" method="post"
+					class="form-inline">
+					<input type="hidden" name="token" value="${token }">
+					<input type="hidden" name="flag" value="0" id="flag">
+					<form:hidden path="id" />
+					<form:hidden path="procInsId" />
+					<form:hidden path="officeName" />
+					<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+						<tr>
+							<td class="width-15 active">姓名</td>
+							<td>
+								<form:input path="name" htmlEscape="false" maxlength="100"
+								style="background-color: #FFFFFF;" class="form-control input-sm "
+								readonly="true" />
+							</td>
+							<td class="width-15 active">性别</td>
+							<td>
+								<form:input path="sex" htmlEscape="false" maxlength="64"
+								style="background-color: #FFFFFF;" class="form-control input-sm "
+								readonly="true" />
+							</td>
+							<td class="width-15 active">年龄<span style="color:red;margin-left:2px;">*</span></td>
+							<td>
+								<form:input path="age" htmlEscape="false" maxlength="64"
+								class="form-control input-sm" />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">所属部门</td>
+							<td><form:input path="" htmlEscape="false" maxlength="64"
+								class="form-control input-sm" />
+							</td>
+							<td class="width-15 active">手机号码<span style="color:red;margin-left:2px;">*</span></td>
+							<td colspan="3"><form:input path="phone" htmlEscape="false" maxlength="64"
+								class="form-control input-sm" />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">入职时间<span style="color:red;margin-left:2px;">*</span></td>
+							<td colspan="5"><input
+							name="tryoutDate" type="text" readonly="readonly" maxlength="20"
+							id="tryoutDate" class="laydate-icon form-control xinreq"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaEmployeeFormal.tryoutDate}" pattern="yyyy-MM-dd"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">试用期薪酬<span style="color:red;margin-left:2px;">*</span></td>
+							<td colspan="5"><form:input path="tryoutSalary" htmlEscape="false" maxlength="64"
+							class="form-control input-sm  " />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">转正时间<span style="color:red;margin-left:2px;">*</span></td>
+							<td colspan="5"><input
+							name="formalDate" type="text" readonly="readonly" maxlength="20"
+							class="laydate-icon form-control xinreq"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaEmployeeFormal.formalDate}" pattern="yyyy-MM-dd"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">转正期薪酬<span style="color:red;margin-left:2px;">*</span></td>
+							<td colspan="5"><form:input path="formalSalary" htmlEscape="false" maxlength="64"
+							class="form-control input-sm  " />
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">本人转正申请</td>
+							<td colspan="5"><form:textarea path="reason" htmlEscape="false" maxlength="255"
+							class="form-control input-sm  " /></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">部门主管意见</td>
+							<td colspan="5"><form:textarea path="examtext" htmlEscape="false" maxlength="255"
+							class="form-control input-sm  " /></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">部门副总意见</td>
+							<td colspan="5"><form:textarea path="examtext2" htmlEscape="false" maxlength="255"
+							class="form-control input-sm  " /></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">人事行政部意见</td>
+							<td colspan="5"><form:textarea path="examtext3" htmlEscape="false" maxlength="255"
+							class="form-control input-sm  " /></td>
+						</tr>
+					</table>
+
+					<%-- <div class="control-group">
+						<label class="control-label">姓名：</label>
+
+						<form:input path="name" htmlEscape="false" maxlength="100"
+							style="background-color: #FFFFFF;" class="form-control input-sm "
+							readonly="true" />
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">性别：</label>
+
+						<form:input path="sex" htmlEscape="false" maxlength="64"
+							style="background-color: #FFFFFF;" class="form-control input-sm "
+							readonly="true" />
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">年龄：</label>
+
+						<form:input path="age" htmlEscape="false" maxlength="64"
+							class="form-control input-sm" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">手机号码：</label>
+
+						<form:input path="phone" htmlEscape="false" maxlength="64"
+							class="form-control input-sm  "
+							style="background-color: #FFFFFF;" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">入职日期：</label> <input
+							name="tryoutDate" type="text" readonly="readonly" maxlength="20"
+							id="tryoutDate" class="laydate-icon form-control xinreq"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaEmployeeFormal.tryoutDate}" pattern="yyyy-MM-dd"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" />
+						<span class="help-inline"><font color="red">*</font> </span>
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">试用期薪酬(月薪)：</label>
+
+						<form:input path="tryoutSalary" htmlEscape="false" maxlength="64"
+							class="form-control input-sm  " />
+						<span class="help-inline"><font color="red">*</font> </span>
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">转正日期：</label> <input
+							name="formalDate" type="text" readonly="readonly" maxlength="20"
+							class="laydate-icon form-control xinreq"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaEmployeeFormal.formalDate}" pattern="yyyy-MM-dd"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" />
+						<span class="help-inline"><font color="red">*</font> </span>
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">转正薪酬(月薪)：</label>
+
+						<form:input path="formalSalary" htmlEscape="false" maxlength="64"
+							class="form-control input-sm  " />
+						<span class="help-inline"><font color="red">*</font> </span>
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">转正申请备注：</label>
+
+						<form:input path="reason" htmlEscape="false" maxlength="255"
+							class="form-control input-sm  " />
+
+					</div> --%>
+					<div class="form-actions">
+						<shiro:hasPermission name="oa:oaForgetclock:edit">
+							<input id="btnSubmit" class="btn btn-primary" type="submit"
+								value="申请员工转正" />&nbsp;</shiro:hasPermission>
+						<c:if test="${not empty oaEmployeeFormal.id}">
+							<input id="btnCancle2" class="btn btn-primary" type="submit"
+								value="取消申请" />&nbsp;</c:if>
+						<input id="btnCancel" class="btn" type="button" value="返 回"
+							onclick="history.go(-1)" />
+						<c:choose>
+							<c:when test="${task != null}">
+				&nbsp;<input
+									onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+									class="btn" type="button" value="流程跟踪" />
+							</c:when>
+							<c:otherwise>&nbsp;<input
+									onclick='btnPNGshow2("${procDefId}");' class="btn"
+									type="button" value="流程图" />
+							</c:otherwise>
+						</c:choose>
+					</div>
+				</form:form>
+				<c:if test="${not empty oaEmployeeFormal.id}">
+					<act:histoicFlow procInsId="${oaEmployeeFormal.procInsId}" />
+				</c:if>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

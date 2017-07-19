@@ -1,0 +1,20 @@
+<%@ tag language="java" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<%@ attribute name="id" type="java.lang.String" required="false"%>
+
+<style>
+.oa-listView:before {
+    background:transparent
+}
+.oa-listView:after {
+    background:transparent
+}
+.oa-listView ul>li:last:after {
+    background:transparent
+}
+</style>
+<ul id="${id}" class="mui-table-view oa-listView">
+	<jsp:doBody></jsp:doBody>
+</ul>
+
+

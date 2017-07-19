@@ -1,0 +1,204 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.qualificationb;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.entity.OaSealUse;
+import com.thinkgem.jeesite.modules.oa.entity.qualificationb.OaQualificationb;
+import com.thinkgem.jeesite.modules.oa.service.OaOvertimeService;
+import com.thinkgem.jeesite.modules.sys.entity.workflow.SysWorkflowVar;
+import com.thinkgem.jeesite.modules.sys.service.workflow.SysWorkflowVarService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.dao.qualificationb.OaQualificationbDao;
+
+/**
+ * 资质借用流程Service
+ * @author niting
+ * @version 2017-01-09
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaQualificationbService extends CrudService<OaQualificationbDao, OaQualificationb> {
+
+	@Autowired
+	private ActTaskService actTaskService;
+	@Autowired
+	private SysWorkflowVarService sysWorkflowVarService;// 工作流变量service
+	@Autowired
+	private OaOvertimeService oaOvertimeService;// 抄送通知的service
+	
+	public OaQualificationb get(String id) {
+		return super.get(id);
+	}
+	
+	public List<OaQualificationb> findList(OaQualificationb oaQualificationb) {
+		return super.findList(oaQualificationb);
+	}
+	
+	public Page<OaQualificationb> findPage(Page<OaQualificationb> page, OaQualificationb oaQualificationb) {
+		return super.findPage(page, oaQualificationb);
+	}
+	
+	public OaQualificationb getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(OaQualificationb oaQualificationb,String flag) {
+		// 查询出部门名称，并设置
+		if (StringUtils.isBlank(oaQualificationb.getOfficename())) {
+			oaQualificationb.setOfficename(UserUtils.getUser().getOffice().getName());
+			oaQualificationb.setName(UserUtils.getUser().getName());
+		}
+		super.save(oaQualificationb);// 该步骤为默认继承步骤，直接保存该记录。
+		
+		Map<String, Object> vars = new HashMap<String, Object>();
+		vars.put("apply", UserUtils.getUser().getLoginName());// 发起人名字
+		SysWorkflowVar workflow = new SysWorkflowVar();// 工作流变量实体类
+		workflow.setWorkflowIdentification("oa_qualificationborrowing"); // 流程标示
+		workflow.setVarName("personnel");
+		vars.put("personnel",sysWorkflowVarService.findBySignVar(workflow).get(0).getVarValue());// 总经理
+		vars.put("flag", true);
+		vars.put("next", false);
+		if(oaQualificationb.getType().equals("原件")){
+			vars.put("next", true);
+			workflow.setVarName("register");
+			vars.put("register", sysWorkflowVarService.findBySignVar(workflow).get(0).getVarValue());// 人事行政部审核人
+		}
+		
+
+		if (StringUtils.isBlank(oaQualificationb.getProcInsId())) {			
+			// 流程关联id为null所以为第一次创建
+			oaQualificationb.setProcInsId(actTaskService.startProcess("oa_qualificationborrowing", "oa_qualificationb", oaQualificationb.getId(),
+					"资质借用流程【" + UserUtils.getUser().getName() + DateUtils.getDate() + "】", vars));
+			// 线程暂停两秒，使得流程流转信息排序正确，防止开始和申请排序颠倒
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			//执行下一步,指定个人任务查询
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaQualificationb.getProcInsId()).list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaQualificationb.getProcInsId(), "【提交】", null, vars);
+			}
+		}else{
+			//打回后，以及流程第一次成功啟動后的相同步驟
+			oaQualificationb.setTextname(null);
+			oaQualificationb.setTextexam(null);
+			String examtext = "【重新提交】";
+			if (flag.equals("1")) {
+				vars.put("flag", false);// 流程控制标志位 boolean
+				examtext = "【作废】";
+			}
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaQualificationb.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaQualificationb.getProcInsId(), examtext, null, vars);
+			}
+			super.save(oaQualificationb);
+		}		
+	}
+	
+	/**
+	 * dealExam业务逻辑方法
+	 * 
+	 * exam 1不同意 ，0同意
+	 */
+	@Transactional(readOnly = false)
+	public void dealexam(OaQualificationb oaQualificationb,String exam,int sign){
+		//审批人签字
+		//oaSealUse.setExamname(UserUtils.getUser().getName());
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		//根据审核结果执行不同操作
+		if(exam.equals("0")){
+			vars.put("flag",true);// 流程控制标志位 boolean
+			examStr = "【同意】";
+		}
+		else{
+			vars.put("flag",false);// 流程控制标志位 boolean
+			examStr = "【不同意】";
+		}
+		
+		//判断是进入第一次审核还是第二次审核
+		switch(sign){
+		case 1:
+			oaQualificationb.setTextname(UserUtils.getUser().getName());
+			oaQualificationb.setTextexam(examStr+oaQualificationb.getTextexam());
+			if(exam.equals("0") && oaQualificationb.getType().equals("复印件")){
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/qualificationb/oaQualificationb/form?id=" + oaQualificationb.getId(),
+						"您提交的资质借用申请流程【" + DateUtils.formatDate(oaQualificationb.getCreateDate()) + "】已被【"+
+						oaQualificationb.getTextname()+"】办结",
+						oaQualificationb.getCreateBy().getId());
+			}else if(exam.equals("1")){
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/qualificationb/oaQualificationb/form?id=" + oaQualificationb.getId(),
+						"您提交的资质借用申请流程【" + DateUtils.formatDate(oaQualificationb.getCreateDate()) + "】已被【"+
+						oaQualificationb.getTextname()+"】退回",
+						oaQualificationb.getCreateBy().getId());
+			}
+			break;
+		case 2:
+			oaQualificationb.setTextname1(UserUtils.getUser().getName());
+			oaQualificationb.setTextexam1(examStr+oaQualificationb.getTextexam1());
+				//发送通知
+			oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/qualificationb/oaQualificationb/form?id=" + oaQualificationb.getId(),
+					"您提交的资质借用申请流程【" + DateUtils.formatDate(oaQualificationb.getCreateDate()) + "】已被【"+
+					oaQualificationb.getTextname1()+"】办结",
+					oaQualificationb.getCreateBy().getId());
+			break;
+		}
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaQualificationb.getProcInsId()).list();
+		
+		if(sign==1){
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaQualificationb.getProcInsId(), oaQualificationb.getTextexam(), null, vars);
+			}
+		}else{
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaQualificationb.getProcInsId(), null, null, vars);
+			}
+		}
+		
+		super.save(oaQualificationb);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(OaQualificationb oaQualificationb) {
+		super.delete(oaQualificationb);
+	}
+	
+	/**
+	 * 判断当前用户是否需要去form页面创建，审批，修改这个流程
+	 */
+	public boolean isDeal(OaQualificationb oaQualificationb) {
+		if (StringUtils.isBlank(oaQualificationb.getId())) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaQualificationb.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+}

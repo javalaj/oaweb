@@ -1,0 +1,471 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>发文起草管理</title>
+<meta name="decorator" content="default" />
+<script src="${ctxStatic}/jquery/jquery-ui-1.10.2.custom.min.js"
+	type="text/javascript"></script>
+
+<script type="text/javascript">
+	$(document).ready(
+			function() {
+				//$("#name").focus();
+				$("#oaArchivesRecordName").change(function() {
+					$(this).valid();
+				});
+				$("#inputForm")
+						.validate(
+								{
+									rules : {
+										"oaArchivesNames" : {
+											required : true
+										}
+									},
+									messages : {
+										"oaArchivesNames" : {
+											required : "必填信息"
+										}
+									},
+									submitHandler : function(form) {
+										//loading('正在提交，请稍等...');
+										form.submit();
+									},
+									errorContainer : "#messageBox",
+									errorPlacement : function(error, element) {
+										$("#messageBox").text("输入有误，请先更正。");
+										if (element.is(":checkbox")
+												|| element.is(":radio")
+												|| element.parent().is(
+														".input-append")) {
+											error.appendTo(element.parent()
+													.parent());
+										} else {
+											error.insertAfter(element);
+										}
+									}
+								});
+			});
+
+	//点击事件出现模态框
+	function showModel(show) {
+		//编辑正文点击的时候出现文本编辑器	
+		$("#showM").css("display", "block");
+	}
+
+	//关闭模态框，模态框的值会自动保存
+	function closeM() {
+		$("#showM").css("display", "none");
+	}
+
+	//点击存草稿，改变Fruit值（0：提交，1：存草稿）
+	function choose(){
+		$("#fruit").val("1");
+	}
+	
+
+	/* function setSelectUserNo(radioObj) {
+
+		var radioCheck = $(radioObj).val();
+		if ("1" == radioCheck) {
+			$(radioObj).attr("checked", false);
+			$(radioObj).val("0");
+
+		} else {
+			$(radioObj).val("1");
+		}
+	} */
+
+	// 获取id, class, tagName   模态框拖动效果
+	var get = {
+		byId : function(id) {
+			return typeof id === "string" ? document.getElementById(id) : id;
+		},
+		byClass : function(sClass, oParent) {
+			var aClass = [];
+			var reClass = new RegExp("(^| )" + sClass + "( |$)");
+			var aElem = this.byTagName("*", oParent);
+			for (var i = 0; i < aElem.length; i++)
+				reClass.test(aElem[i].className) && aClass.push(aElem[i]);
+			return aClass;
+		},
+		byTagName : function(elem, obj) {
+			return (obj || document).getElementsByTagName(elem)
+		}
+	}
+
+	//窗口拖拽
+	function drag(oDrag, oTitle) {
+		var posX = posY = 0;
+		var oMin = get.byClass("min", oDrag)[0];
+		var oMax = get.byClass("max", oDrag)[0];
+		var oRevert = get.byClass("revert", oDrag)[0];
+		var oClose = get.byClass("close", oDrag)[0];
+		var RevertWidth = 300;
+		var RevertHeight = 160;
+		oTitle.onmousedown = function(event) {
+			oTitle.style.cursor = "move";
+			var event = event || window.event;
+			var disX = event.clientX - oDrag.offsetLeft;
+			var disY = event.clientY - oDrag.offsetTop;
+			//鼠标移动，窗口随之移动
+			document.onmousemove = function(event) {
+				var event = event || window.event;
+				maxW = document.documentElement.clientWidth - oDrag.offsetWidth;
+				maxH = document.documentElement.clientHeight
+						- oDrag.offsetHeight;
+				posX = event.clientX - disX;
+				posY = event.clientY - disY;
+				if (posX < 0) {
+					posX = 0;
+				} else if (posX > maxW) {
+					posX = maxW;
+				}
+				if (posY < 0) {
+					posY = 0;
+				} else if (posY > maxH) {
+					posY = maxH;
+				}
+				oDrag.style.left = posX + 'px';
+				oDrag.style.top = posY + 'px';
+			}
+			//鼠标松开，窗口将不再移动
+			document.onmouseup = function() {
+				document.onmousemove = null;
+				document.onmouseup = null;
+			}
+		}
+	}
+	window.onload = function() {
+		var oDrag = document.getElementById("drag");
+		var oTitle = get.byClass("title", oDrag)[0];
+		drag(oDrag, oTitle);
+	}
+</script>
+
+<style type="text/css">
+h3 {
+	color: red;
+}
+
+.oaArchivestop {
+	text-align: right;
+}
+
+.control-label {
+	color: red;
+}
+
+.left {
+	width: 50%;
+	border-right: 1px solid red;
+}
+
+.all {
+	height: 30px;
+}
+
+.note {
+	height: 100px;
+}
+
+/* .code {
+	color: red;
+	margin-left: 20px;
+} */
+
+/* .modal-content {
+	width: 100%;
+	height: 100%;
+}
+
+table td {
+	border-bottom: 1px solid red;
+} */
+.aa ul li {
+	float: left;
+	list-style: none;
+	padding-right: 10px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+#drag {
+	position: absolute;
+	/*  top:100px;
+            left:100px;
+            width:300px;
+            height:160px;
+            background:pink;
+            border:1px solid #444; */
+}
+
+#drag .title {
+	position: relative;
+	height: 27px;
+	margin: 5px;
+	text-align: left;
+	/*             line-height: 160px; */
+}
+
+
+
+
+.xin-div .input-group.treeselect-div {	
+	width: 62.6%; 
+}
+#oaArchivesRecordName{
+max-width:23% !important;
+}
+
+input[type=checkbox], input[type=radio]{
+	margin:0;
+	margin-right:4px;
+}
+
+input[type=checkbox] + label{
+	margin-right:10px;
+	height: 34px;
+    line-height: 34px;
+}
+.control-label{
+	height:34px;
+}
+label + a{
+	height: 34px;
+    line-height: 34px;
+}
+.form-horizontal .controls{
+	margin-left:160px;
+}
+.upload-ph{
+	float:left;
+	margin-left:0;
+}
+
+ol{
+	display: inline-flex;
+	height:34px;
+	line-height:34px;
+}
+
+</style>
+
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>发文--起草</h5>
+			</div>
+			<div class="ibox-content">
+				<form:form id="inputForm" modelAttribute="oaArchives" action="${ctx}/oa/oaArchives/save" method="post"
+					class="form-horizontal">
+					<legend>${title }</legend>
+					<sys:message content="${message}" />
+					<input type="hidden" name="token" value="${token }">
+					<input type="hidden" name="Fruit" value="0" id="fruit">
+			
+					<div class="aa">
+						<ul class="ul-form">
+							<li class="btns"><a id="modal-262575"
+								href="#modal-container-262575" role="button"
+								class="btn btn-primary" style="text-decoration: none"
+								data-toggle="modal" onclick="showModel(this)">编辑正文</a></li>
+							<li class="btns"><input
+								onclick='btnPNGshow2("oa_Archvies:1:6552053766724510869ef1800054ad4a");'
+								class="btn" type="button" value="流程图" /></li>
+						</ul>
+					</div>
+			
+					<div id="showM" style="display: none;">
+						<div id="drag">
+							<div class="title">
+								<div class="modal-dialog" style="width: 750px;">
+									<div class="modal-content">
+										<div class="modal-header" style="padding: 5px 10px;">
+											<button type="button" class="close" data-dismiss="modal"
+												onclick="closeM()" aria-hidden="true">x</button>
+											<h4 class="modal-title" id="myModalLabel">正文</h4>
+										</div>
+										<div class="modal-body" style="padding: 5px 10px;">
+											<form:textarea path="content" onpropertychange="if(value.length>100) value=value.substr(0,100)" id="content" htmlEscape="false"
+												rows="20" maxlength="20000" class="input-xxlarge required" />
+											<sys:ckeditor replace="content" uploadPath="/oa/oaArchives"
+												height="200px" />
+										</div>
+										<div class="modal-footer" style="padding: 5px 10px; margin: 0px;">
+											<button type="button" class="btn btn-default"
+												data-dismiss="modal" onclick="closeM()">关闭</button>
+											<button type="button" class="btn btn-default"
+												data-dismiss="modal" onclick="closeM()">保存</button>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+			
+			
+					<%-- <div class="aa">
+						<ul class="ul-form">
+							<li class="btns"><a id="modal-262575"
+								href="#modal-container-262575" role="button"
+								class="btn btn-primary" style="text-decoration: none"
+								data-toggle="modal">编辑正文</a>
+								<div class="modal fade" id="modal-container-262575" role="dialog"
+								aria-labelledby="myModalLabel" style="display:none;height:500px;">
+									<div class="modal-dialog" style="width:750px;">
+										<div class="modal-content">
+											<div class="modal-header">
+												<button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+												<h4 class="modal-title" id="myModalLabel">正文</h4>
+											</div>
+											<div class="modal-body"> 
+												<form:textarea path="content" htmlEscape="false" rows="20"
+													maxlength="20000" class="input-xxlarge required"/>
+												<sys:ckeditor replace="content" uploadPath="/oa/oaArchives"/>
+											</div>
+											<div class="modal-footer">
+												<button type="button" class="btn btn-default"
+													data-dismiss="modal">关闭</button>
+												<button type="button" class="btn btn-default"
+													data-dismiss="modal">保存</button>
+											</div>
+										</div>
+									</div>
+								</div>	
+							</li>
+							<li class="btns"><input
+								onclick='btnPNGshow2("oa_Archvies:1:6552053766724510869ef1800054ad4a");'
+								class="btn" type="button" value="流程图" /></li>
+			
+						</ul>
+					</div> --%>
+			
+			
+			
+					<form:hidden path="id" />
+					<input name="draftdate" type="hidden"
+						value="<fmt:formatDate value="${oaArchives.draftdate}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+			
+					<sys:message content="${message}" />
+					<table class="table-form">
+						<caption>
+							<h3 align="center" style="font-size: 20px; font-weight: bolder;margin-bottom: 5px;">${fns:getConfig('oaArchivesCaption')}</h3>
+						</caption>
+						<tbody>
+							<tr>
+								<td class="all" colspan="3"><label class="control-label">发文字号：</label>
+									<form:select path="code" class="selectpicker " data-style="btn-inverse" data-live-search="true" id="code"
+										style="width:20%;">
+										<form:options items="${fns:getDictList('code')}"
+											itemLabel="label" itemValue="value" htmlEscape="false" />
+									</form:select></td>
+							</tr>
+			
+							<tr>
+								<td class="all"><label class="control-label">密级：</label> <form:select
+										path="secrets" class="selectpicker " data-style="btn-inverse" data-live-search="true" style="width:40%;">
+										<form:options items="${fns:getDictList('secrets')}"
+											itemLabel="label" itemValue="value" htmlEscape="false" />
+									</form:select></td>
+								<td><label class="control-label">紧急程度：</label> <form:select
+										path="urgency" class="selectpicker " data-style="btn-inverse" data-live-search="true" style="width:40%;">
+										<form:options items="${fns:getDictList('urgency')}"
+											itemLabel="label" itemValue="value" htmlEscape="false" />
+									</form:select></td>
+							</tr>
+							<tr>
+								<td class="left"><label class="control-label" for="manager">核稿人(时间):</label>
+									<form:input path="leadText" htmlEscape="false" maxlength="20"
+										class="form-control" style="width:40%;" readonly="true" />
+								<td class="right" colspan="2"><label class="control-label">拟稿部门和拟稿人：</label>
+									<input type="text"
+									value="${fns:getUser().office.name}&nbsp;${oaArchives.createBy.name}&nbsp; <fmt:formatDate 
+									value="${oaArchives.draftdate}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+									class="form-control" style="width: 40%;" readonly="readonly" /></td>
+							</tr>
+							<tr>
+								<td class="all" colspan="3"><label class="control-label"
+									for="tilte">事由：</label> <form:input path="title"
+										htmlEscape="false" id="title" maxlength="255"
+										class="form-control" style="width:20%;" required="required" /> <span
+									class="help-inline"><font color="red">*</font> </span></td>
+							</tr>
+							<tr>
+								<td class="all xin-div" colspan="3"><label
+									class="control-label">主送：</label>
+									<div class="controls" style="margin-left: -20px;">
+										<sys:treeselect id="oaArchivesRecord" name="oaIds"
+											value="${oaArchives.oaIds}" labelName="oaArchivesNames"
+											labelValue="${oaArchives.oaArchivesNames}" title="接收人"
+											url="/sys/office/treeData?type=3" cssClass="form-control"
+											notAllowSelectParent="true" notAllowSelectRoot="false"
+											checked="true" allowClear="true" />
+										<span class="help-inline" id="tip"><font color="red">*</font>
+										</span>
+									</div></td>
+							</tr>
+							<tr>
+								<td class="all" colspan="3"><label class="control-label">抄送：</label>
+									<form:input path="ccunit" htmlEscape="false" maxlength="100"
+										class="form-control" style="width:20%;" /></td>
+							</tr>
+							<tr>
+								<td class="all" colspan="3"><label class="control-label"
+									for="contenthref">正文：</label> <a id="contenthref"
+									onclick="showModel(this)">正文内容</a></td>
+							</tr>
+			
+							<tr>
+								<td class="all" colspan="3"><label class="control-label"
+									for="files">相关部门会签：</label> 
+									<form:checkboxes path="departmentsign"
+										items="${fns:getDictList('departmentsign')}" value=""
+										itemLabel="label" itemValue="value" htmlEscape="false"
+										class="departmentsign" /></td>
+							</tr>
+			
+							<tr>
+								<td class="all" colspan="3"><label class="control-label"
+									for="files">附件：</label>
+									<div class="controls">
+										<form:hidden id="files" path="files" htmlEscape="false"
+											maxlength="255" class="form-control" />
+										<sys:ckfinder input="files" type="files"
+											uploadPath="/oa/oaArchives" selectMultiple="true" />
+									</div></td>
+							<tr>
+								<td class="all" colspan="3"><label class="control-label">主题词：</label>
+									<form:input path="keyword" htmlEscape="false" maxlength="255"
+										class="form-control" style="width:20%;" /></td>
+							</tr>
+			
+							<!-- <tr>
+								<td class="all" colspan="3"><label class="control-label">是否提交：</label><label><input
+										name="Fruit" type="radio" value="1"
+										onclick="setSelectUserNo(this);" />&nbsp;&nbsp;保存草稿暂时不提交 </label><span
+									style="color: red;">&nbsp;&nbsp;&nbsp;&nbsp;(默认不选,提交审核)</span></td>
+							</tr> -->
+					</table>
+					<div class="form-actions"
+						style="text-align: left; margin-top: 15px; margin-bottom: 15px;">
+						<shiro:hasPermission name="oa:oaArchives:edit">
+							<input id="btnSubmit" class="btn btn-primary" type="submit"
+								value="提 交" />&nbsp;&nbsp;&nbsp;&nbsp;
+							<input id="saveSubmit" class="btn btn-primary" type="submit"
+								value="存草稿" onclick="return choose();"/>&nbsp;&nbsp;&nbsp;&nbsp;	
+						</shiro:hasPermission>
+						<input id="btnCancel" class="btn" type="button" value="返 回"
+							onclick="history.go(-1)" />
+					</div>
+				</form:form>
+			</div>
+		</div>
+	</div>			
+</body>
+</html>

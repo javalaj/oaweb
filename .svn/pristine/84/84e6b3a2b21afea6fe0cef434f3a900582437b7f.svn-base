@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.iim.dao.IimChatGroupUserDao">
+    
+	<sql id="iimChatGroupUserColumns">
+		a.id AS "id",
+		a.group_id AS "group.id",
+		a.user_id AS "user.id",
+		a.state AS "state",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+	    a.in_date AS "inDate",
+	    a.out_date AS "outDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u3.name AS "user.name",
+		u3.id AS "user.id"
+	</sql>
+	
+	<sql id="iimChatGroupUserJoins">
+		LEFT JOIN sys_user u3 ON u3.id = a.user_id
+	</sql>
+    	
+	
+	<select id="get" resultType="IimChatGroupUser">
+		SELECT 
+		<include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="IimChatGroupUser">
+		SELECT 
+		<include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="group != null and group.id != null and group.id != ''">
+				AND a.group_id = #{group.id}
+			</if>
+			<if test="user != null and user.id != null and user.id != ''">
+				AND a.user_id = #{user.id}
+			</if>
+			<if test="state != null and state != ''">
+				AND a.state = #{state}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="IimChatGroupUser">
+		SELECT 
+		<include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO iim_chat_group_user(
+			id,
+			group_id,
+			user_id,
+			state,
+			create_by,
+			create_date,
+			in_date,
+			out_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{group.id},
+			#{user.id},
+			#{state},
+			#{createBy.id},
+			#{createDate},
+			#{in_date},
+			#{out_date},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE iim_chat_group_user SET 	
+			group_id = #{group.id},
+			user_id = #{user.id},
+			state = #{state},
+			in_date = #{in_date},
+			out_date = #{out_date},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<!--物理删除-->
+	<update id="delete">
+			UPDATE iim_chat_group_user SET 
+			del_flag = #{DEL_FLAG_DELETE} 
+		WHERE id = #{id}
+	</update>
+	
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+
+		UPDATE iim_chat_group_user SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	
+		
+	<!-- 根据用户获取所在的群 --> 
+	<select id="getGroupByuser" parameterType="com.thinkgem.jeesite.modules.sys.entity.User" resultType="IimChatGroup" useCache="true">
+		SELECT *
+		FROM iim_chat_group
+		<where>
+			del_flag = '0'
+		</where>	
+		and  id in( select group_id from iim_chat_group_user where user_id=#{id} and (state='0' or state='1' or state='5') )
+	</select>
+	
+	
+	<!-- 根据群获取所有人员 --> 
+	<select id="getUserBygroup" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroup" resultType="User" useCache="true">
+		SELECT *
+		FROM sys_user where id in( select user_id from iim_chat_group_user where group_id=#{id} and (state='0' or state='1' or state='5') and  del_flag = '0')
+	</select>
+	
+	
+	
+	
+	
+	<!-- 根据组获取组成员关系 --> 
+	<select id="getGroupUserBygroup" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroup" resultType="IimChatGroupUser" useCache="true">
+		SELECT <include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = '0'
+		</where>	
+         and a.group_id =#{id} 
+		 and (a.state='0' or a.state='1' or a.state='5')
+	</select>
+	
+	
+	
+	<!-- 根据组ID和当前用户ID获取其它人员 --> 
+	<select id="getUserBygroupID" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroupUser" resultType="Map" useCache="true">
+		SELECT *
+		FROM iim_chat_group_user
+		<where>
+			del_flag = '0'
+		</where>	
+		and group_id =#{groupid}  and (state='0' or state='1' or state='5')
+	</select>
+	
+	
+	<!-- 根据用户id和state获取群 --> 
+	<select id="getGroup"  resultType="IimChatGroup" useCache="true">
+		SELECT *
+		FROM iim_chat_group 
+		<where>
+			del_flag = '0'
+		</where>	
+		and  id in( select group_id from iim_chat_group_user where user_id=#{userid} and state=#{state} and  del_flag = '0' )
+	</select>
+	
+	
+	
+	<!-- 根据群,级别获取所有人员--> 
+	<select id="getGroupUser" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroup" resultType="User"  useCache="true">
+		SELECT *
+		FROM sys_user where id in( select user_id from iim_chat_group_user where group_id=#{id} and state=#{state} and  del_flag = '0')
+	</select>
+	
+	<!--判断群是否存在用户-->
+	<select id="booleanGroupUser" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroup" resultType="IimChatGroupUser" useCache="true">
+		SELECT <include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = #{delflag}
+			<if test="state != null and state != ''">
+				AND a.state = #{state}
+			</if>
+			and a.group_id =#{groupid} and a.user_id=#{userid}
+		</where>	
+          
+	</select>
+	
+	
+	<!--更新此人在群中是否生效-->
+	<update id="updateGroupUser">
+		 UPDATE iim_chat_group_user SET 
+			del_flag = #{delFlag},in_date=#{in_date},state=#{state}
+		WHERE id = #{id} 
+	</update>
+	
+	<!--根据组和用户获取群关系-->
+	<select id="GetGroupUserbyid" parameterType="com.thinkgem.jeesite.modules.iim.entity.IimChatGroup" resultType="IimChatGroupUser" useCache="true">
+		SELECT <include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = '0'
+		</where>	
+         and a.group_id =#{groupid} and a.user_id=#{userid} 
+		 and (a.state='0' or a.state='1' or a.state='5')
+	</select>
+	
+	
+	<!-- 查询此群群主和管理员人员 -->
+	<select id="findManageUser" resultType="IimChatGroupUser">
+		SELECT <include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = '0'
+		</where>
+		 and a.group_id = #{groupid} and (a.state='0'  or a.state='5')
+	</select>
+	
+	
+	<!-- 查询此群管理员人员和普通人员 -->
+	<select id="findCommonUser" resultType="IimChatGroupUser">
+		SELECT <include refid="iimChatGroupUserColumns"/>
+		FROM iim_chat_group_user a
+		<include refid="iimChatGroupUserJoins"/>
+		<where>
+			a.del_flag = '0'
+		</where>
+		 and a.group_id = #{groupid} and (a.state='1'  or a.state='5')
+	</select>
+	
+	
+</mapper>

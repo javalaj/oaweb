@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractPurchaseDao">
+    
+	<sql id="oaContractPurchaseColumns">
+		a.id AS "id",
+		a.contract_no AS "contractNo",
+		a.contract_name AS "contractName",
+		a.contract_status AS "contractStatus",
+		a.project_id AS "project.id",
+		a.project_old_name AS "projectOldName",
+		a.contract_type AS "contractType",
+		a.contract_money AS "contractMoney",
+		a.contract_time AS "contractTime",
+		a.contract_sales_id AS "contractSales.id",
+		a.supplier_id AS "supplier.id",
+		a.supplier_warranty_start_time AS "supplierWarrantyStartTime",
+		a.supplier_warranty_end_time AS "supplierWarrantyEndTime",
+		a.filing_status AS "filingStatus",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		p1.project_no AS "project.projectNo",
+		p1.project_name AS "project.projectName",
+		s1.org_code AS "supplier.orgCode",
+		s1.sup_name AS "supplier.supName",
+		a.is_inspected AS "isInspected",
+		a.inspection_files AS "inspectionFiles",
+		a.inspection_time AS "inspectionTime",
+		a.inspection_user_id AS "inspectionUser.id",
+		a.is_add_stage_abled AS "isAddStageAbled",
+		a.supplier_warranty_month AS "supplierWarrantyMonth",
+		cs1.contract_no AS "contractSales.contractNo",
+		cs1.contract_name AS "contractSales.contractName",
+		IFNULL(cpsspmv.sum_pay_money, 0) AS "sumPayMoney"
+	</sql>
+	
+	<sql id="oaContractPurchaseJoins">
+		LEFT JOIN oa_project p1 ON p1.id = a.project_id
+		LEFT JOIN oa_supmanagement s1 ON s1.id = a.supplier_id
+		LEFT JOIN oa_contract_sales cs1 ON cs1.id = a.contract_sales_id
+		LEFT JOIN (<include refid="oaContractPurchaseStageSumPayMoneyView"/>) cpsspmv ON cpsspmv.contract_purchase_id = a.id
+	</sql>
+	
+	<sql id="oaContractPurchaseStageSumPayMoneyView">
+		SELECT sum(pay_money) as sum_pay_money,contract_purchase_id
+		FROM oa_contract_purchase_stage ocps
+		where ocps.pay_stage_status='3'
+		GROUP BY ocps.contract_purchase_id
+	</sql>	
+    
+	<select id="get" resultType="OaContractPurchase">
+		SELECT 
+			<include refid="oaContractPurchaseColumns"/>
+		FROM oa_contract_purchase a
+		<include refid="oaContractPurchaseJoins"/>
+		WHERE a.id = #{id} and del_flag='0'
+	</select>
+	
+	<select id="findList" resultType="OaContractPurchase">
+		SELECT 
+			<include refid="oaContractPurchaseColumns"/>
+		FROM oa_contract_purchase a
+		<include refid="oaContractPurchaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.contract_type='0' 
+			<if test="contractNo != null and contractNo != ''">
+				AND a.contract_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractNo},'%')</if>
+			</if>
+			<if test="contractName != null and contractName != ''">
+				AND a.contract_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractName},'%')</if>
+			</if>
+			<if test="contractStatus != null and contractStatus != ''">
+				AND a.contract_status = #{contractStatus}
+			</if>
+			<if test="project != null and project.id != null and project.id != ''">
+				AND a.project_id = #{project.id}
+			</if>
+			<if test="beginContractTime != null and beginContractTime != '' ">
+				<![CDATA[AND a.contract_time>=#{beginContractTime} ]]>
+			</if>
+			<if test="endContractTime != null and endContractTime != ''">
+				<![CDATA[AND a.contract_time<=#{endContractTime} ]]>
+			</if>
+			<if test="supplier != null and supplier.id != null and supplier.id != ''">
+				AND a.supplier_id = #{supplier.id}
+			</if>
+			${sqlMap.isOverdue}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContractPurchase">
+		SELECT 
+			<include refid="oaContractPurchaseColumns"/>
+		FROM oa_contract_purchase a
+		<include refid="oaContractPurchaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.contract_type='0' 
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListByProjectId" resultType="OaContractPurchase">
+		SELECT 
+			<include refid="oaContractPurchaseColumns"/>
+		FROM oa_contract_purchase a
+		<include refid="oaContractPurchaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.contract_type='0' 
+			<choose>
+				<when test="project == null">
+					AND (a.project_id = null OR a.project_id ='')
+				</when>
+				<otherwise>
+					AND a.project_id = #{project.id}
+				</otherwise>
+			</choose>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>	
+	<insert id="insert">
+		INSERT INTO oa_contract_purchase(
+			id,
+			contract_no,
+			contract_name,
+			contract_status,
+			project_id,
+			project_old_name,
+			contract_type,
+			contract_money,
+			contract_time,
+			contract_sales_id,
+			supplier_id,
+			supplier_warranty_start_time,
+			supplier_warranty_end_time,
+			filing_status,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			is_inspected,
+			inspection_files,
+			inspection_time,
+			inspection_user_id,
+			is_add_stage_abled,
+			supplier_warranty_month
+		) VALUES (
+			#{id},
+			#{contractNo},
+			#{contractName},
+			#{contractStatus},
+			#{project.id},
+			#{projectOldName},
+			#{contractType},
+			#{contractMoney},
+			#{contractTime},
+			#{contractSales.id},
+			#{supplier.id},
+			#{supplierWarrantyStartTime},
+			#{supplierWarrantyEndTime},
+			#{filingStatus},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{isInspected},
+			#{inspectionFiles},
+			#{inspectionTime},
+			#{inspectionUser.id},
+			#{isAddStageAbled},
+			#{supplierWarrantyMonth}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_purchase SET 	
+			contract_no = #{contractNo},
+			contract_name = #{contractName},
+			contract_status = #{contractStatus},
+			project_id = #{project.id},
+			project_old_name = #{projectOldName},
+			contract_type = #{contractType},
+			contract_money = #{contractMoney},
+			contract_time = #{contractTime},
+			contract_sales_id = #{contractSales.id},
+			supplier_id = #{supplier.id},
+			supplier_warranty_start_time = #{supplierWarrantyStartTime},
+			supplier_warranty_end_time = #{supplierWarrantyEndTime},
+			filing_status = #{filingStatus},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			is_inspected = #{isInspected},
+			inspection_files = #{inspectionFiles},
+			inspection_time = #{inspectionTime},
+			inspection_user_id = #{inspectionUser.id},
+			is_add_stage_abled = #{isAddStageAbled},
+			supplier_warranty_month = #{supplierWarrantyMonth}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_purchase SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

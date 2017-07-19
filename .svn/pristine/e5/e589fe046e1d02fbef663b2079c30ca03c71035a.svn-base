@@ -1,0 +1,146 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>运行中的流程</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			top.$.jBox.tip.mess = null;
+		});
+	function page(n,s){
+        	location = '${ctx}/act/process/running/?pageNo='+n+'&pageSize='+s;
+        } 
+		function updateCategory(id, category){
+			$.jBox($("#categoryBox").html(), {title:"设置分类", buttons:{"关闭":true}, submit: function(){}});
+			$("#categoryBoxId").val(id);
+			$("#categoryBoxCategory").val(category);
+		}
+	</script>
+	<script type="text/template" id="categoryBox">
+		<form id="categoryForm" action="${ctx}/act/process/updateCategory" method="post" enctype="multipart/form-data"
+			style="text-align:center;" class="form-search" onsubmit="loading('正在设置，请稍等...');"><br/>
+			<input id="categoryBoxId" type="hidden" name="procDefId" value="" />
+			<select id="categoryBoxCategory" name="category">
+				<c:forEach items="${fns:getDictList('act_category')}" var="dict">
+					<option value="${dict.value}">${dict.label}</option>
+				</c:forEach>
+			</select>
+			<br/><br/>　　
+			<input id="categorySubmit" class="btn btn-primary" type="submit" value="   保    存   "/>　　
+		</form>
+	</script>
+</head>
+<body class="gray-bg">
+<%-- 	<ul class="nav nav-tabs">
+		<li><a href="${ctx}/act/process/">流程管理</a></li>
+		<li><a href="${ctx}/act/process/deploy/">部署流程</a></li>
+		<li class="active"><a href="${ctx}/act/process/running/">运行中的流程</a></li>
+	</ul> --%>
+<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>运行中的流程列表 </h5>
+		<div class="ibox-tools">
+			<!-- <a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			<ul class="dropdown-menu dropdown-user">
+				<li><a href="#">选项1</a>
+				</li>
+				<li><a href="#">选项2</a>
+				</li>
+			</ul>
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a> -->
+		</div>
+	</div>
+    
+    <div class="ibox-content">
+	<sys:message content="${message}"/> 
+		<div class="row">
+			<div class="col-sm-12">
+	<form id="searchForm" action="${ctx}/act/process/running/" method="post" class="form-inline">
+	<input id="pageNo" name="pageNo" type="hidden"
+						value="${page.pageNo}" />
+					<input id="pageSize" name="pageSize" type="hidden"
+						value="${page.pageSize}" />
+					<table:sortColumn id="orderBy" name="orderBy"
+						value="${page.orderBy}" callback="sortOrRefresh();" />
+					<!-- 支持排序 -->
+					<div class="form-group">	
+		<span>流程实例ID：</span><input type="text" id="procInsId" name="procInsId" value="${procInsId}" class="form-control m-b"/>
+		<span>流程定义Key：</span><input type="text" id="procDefKey" name="procDefKey" value="${procDefKey}" class="form-control m-b"/>
+</div>
+	</form>
+	<br/></div></div>
+	<!-- 工具栏 -->
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="pull-left">
+				<button class="btn btn-white btn-sm " data-toggle="tooltip"
+						data-placement="left" onclick="location.href='${ctx}/act/process/'" title="流程管理">
+						<i class="fa fa-cubes"></i>流程管理
+					</button>	
+<button class="btn btn-white btn-sm " data-toggle="tooltip"
+						data-placement="left" onclick="openDialog('部署流程', '${ctx}/act/process/deploy/','600px', '250px')" title="部署流程">
+						<i class="fa fa-dashboard"></i> 部署流程
+					</button>								
+					<button class="btn btn-white btn-sm " data-toggle="tooltip"
+						data-placement="left" onclick="sortOrRefresh()" title="刷新">
+						<i class="glyphicon glyphicon-repeat"></i> 刷新
+					</button>
+
+				</div>
+				<div class="pull-right">
+					<button class="btn btn-primary btn-rounded btn-outline btn-sm "
+						onclick="$('#searchForm').submit();">
+						<i class="fa fa-search"></i> 查询
+					</button>
+					<button class="btn btn-primary btn-rounded btn-outline btn-sm "
+						onclick="window.location.href='${ctx}/act/process/running/'">
+						<i class="fa fa-refresh"></i> 重置
+					</button>
+				</div>
+			</div>
+		</div>
+	<table class=" table-striped table-bordered  table-hover   dataTables-example dataTable no-footer">
+		<thead>
+			<tr>
+				<th>执行ID</th>
+				<th>流程实例ID</th>
+				<th>流程定义ID</th>
+				<th>当前环节</th>
+				<th>是否挂起</th>
+				<th>操作</th>
+			</tr>
+		</thead>
+		<tbody>
+			<c:forEach items="${page.list}" var="procIns">
+				<tr>
+					<td>${procIns.id}</td>
+					<td>${procIns.processInstanceId}</td>
+					<td>${procIns.processDefinitionId}</td>
+					<td>${procIns.activityId}</td>
+					<td>${procIns.suspended}</td>
+					<td>
+						<shiro:hasPermission name="act:process:edit">
+							<a href="${ctx}/act/process/deleteProcIns?procInsId=${procIns.processInstanceId}&reason=" onclick="return promptx('删除流程','删除原因',this.href);" class="btn btn-danger btn-xs"><i class="fa fa-trash"></i>删除流程</a>
+						</shiro:hasPermission>&nbsp;
+					</td>
+				</tr>
+			</c:forEach>
+		</tbody>
+	</table>
+		<table:page page="${page}"></table:page>
+<br/>
+	<br/>
+	</div>
+	</div>
+</div>
+</body>
+</html>

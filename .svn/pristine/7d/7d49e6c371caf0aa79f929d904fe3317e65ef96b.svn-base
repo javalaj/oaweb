@@ -1,0 +1,171 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+    <title>消息中心</title>
+    <meta name="decorator" content="default"/>
+    <link rel="stylesheet" href="${ctxStatic}/mobile/css/mui.css" />
+    <link rel="stylesheet" href="${ctxStatic}/mobile/css/oabase.css" />
+    
+    <style type="text/css">
+    .log-footer {
+			width: 100%;
+			height: 52px;
+			/* background: #F6F6F6; */
+			text-align: center;
+			padding-top: 10px;
+		}
+		.mui-bar-nav.mui-bar .mui-icon{
+			color:#12b5f7;
+		}
+    </style>
+ 	<script src="${ctxStatic}/jquery/jquery-1.8.3.min.js" type="text/javascript"></script>	   
+    <script type="text/javascript">
+	function page(n,s){
+		$("#pageNo").val(n);
+		$("#pageSize").val(s);
+		$("#searchForm").submit();
+    	return false;
+    }
+    </script>
+    <script type="text/javascript">
+function myfunction(){
+	$("#page_message").addClass("mui-active");
+}
+window.onload=myfunction;
+
+	function goBack()
+	{
+		var messageMap = '${messageMap}';
+		
+		if(messageMap == '')
+			window.location.replace('${ctx}/m/oa/oaNotify/messageAll');
+		else	
+			window.location.replace('${mctx}/mobile/sys/index/');
+	}
+
+/* 	
+var Cookie = {  
+        setCookie:function(name,value,option){  
+            var str = name + "=" + escape(value);  
+            if(option){  
+                if(option.expireDays){  
+                    var date = new Date();  
+                    var ms = option.expireDays * 24 * 3600 * 1000;  
+                    date.setTime(date.getTime() + ms);  
+                    str += "; expires=" + date.toGMTString();  
+                }  
+                if(option.path)str += ";path=" + option.path;  
+                if(option.domain)str += ";domain=" + option.domain;  
+                if(option.secure)str += ";true";  
+            }  
+            document.cookie = str;  
+        },  
+        getCookie:function(name){  
+            var cookies = document.cookie.split(";");  
+            for(var i=0; i<cookies.length;i++){  
+                var arr=cookies[i].split("=");  
+                if(arr[0]==name){  
+                    return unescape(arr[1]);  
+                }  
+            }  
+            return "";  
+        },  
+        delCookie:function(name){  
+            this.setCookie(name,"",{expireDays:-1});  
+        }  
+    }  
+    window.onload=function(){  
+        if("1"==Cookie.getCookie("diffmaker")){  
+            /* alert("找到Cookie，我将不再刷新页面，并删除Cookie"); 
+            Cookie.delCookie("diffmaker");  
+        }else{  
+            /* alert("没有找到Cookie，我将刷新页面!");  
+            Cookie.setCookie("diffmaker","1",null);  
+            window.location.reload(true);  
+        }  
+    }  */ 
+</script>
+</head>
+	<body class="oa-message">
+		<header class="mui-bar mui-bar-nav">
+			<a class="mui-icon mui-icon-left-nav mui-pull-left"onclick="goBack();" ></a>
+			<h1 class="mui-title">消息中心</h1>
+		</header>
+		<div class="mui-content" style="background-color: #f7f7f7;">
+		<form:form id="searchForm" modelAttribute="oaNotify" action="${ctx}/m/oa/oaNotify/message" method="post" class="breadcrumb form-search">
+		<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}"/>
+		<input id="pageSize" name="pageSize" type="hidden" value="${page.pageSize}"/>
+		<input id="type" name="type" type="hidden" value="${oaNotify.type}"/>
+		</form:form>
+			<div>
+				<div id="notice" class="mui-control-content notice mui-active">
+					<ul class="mui-table-view">
+					<c:choose>
+						<c:when test="${empty messageMap}"><!--消息分列表 -->
+							<c:forEach items="${page.list}" var="oaNotify">
+								<li class="mui-table-view-cell mui-media">
+									<a href="${ctx}/m/oa/oaNotify/${requestScope.oaNotify.self?'view':'form'}?id=${oaNotify.id}&oaNotify.Mess=true">
+										<div class="msg-icon"><img class="mui-media-object mui-pull-left" 
+											src="${ctxStatic}/mobile/images/${fns:getDictLabel(oaNotify.type, 'mobile_notify_message', '')}" 
+											alt="${fns:getDictLabel(oaNotify.type, 'oa_notify_type', '')}" />
+										<c:if test="${oaNotify.readFlag eq '0'}">
+										<span class="mui-badge bigdata"></span>
+										</c:if>
+										</div>
+										<div class="mui-media-body">
+											<p style="width: 100%;overflow: hidden;">
+											<span class="msg-type mui-pull-left">${fns:getDictLabel(oaNotify.type, 'oa_notify_type', '')}消息</span>
+											<span class="msg-time">
+												<fmt:formatDate value="${oaNotify.updateDate}" pattern="yyyy-MM-dd"/>
+											</span></p>
+											<p class="mui-ellipsis msg-title">${fns:abbr(oaNotify.title,50)}</p>
+										</div>
+									</a>
+								</li>
+							</c:forEach>
+							</ul>
+							<table:pageMobile page="${page}" showPageOne="false"/>
+						</c:when>
+						<c:otherwise><!--消息总列表 -->
+							<c:forEach items="${messageMap}" var="message">
+							<c:if test="${message.key ne 'sum'}">
+								<li class="mui-table-view-cell mui-media">
+									<a href="${ctx}/m/oa/oaNotify/message?oaNotify.type=${message.key}">
+										<div class="msg-icon"><img class="mui-media-object mui-pull-left" 
+										src="${ctxStatic}/mobile/images/${fns:getDictLabel(message.key, 'mobile_notify_message', '')}" 
+										alt="${fns:getDictLabel(message.key, 'oa_notify_type', '')}消息 " />
+										<%-- <c:if test="${message.value < 9 && message.value > 0}">
+										<span class="mui-badge bigdata"></span>
+										</c:if> --%>
+										<c:if test="${message.value > 0}">
+										<span class="mui-badge">${message.value}</span>
+										</c:if>
+										</div>
+										<div class="mui-media-body">
+											<span class="msg-type">${fns:getDictLabel(message.key, 'oa_notify_type', '')}消息</span>
+											<!-- <span class="msg-time"></span> -->
+											<!-- <p class="mui-ellipsis msg-title"></p> -->
+										</div>
+									</a>
+								</li>
+							</c:if>
+							</c:forEach>
+							</ul>
+						</c:otherwise>
+					</c:choose>
+				</div>
+			</div>	
+		</div>	
+	
+	<c:if test="${!empty messageMap}">
+	<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+    <script src="${ctxStatic}/mobile/js/mobile.js"></script>
+    <jsp:include page="/WEB-INF/views/mobile/modules/sys/foot.jsp"></jsp:include>
+    </c:if>	 
+	</body>
+</html>

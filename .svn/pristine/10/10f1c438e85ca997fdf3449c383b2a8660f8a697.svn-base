@@ -1,0 +1,238 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.sys.utils;
+
+import java.util.List;
+
+import org.activiti.engine.task.Task;
+import org.apache.commons.lang3.StringUtils;
+
+import com.thinkgem.jeesite.common.utils.SpringContextHolder;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.sys.dao.workflow.SysWorkflowVarDao;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.Role;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.entity.workflow.SysWorkflowVar;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+
+/**
+ * 工作流工具类
+ * @author 李廷龙
+ * @version 2016-11-29
+ */
+public class WorkflowUtils {
+	private static SysWorkflowVarDao sysWorkflowVarDao = SpringContextHolder.getBean(SysWorkflowVarDao.class);
+	
+	private static OfficeService officeService = SpringContextHolder.getBean(OfficeService.class);
+	
+	private static ActTaskService actTaskService = SpringContextHolder.getBean(ActTaskService.class);
+	
+	private static SystemService systemService = SpringContextHolder.getBean(SystemService.class);
+	
+	private static OaNotifyService oanotifyservice = SpringContextHolder.getBean(OaNotifyService.class);
+	/**人事角色id*/
+	private static final String RENSHI_ID = "f3801ba8d867430fb6659f0b5f66af2f";
+	
+	/**
+	 * 获取流程定义的属性配置参数
+	 * @param workflowIdentification
+	 * @param varName
+	 * @param defaultValue
+	 * @return
+	 */
+	public static String getWorkflowVarValue(String workflowIdentification, String varName,String defaultValue){
+		String resultValue=defaultValue;
+		if (StringUtils.isNotBlank(workflowIdentification) && StringUtils.isNotBlank(varName)){
+			SysWorkflowVar sysWorkflowVar=sysWorkflowVarDao.getSysWorkflowVarByWorkflowIdentificationAndVarName(workflowIdentification, varName);
+			if (sysWorkflowVar!=null) {
+				if(StringUtils.equals(SysWorkflowVar.VAR_TYPE_SELF_DEFINED, sysWorkflowVar.getVarType())){
+					resultValue=sysWorkflowVar.getVarValue();
+				}
+				if(StringUtils.equals(SysWorkflowVar.VAR_TYPE_USER, sysWorkflowVar.getVarType())){
+					resultValue=sysWorkflowVar.getVarValueUser().getLoginName();
+					
+				}
+				if(StringUtils.equals(SysWorkflowVar.VAR_TYPE_ROLE, sysWorkflowVar.getVarType())){
+					resultValue=sysWorkflowVar.getVarValueRole().getEnname();
+				}
+			}
+		}
+		return resultValue;
+	}
+	
+	/**
+	 * 获取当前登陆人所在部门的主负责人登录名
+	 * @return
+	 */
+	public static String getOfficePrimaryPersonLoginNameOfUser(){
+		User user=UserUtils.getUser().getOffice().getPrimaryPerson();
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		return "";
+	}
+
+	/**
+	 * 根据id获取所在部门的主负责人登录名
+	 * @return
+	 */
+	public static String getOfficePrimaryPersonLoginNameOfUser(String id)
+	{
+		User user=UserUtils.get(id).getOffice().getPrimaryPerson();
+		
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		return "";
+	}
+	
+	/**
+	 * 获取当前登陆人所在部门的副负责人登录名
+	 * @return
+	 */
+	public static String getOfficeDeputyPersonLoginNameOfUser(){
+		User user=UserUtils.getUser().getOffice().getDeputyPerson();
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		return "";
+	}
+	
+	/**
+	 * 根据id获取当前登陆人所在部门的副负责人登录名
+	 * @return
+	 */
+	public static String getOfficeDeputyPersonLoginNameOfUser(String id){
+		User user=UserUtils.get(id).getOffice().getDeputyPerson();
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		return "";
+	}	
+	/**
+	 * 获取相关部门主负责人登陆名
+	 * @param office
+	 * @return
+	 */
+	public static String getReletiveOfficePrimaryPersonLoginNameOfUser(Office office)
+	{
+		User user = office.getPrimaryPerson();
+		
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		
+		return "";
+	}
+
+	/**
+	 * 获取相关部门副负责人登陆名
+	 * @param office
+	 * @return
+	 */
+	public static String getReletiveOfficeDeputyPersonLoginNameOfUser(Office office)
+	{
+		User user = office.getDeputyPerson();
+		
+		if (user!=null) {
+			return UserUtils.get(user.getId()).getLoginName();
+		}
+		
+		return "";
+	}	
+	/**
+	 * 判断当前用户是否对某业务具有审批权限
+	 */
+	public static boolean isDeal(String businessId,String procInsId) {
+		if (StringUtils.isBlank(businessId)) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(procInsId).list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 根据部门id查询部门名称
+	 * @param id
+	 * @return
+	 */
+	public static String getOfficeName(String id)
+	{
+		Office office = officeService.get(id);
+		
+		if (office != null)
+			return office.getName();
+		
+		return "";
+	}
+	
+	/**
+	 * 获取人事部门员工id
+	 * @return
+	 */
+	public static String getRoleId()
+	{
+		Role role = new Role();
+		
+		role.setId(RENSHI_ID);
+		
+		List<User> userList = systemService.findUser(new User(new Role(role.getId())));
+		
+		if (userList.size() != 0)
+		{
+			String roleIds = "";
+			
+			for (User user: userList)
+				roleIds += user.getId() + ",";
+			
+			return roleIds;
+		}
+		return "";
+	}
+	
+	/**
+	 * 根据部门id查询部门
+	 * @param Office
+	 * @return
+	 */
+	public static Office getOffice(String id)
+	{
+		Office office = officeService.get(id);
+		
+		return office;
+	}
+	
+	/**
+	 * 发送流程通知公告
+	 * @param title 标题
+	 * @param url @@proNotify@@+查看流程路径
+	 * @param ids 通知人员ID
+	 */
+	public static void sendOaNotify(String title, String url, String ids)
+	{
+		//通知公告
+		OaNotify oanotify=new OaNotify();
+		
+		oanotify.setTitle(title);// 标题
+		
+		oanotify.setType("4");// 设置成流程通告
+		
+		oanotify.setStatus("1");
+		
+		oanotify.setOaNotifyRecordIds(ids);// 通知人员
+		
+		oanotify.setContent(url);
+		
+		oanotifyservice.save(oanotify);
+	}
+}

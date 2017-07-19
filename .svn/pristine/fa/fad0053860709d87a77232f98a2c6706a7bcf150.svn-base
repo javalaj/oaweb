@@ -1,0 +1,246 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>工作流变量管理</title>
+	<meta name="decorator" content="default"/>
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/easyui/demo/demo.css">
+	<script type="text/javascript" src="${ctxStatic}/easyui/jquery.min.js"></script>
+	<script type="text/javascript" src="${ctxStatic}/easyui/jquery.easyui.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			initButton();
+			$("#btnAdd").click(function() {
+				openDialog("添加变量", "${ctx}/sys/workflow/sysWorkflowVar/form",width="650px", height="530px");
+				
+			});
+			$("#btnDel").click(function() {
+				var rows = $("#contentTable").datagrid("getChecked");
+				if (rows.length>0){
+					layer.confirm("确定删除吗？", {
+					  	btn: ["确定", "取消"], //可以无限个按钮
+					  	btn2: function(index, layero){
+					    	//按钮【按钮二】的回调
+					  		}
+						},
+						function(index, layero){
+							var ids="";
+							$.each(rows, function(index, item){
+								ids+=item.itemId+",";
+							});
+							location.href="${ctx}/sys/workflow/sysWorkflowVar/deleteAll?ids="+ids;
+						}
+					);
+				}else{
+					top.layer.msg("请至少勾选一条数据");
+				}
+			});
+			
+			$("#btnEdit").click(function() {
+				var row = $("#contentTable").datagrid("getSelected");
+				if (row){
+					openDialog("修改变量", "${ctx}/sys/workflow/sysWorkflowVar/form?id="+row.itemId,width="650px", height="530px");
+				}else{
+					top.layer.msg("请选择一行数据");
+				}
+			});
+			
+			$("#btnView").click(function() {
+				var row = $("#contentTable").datagrid("getSelected");
+				if (row){
+					openDialogView("查看变量", "${ctx}/sys/workflow/sysWorkflowVar/form?id="+row.itemId,width="650px", height="530px");
+				}else{
+					top.layer.msg("请选择一行数据");
+				}
+			});
+			$("#btnAddMore").click(function() {
+				var row = $("#contentTable").datagrid("getSelected");
+				if (row){
+					openDialog("添加变量", "${ctx}/sys/workflow/sysWorkflowVar/form?addMore=true&id="+row.itemId,width="650px", height="530px");
+				}else{
+					top.layer.msg("请选择一行数据");
+				}
+			});
+		});
+		function initButton(){
+			var row = $("#contentTable").datagrid("getSelected");
+			if (row){
+				stateToEnabled("#btnEdit");
+				stateToEnabled("#btnView");
+				stateToEnabled("#btnAddMore");
+			}else{
+				stateToDisabled("#btnEdit");
+				stateToDisabled("#btnView");
+				stateToDisabled("#btnAddMore");
+			} 
+		}
+		function stateToDisabled(selector){
+			$(selector).hide();
+			$(selector).attr("disabled","disabled");
+		}
+		function stateToEnabled(selector){
+			$(selector).show();
+			$(selector).removeAttr("disabled");
+		}		
+	</script>
+	<style>
+		/* body {
+			font-family: "Helvetica Neue", Helvetica, "PingFang SC", 微软雅黑, Tahoma, Arial, sans-serif;
+			font-size: 13px;
+			color: #666a6d;
+		} */
+		div.panel.datagrid.easyui-fluid {
+			margin-bottom: 6px;
+		}
+		div.datagrid-wrap.panel-body.panel-body-noheader{
+			border-color: #ddd;
+		}
+		.datagrid-row-selected{
+			background: #35a5e7;
+    		color: #fff;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>工作流变量列表 </h5>
+				<div class="ibox-tools">
+				</div>
+			</div>
+		    <div class="ibox-content">
+				<sys:message content="${message}"/>
+			
+				<!-- 查询条件 -->
+				<div class="row">
+					<div class="col-sm-12">
+						<form:form id="searchForm" modelAttribute="sysWorkflowVar" action="${ctx}/sys/workflow/sysWorkflowVar/" method="post" class="form-inline">
+							<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}"/>
+							<input id="pageSize" name="pageSize" type="hidden" value="${page.pageSize}"/>
+							<table:sortColumn id="orderBy" name="orderBy" value="${page.orderBy}" callback="sortOrRefresh();"/><!-- 支持排序 -->
+							<div class="form-group">
+								<span>流程名称：</span>
+									<form:input path="workflowName" htmlEscape="false" maxlength="64" class="form-control"/>
+								
+								<span>流程标识：</span>
+									<form:input path="workflowIdentification" htmlEscape="false" maxlength="64" class="form-control"/>
+								
+								<span>变量类型：</span>
+									<form:select path="varType" class="selectpicker " data-style="btn-inverse" data-live-search="true">
+										<form:option value="" label="全部类型"/>
+										<form:options items="${fns:getDictList('sys_workflow_var_var_type')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+									</form:select>
+							</div>
+						</form:form>
+						<br/>
+					</div>
+				</div>
+			
+				<!-- 工具栏 -->
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="pull-left">
+							<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit"> 
+								<a id="btnAdd" href="javascript:void(0);" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> 添加</a>
+								<a id="btnDel" href="javascript:void(0);" class="btn btn-primary btn-sm"><i class="fa fa-trash-o"></i> 删除</a>
+								<a id="btnEdit" href="javascript:void(0);" class="btn btn-primary btn-sm"><i class="fa fa-edit"></i> 修改</a>
+							</shiro:hasPermission>
+							<shiro:hasPermission name="sys:workflow:sysWorkflowVar:view">
+								<a id="btnView" href="javascript:void(0);" class="btn btn-primary btn-sm"><i class="fa fa-search-plus"></i> 查看</a>
+							</shiro:hasPermission>
+							<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit"> 
+								<a id="btnAddMore" href="javascript:void(0);" class="btn btn-primary btn-sm"><i class="fa fa-plus"></i> 添加更多</a>
+							</shiro:hasPermission>
+							<%--  <shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit">
+								<table:addRow url="${ctx}/sys/workflow/sysWorkflowVar/form" title="工作流变量"></table:addRow><!-- 增加按钮 -->
+							    <table:editRow url="${ctx}/sys/workflow/sysWorkflowVar/form" id="contentTable"  title="工作流变量"></table:editRow><!-- 编辑按钮 -->
+							</shiro:hasPermission> 
+							<table:delRow url="${ctx}/sys/workflow/sysWorkflowVar/deleteAll" id="contentTable"></table:delRow><!-- 删除按钮 --> --%>
+						</div>
+						<div class="pull-right">
+							<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="search()" ><i class="fa fa-search"></i> 查询</button>
+							<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="reset()" ><i class="fa fa-refresh"></i> 重置</button>
+						</div>
+					</div>
+				</div>
+				<br/>
+				<table id="contentTable" style="width:100%;min-height:277px;max-height:387px;margin-bottom: 6px;"  class="easyui-datagrid" 
+							data-options="striped:true,
+							rownumbers:true,
+							singleSelect:true,
+							selectOnCheck:false,
+							checkOnSelect:false,
+							remoteSort:false,
+							idField:'itemId',
+							onSelect:function(rowIndex, rowData){
+								initButton();
+							}">
+					<thead data-options="frozen:true">
+						<tr>
+							<th data-options="field:'ck',checkbox:true"></th>
+							<th data-options="field:'itemId',sortable:true,hidden:true"></th>
+							<th data-options="field:'workflowName',width:'20%',sortable:true">流程名称</th>
+							<th data-options="field:'workflowIdentification',sortable:true,width:'20%'">流程标识 </th>
+						</tr>						
+					</thead>
+					<thead>
+						<tr>
+							<th data-options="field:'varType',sortable:true,width:'70px'">变量类型</th>
+							<th data-options="field:'varDescription',sortable:true,width:'100px'">变量描述</th>
+							<th data-options="field:'varName',sortable:true,width:'100px',resizable:true">变量键名</th>
+							<th data-options="field:'varValue',width:'30%',sortable:true">变量值</th>
+							<th data-options="field:'updateDate',sortable:true,width:'100px'">更新时间</th>
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach items="${page.list}" var="sysWorkflowVar" varStatus="status">
+							<tr>
+								<td>
+								</td>
+								<td>
+									${sysWorkflowVar.id}
+								</td>
+								<td>
+									${sysWorkflowVar.workflowName}
+								</td>
+								<td>
+									${sysWorkflowVar.workflowIdentification}
+								</td>
+								<td>
+									${fns:getDictLabel(sysWorkflowVar.varType, 'sys_workflow_var_var_type', '')}
+								</td>
+								<td>
+									${sysWorkflowVar.varDescription}
+								</td>
+								<td>
+									${sysWorkflowVar.varName}
+								</td>
+								<td>
+									<c:if test="${sysWorkflowVar.varType eq '0'}">
+										${sysWorkflowVar.varValue}
+									</c:if>
+									<c:if test="${sysWorkflowVar.varType eq '1' and not empty sysWorkflowVar.varValueUser.id}">
+										${sysWorkflowVar.varValueUser.name}(${sysWorkflowVar.varValueUser.loginName})
+									</c:if>
+									<c:if test="${sysWorkflowVar.varType eq '2' and not empty sysWorkflowVar.varValueRole.id}">
+									<a href="#" onclick="openDialogView('查看角色下的用户列表', '${ctx}/sys/role/assign?id=${sysWorkflowVar.varValueRole.id}','80%', '80%')" class="btn btn-info btn-xs"><i class="fa fa-search-plus"></i>${sysWorkflowVar.varValueRole.name}(${sysWorkflowVar.varValueRole.enname})</a>
+									</c:if>
+									
+								</td>
+								<td>
+									<fmt:formatDate value="${sysWorkflowVar.updateDate}" pattern="yyyy-MM-dd HH:mm:ss"/>
+								</td>
+							</tr>
+						</c:forEach>
+					</tbody>
+				</table>				
+				<!-- 分页代码 -->
+				<table:page page="${page}"></table:page>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

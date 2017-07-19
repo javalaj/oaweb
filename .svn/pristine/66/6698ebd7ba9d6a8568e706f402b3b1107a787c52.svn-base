@@ -1,0 +1,404 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>分包合同管理</title>
+	<meta name="decorator" content="default"/>
+	
+	<script type="text/javascript">
+		var validateForm;
+		function doSubmit(){
+		  if(validateForm.form()){
+			  $("#inputForm").submit();
+			  return true;
+		  }
+		  return false;
+		}
+		$.validator.addMethod("startDateCompareWithEndDate",function(value,element,params){
+			var compareVal=$(params[0]).val();
+			if(compareVal==null||compareVal==""){
+				return true;
+			}else{
+				return dateCompare(value, compareVal);
+			}
+		},"开始日期必须早于结束日期");
+		
+		$.validator.addMethod("endDateCompareWithStartDate",function(value,element,params){
+			var compareVal=$(params[0]).val();
+			if(compareVal==null||compareVal==""){
+				return true;
+			}else{
+				return dateCompare(compareVal, value);
+			}
+		},"结束日期必须晚于开始日期");
+		
+		$(document).ready(function() {
+			$(".selectpicker").selectpicker({noneSelectedText:'请选择'});
+			var tabIndex="${param.tabIndex}";
+			if(tabIndex=="2"){
+				$('#myTab a:eq(2)').tab('show');
+			}
+			if(tabIndex=="1"){
+				$('#myTab a:eq(1)').tab('show');
+			}
+			//$("#name").focus();
+			validateForm=$("#inputForm").validate({
+				rules: {
+				     "supplierWarrantyStartTime": {
+				    	 required: true,
+				    	 startDateCompareWithEndDate: ["#supplierWarrantyEndTime"]
+					 },
+				     "supplierWarrantyEndTime": {
+				    	 required: true,
+				    	 endDateCompareWithStartDate: ["#supplierWarrantyStartTime"]
+					 },
+				     "remarks": {
+				    	 extMaxLength:255
+					 }
+				},
+				messages: {
+			    	"remarks": {
+			    		extMaxLength: "长度不得超过255个字符",
+				     }
+				},
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍候...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+				
+			});
+			
+			$("#projectId").change(function(){
+				$(this).valid();
+				reloadOaContractSales($(this).val());
+			});
+			
+			$("#contractSalesId").change(function(){  
+				$(this).valid();
+			});
+			$("#supplierId").change(function(){  
+				$(this).valid();
+			});
+			$("#filingStatus").change(function(){  
+				$(this).valid();
+			});
+			$("#contractStatus").change(function(){  
+				$(this).valid();
+			});
+			
+		});
+		
+		function reloadOaContractSales(projectIdx){
+			$.ajax({
+				type: "POST",
+				url: "${ctx}/oa/contract/oaContractSales/getOaContractSalesList",
+				data: {projectId: projectIdx},
+				dataType: 'json',
+				success: function(data){
+					//$("#s2id_contractSalesId").children("a").children("span.select2-chosen").empty();
+					$("#contractSalesId").empty();
+					$("#contractSalesId").append("<option value=''></option>");
+					$.each(data, function(index,item){
+						$("#contractSalesId").append("<option value='"+item.id+"'>["+item.contractNo+"]"+item.contractName+"</option>");
+					});
+					$("#contractSalesId").selectpicker('refresh');
+				}
+			});
+		}
+		function fun(contractPurchaseId,contractNo,contractName,id){
+			window.location.href = "${ctx}/oa/contract/oaContractSubStage/formAdd?id="+id+"&contractPurchase.id="+contractPurchaseId+"&contractPurchase.contractNo="+encodeURIComponent(contractNo)+"&contractPurchase.contractName="+encodeURIComponent(contractName);
+		}
+		function funwf(oaContractPurchaseStageId){
+			window.location.href = "${ctx}/oa/contract/oaContractPurchasePayApproval/form?oaContractPurchaseStage.id="+oaContractPurchaseStageId+"&oaContractPurchaseStageId="+oaContractPurchaseStageId;
+		}
+		function dateCompare(start, end) {
+			//alert(start+"???"+end);
+			var startTime = start;
+
+			var endTime = end;
+			if (startTime > endTime) {
+
+				return false;
+			} else
+				return true;
+		}
+		function pickerFunctin() {
+			$("#supplierWarrantyStartTime").valid();  
+			$("#supplierWarrantyEndTime").valid();
+		}
+	</script>
+</head>
+<body>
+	<form:form id="inputForm" modelAttribute="oaContractPurchase" action="${ctx}/oa/contract/oaContractSub/save" method="post" class="form-horizontal">
+	 
+		<ul class="nav nav-tabs myoa-tabs" id="myTab">
+			<li class="active"><a href="#base" data-toggle="tab">分包合同主信息</a></li>
+			<c:if test="${not empty oaContractPurchase.id}">
+				<li><a href="#report" data-toggle="tab">阶段信息(${oaContractPurchase.oaContractPurchaseStageList.size()})</a></li>
+			</c:if>
+		</ul>
+		<br/>
+		
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>
+		<div class="tab-content">
+			<div class="tab-pane active" id="base">
+				<table class="table table-condensed dataTables-example dataTable no-footer myoa-newitem-table">
+					<c:if test="${not empty oaContractPurchase.contractNo}">
+						<tr>
+							<td>合同编号</td>
+							<td>
+								${oaContractPurchase.contractNo}
+							</td>
+						</tr>
+					</c:if>
+					<tr>
+						<td>合同名称 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:input path="contractName" htmlEscape="false" maxlength="64" class="form-control required"/>							
+						</td>
+					</tr>
+					<tr>
+						<td>项目名称（旧）</td>
+						<td>
+							<form:input path="projectOldName" htmlEscape="false" maxlength="64" class="form-control "/>
+						</td>
+					</tr>
+					<tr>
+						<td>关联的项目 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:select path="project.id" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true" name="project.id" id="projectId">
+								<form:option value="" label=""/>
+								<c:forEach items="${oaProjectList}" var="oaProject">
+									<form:option value="${oaProject.id}">[${oaProject.projectNo}]${oaProject.projectName}</form:option>
+								</c:forEach>
+							</form:select>
+							
+						</td>
+					</tr>
+					<tr>
+						<td>关联的销售合同 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:select path="contractSales.id" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true" name="contractSales.id" id="contractSalesId">
+								<c:if test="${not empty oaContractPurchase.contractSales.id}">
+									<option value="${oaContractPurchase.contractSales.id}">[${oaContractPurchase.contractSales.contractNo}]${oaContractPurchase.contractSales.contractName}</option>
+								</c:if>
+							</form:select>							
+						</td>
+					</tr>
+					<tr>
+						<td>供应商 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:select path="supplier.id" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true" name="supplier.id" id="supplierId">
+								<c:forEach items="${supmanagementList}" var="supmanagement">
+									<form:option value="${supmanagement.id}">[${supmanagement.orgCode}]${supmanagement.supName}</form:option>
+								</c:forEach>
+							</form:select>							
+						</td>
+					</tr>
+					<tr>
+						<td>合同签订日期 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<input name="contractTime" type="text" readonly="readonly" maxlength="20" class="Wdate laydate-icon form-control layer-date input-sm required"
+								value="<fmt:formatDate value="${oaContractPurchase.contractTime}" pattern="yyyy-MM-dd"/>"
+								onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});"/>							
+						</td>
+					</tr>
+					<tr>
+						<td>供应商保质期 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:input path="supplierwarrantyMonth" htmlEscape="false" max="1200" min="1" class="form-control number required"/>							
+						</td>
+					</tr>
+					<tr>
+						<td>供应商质保期开始日期</td>
+						<td>
+							<input id="supplierWarrantyStartTime" name="supplierWarrantyStartTime" type="text" readonly="readonly" maxlength="20" class="Wdate laydate-icon form-control layer-date input-sm "
+								value="<fmt:formatDate value="${oaContractPurchase.supplierWarrantyStartTime}" pattern="yyyy-MM-dd"/>"
+								onclick="WdatePicker({onpicked:pickerFunctin,dateFmt:'yyyy-MM-dd',isShowClear:false});"/>
+						</td>
+					</tr>
+					<tr>
+						<td>供应商质保期结束日期</td>
+						<td>
+							<input id="supplierWarrantyEndTime" name="supplierWarrantyEndTime" type="text" readonly="readonly" maxlength="20" class="Wdate laydate-icon form-control layer-date input-sm "
+								value="<fmt:formatDate value="${oaContractPurchase.supplierWarrantyEndTime}" pattern="yyyy-MM-dd"/>"
+								onclick="WdatePicker({onpicked:pickerFunctin,dateFmt:'yyyy-MM-dd',isShowClear:false});"/>
+						</td>
+					</tr>
+					<tr>
+						<td>合同归档情况 <span class="help-inline"><font color="red">*</font> </span></td>
+						<td>
+							<form:select path="filingStatus" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true" id="filingStatus">
+								<form:options items="${fns:getDictList('oa_contract_purchase_filingStatus')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+							</form:select>							
+						</td>
+					</tr>
+					<tr>
+						<td>合同金额 <span class="help-inline"><font color="red">*</font></span></td>
+						<td>
+							<form:input path="contractMoney" htmlEscape="false" max="9999999" min="0" class="form-control number required"/>							
+						</td>
+					</tr>
+					<c:if test="${not empty oaContractPurchase.id}">
+					<tr>
+						<td>已付金额</td>
+						<td>
+							${oaContractPurchase.sumPayMoney}
+						</td>
+					</tr>
+					<tr>
+						<td>未付金额</td>
+						<td>
+							${oaContractPurchase.contractMoney-oaContractPurchase.sumPayMoney}
+						</td>
+					</tr>
+					</c:if>
+					<tr>
+						<td>合同状态 <span class="help-inline"><font color="red">*</font></span></td>
+						<td>
+							<form:select path="contractStatus" class="form-control selectpicker required" data-style="btn-inverse" data-live-search="true" id="contractStatus">
+								<form:options items="${fns:getDictList('oa_contract_purchase_status')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+							</form:select>							
+						</td>
+					</tr>					
+					<tr>
+						<td>备注信息</td>
+						<td>
+							<form:textarea path="remarks" htmlEscape="false" rows="4" class="form-control "/>
+						</td>
+					</tr>
+				</table>
+			</div>
+			<div class="tab-pane" id="report" >
+				<c:if test="${oaContractPurchase.oaContractPurchaseStageList.size()<1}">
+					<div style='text-align:left'><fieldset><legend>目前没有相关的阶段信息</legend></fieldset></div>
+				</c:if>
+				<c:if test="${not empty oaContractPurchase.id and oaContractPurchase.oaContractPurchaseStageList.size()>0}">
+					<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+						<c:forEach items="${oaContractPurchase.oaContractPurchaseStageList}" var="oaContractPurchaseStage">
+							<tr>
+								<td class="width-15 active" colspan="3"><div style='text-align:left'><fieldset><legend>合同付款阶段：[${oaContractPurchaseStage.payStageIndex}]${fns:getDictLabel(oaContractPurchaseStage.payStage, 'oa_contract_purchase_stage_pay_stage', '')}</legend></fieldset></div></td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >阶段状态</td>
+								<td class="width-35" colspan="2">
+									${fns:getDictLabel(oaContractPurchaseStage.payStageStatus, 'oa_contract_purchase_stage_pay_stage_status', '')}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >进度对应工作是否完成</td>
+								<td class="width-35" colspan="2">
+									${fns:getDictLabel(oaContractPurchaseStage.isWorkProgressCompleted, 'yes_no', '')}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >进度文档</td>
+								<td class="width-35" colspan="2">
+									<input type="hidden" id="workProgressFile${oaContractPurchaseStage.id}"value="${oaContractPurchaseStage.workProgressFile}"/>
+									<sys:ckfinder input="workProgressFile${oaContractPurchaseStage.id}" readonly="true" type="files" uploadPath="/oa/contract/oaContractSubStage" selectMultiple="true"/>
+								</td>
+							</tr>
+							
+							<c:if test="${oaContractPurchaseStage.payStageStatus ne '0'}">
+								<tr>
+									<td class="width-15 active" >付款申请流程</td>
+									<td class="width-35" colspan="2">
+										<a href="${ctx}/oa/contract/oaContractPurchasePayApproval/form?oaContractPurchaseStage.id=${oaContractPurchaseStage.id}&oaContractPurchaseStageId=${oaContractPurchaseStage.id}"
+											class="btn btn-info btn-xs"><i class="fa fa-search-plus"></i>查看</a>
+									</td>
+								</tr>
+							</c:if>
+							<tr>
+								<td class="width-15 active" >付款时间</td>
+								<td class="width-35" colspan="2">
+									<fmt:formatDate value="${oaContractPurchaseStage.payTime}" pattern="yyyy-MM-dd HH:mm:ss"/>
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >付款金额</td>
+								<td class="width-35" colspan="2">
+									${oaContractPurchaseStage.payMoney}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >发票金额</td>
+								<td class="width-35" colspan="2">
+									${oaContractPurchaseStage.billingMoney}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >发票号</td>
+								<td class="width-35" colspan="2">
+									${oaContractPurchaseStage.billingNo}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >票种</td>
+								<td class="width-35" colspan="2">
+									${fns:getDictLabel(oaContractPurchaseStage.billingType, 'oa_contract_purchase_stage_billing_type', '')}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >开票日期</td>
+								<td class="width-35" colspan="2">
+									<fmt:formatDate value="${oaContractPurchaseStage.billingTime}" pattern="yyyy-MM-dd HH:mm:ss"/>
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >开票内容</td>
+								<td class="width-35" colspan="2">
+									${oaContractPurchaseStage.billingContent}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >发票扫描件</td>
+								<td class="width-35" colspan="2">
+									<input type="hidden" id="billingFile${oaContractPurchaseStage.id}"value="${oaContractPurchaseStage.billingFile}"/>
+									<sys:ckfinder input="billingFile${oaContractPurchaseStage.id}" readonly="true" type="files" uploadPath="/oa/contract/oaContractSubStage" selectMultiple="true"/>
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >备注信息</td>
+								<td class="width-35" >
+									${oaContractPurchaseStage.remarks}
+								</td>
+							</tr>
+							<tr>
+								<td class="width-15 active" >操作</td>
+								<td class="width-35" >
+									<c:if test="${oaContractPurchaseStage.payStageStatus eq '0' or oaContractPurchaseStage.payStageStatus eq '2'}">
+										<c:if test="${oaContractPurchaseStage.payStageStatus eq '0'}">
+											<shiro:hasPermission name="oa:contract:oaContractPurchasePayApproval:approval">
+												<input id="btnWf" class="btn btn-primary" type="button" value="发起付款申请流程" onclick="funwf('${oaContractPurchaseStage.id}');" />
+											</shiro:hasPermission>
+										</c:if>
+										<c:if test="${oaContractPurchaseStage.payStageStatus eq '2'}">
+											<shiro:hasPermission name="oa:contract:oaContractSubStage:saveAdd">
+												<input id="btnAdd" class="btn btn-primary" type="button" value="补填阶段信息" onclick="fun('${oaContractPurchase.id}','${oaContractPurchase.contractNo}','${oaContractPurchase.contractName}','${oaContractPurchaseStage.id}');" />
+											</shiro:hasPermission>
+										</c:if>
+									</c:if>
+								</td>
+							</tr>
+							<tr>
+								<td colspan="3">&nbsp;</td>
+							</tr>
+						</c:forEach>
+					</table>
+				</c:if>	
+			</div>
+			
+		</div>
+	</form:form>
+</body>
+</html>

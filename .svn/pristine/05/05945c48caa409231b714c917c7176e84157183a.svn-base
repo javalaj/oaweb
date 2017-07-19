@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.CyTspOaAddressGroupDao">
+
+	<sql id="cyTspOaAddressGroupColumns">
+		a.group_id AS "groupId",
+		a.name AS "name",
+		a.user_id AS
+		"userId",
+		a.parent_id AS "parentId",
+		a.parent_id AS "parentIds",
+		a.grade
+		AS "grade",
+		a.type AS "type"
+	</sql>
+
+	<select id="get" resultType="CyTspOaAddressGroup">
+		SELECT
+		<include refid="cyTspOaAddressGroupColumns" />
+		FROM cy_tsp_oa_address_group a
+		WHERE a.group_id = #{groupId}
+	</select>
+	
+	<select id="getGroupName" resultType="CyTspOaAddressGroup">
+		SELECT
+		<include refid="cyTspOaAddressGroupColumns" />
+		FROM cy_tsp_oa_address_group a
+		WHERE a.name = #{name} AND a.user_id=#{userId}
+		
+	</select>
+	
+	<select id="getCyTspOaAddressGroup" resultType="CyTspOaAddressGroup">
+		SELECT
+		<include refid="cyTspOaAddressGroupColumns" />
+		FROM cy_tsp_oa_address_group a
+
+		WHERE a.user_id = #{userId}
+	</select>
+
+
+	<!-- 新建分组 -->
+	<insert id="insertGroup" parameterType="CyTspOaAddressGroup">
+		<selectKey keyProperty="group_id" resultType="Integer">
+			select
+			LAST_INSERT_ID()
+		</selectKey>
+		INSERT INTO cy_tsp_oa_address_group(
+		name,
+		user_id
+		) VALUES (
+		#{name},
+		#{userId}
+		)
+	</insert>
+	<select id="findList" resultType="CyTspOaAddressGroup">
+		SELECT
+		<include refid="cyTspOaAddressGroupColumns" />
+		FROM cy_tsp_oa_address_group a WHERE a.user_id = #{userId}
+
+	</select>
+
+	<update id="updateGroup">
+		UPDATE cy_tsp_oa_address_group SET
+		name=#{name}
+		WHERE
+		group_id = #{groupId}
+	</update>
+
+	<delete id="deleteGroup">
+		DELETE FROM cy_tsp_oa_address_group
+		WHERE group_id =
+		#{groupId}
+	</delete>
+
+</mapper>

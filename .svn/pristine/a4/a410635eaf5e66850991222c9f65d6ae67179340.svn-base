@@ -1,0 +1,143 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>工作流变量管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			
+		});		
+	</script>
+</head>
+<body>
+	<%-- <ul class="nav nav-tabs">
+		<li class="active"><a href="${ctx}/sys/workflow/sysWorkflowVar/">工作流变量列表</a></li>
+		<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit"><li><a href="${ctx}/sys/workflow/sysWorkflowVar/form">工作流变量添加</a></li></shiro:hasPermission>
+	</ul> --%>
+	<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>工作流变量列表 </h5>
+		<div class="ibox-tools">
+			<!-- <a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			<ul class="dropdown-menu dropdown-user">
+				<li><a href="#">选项1</a>
+				</li>
+				<li><a href="#">选项2</a>
+				</li>
+			</ul>
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a> -->
+		</div>
+	</div>
+    
+    <div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<!-- 查询条件 -->
+	<div class="row">
+	<div class="col-sm-12">
+	<form:form id="searchForm" modelAttribute="sysWorkflowVar" action="${ctx}/sys/workflow/sysWorkflowVar/" method="post" class="form-inline">
+		<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}"/>
+		<input id="pageSize" name="pageSize" type="hidden" value="${page.pageSize}"/>
+		<table:sortColumn id="orderBy" name="orderBy" value="${page.orderBy}" callback="sortOrRefresh();"/><!-- 支持排序 -->
+		<div class="form-group">
+			<span>流程名称：</span>
+				<form:input path="workflowName" htmlEscape="false" maxlength="64" class="form-control"/>
+			
+			<span>流程标识：</span>
+				<form:input path="workflowIdentification" htmlEscape="false" maxlength="64" class="form-control"/>
+			
+			<span>变量类型：</span>
+				<form:select path="varType" class="form-control">
+					<form:option value="" label="全部类型"/>
+					<form:options items="${fns:getDictList('sys_workflow_var_var_type')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+				</form:select>
+		</div>
+	</form:form>
+	<br/>
+	</div>
+	</div>
+	
+		<!-- 工具栏 -->
+	<div class="row">
+	<div class="col-sm-12">
+		<div class="pull-left">
+			<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit">
+				<table:addRow url="${ctx}/sys/workflow/sysWorkflowVar/form" title="工作流变量"></table:addRow><!-- 增加按钮 -->
+			    <table:editRow url="${ctx}/sys/workflow/sysWorkflowVar/form" id="contentTable"  title="工作流变量"></table:editRow><!-- 编辑按钮 -->
+			</shiro:hasPermission> 
+			<%-- <shiro:hasPermission name="sys:dict:del"> --%>
+				<table:delRow url="${ctx}/sys/workflow/sysWorkflowVar/deleteAll" id="contentTable"></table:delRow><!-- 删除按钮 -->
+			<%-- </shiro:hasPermission> --%>
+	       <button class="btn btn-white btn-sm " data-toggle="tooltip" data-placement="left" onclick="sortOrRefresh()" title="刷新"><i class="glyphicon glyphicon-repeat"></i> 刷新</button>
+		
+			</div>
+		<div class="pull-right">
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="search()" ><i class="fa fa-search"></i> 查询</button>
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="reset()" ><i class="fa fa-refresh"></i> 重置</button>
+		</div>
+	</div>
+	</div>
+	<table id="contentTable" class="table table-striped table-bordered  table-hover table-condensed  dataTables-example dataTable no-footer">
+		<thead>
+			<tr><th> <input type="checkbox" class="i-checks"></th>
+				<th class="sort-column workflowName" >流程名称</th>
+				<th class="sort-column workflowIdentification">流程标识</th>
+				<th class="sort-column varName">变量名称</th>
+				<th  class="sort-column varDescription">变量描述</th>
+				<th class="sort-column varValue" >变量值</th>
+				<th class="sort-column updateDate">更新时间</th>
+				<th class="sort-column varType">变量类型</th>
+				<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit" ><th style="width:110px;">操作</th></shiro:hasPermission>
+			</tr>
+		</thead>
+		<tbody>
+		<c:forEach items="${page.list}" var="sysWorkflowVar">
+			<tr><td> <input type="checkbox" id="${sysWorkflowVar.id}" class="i-checks"></td>
+				<td><a href="#"
+				onclick="openDialogView('修改工作流变量', '${ctx}/sys/workflow/sysWorkflowVar/form?id=${sysWorkflowVar.id}','800px', '500px')">
+					${sysWorkflowVar.workflowName}
+				</a></td>
+				<td>
+					${sysWorkflowVar.workflowIdentification}
+				</td>
+				<td>
+					${sysWorkflowVar.varName}
+				</td>
+				<td>
+					${sysWorkflowVar.varDescription}
+				</td>
+				<td >
+					${sysWorkflowVar.varValue}
+				</td>
+				<td>
+					<fmt:formatDate value="${sysWorkflowVar.updateDate}" pattern="yyyy-MM-dd HH:mm:ss"/>
+				</td>
+				<td>
+					${fns:getDictLabel(sysWorkflowVar.varType, 'sys_workflow_var_var_type', '')}
+				</td>
+				<shiro:hasPermission name="sys:workflow:sysWorkflowVar:edit"><td style="width:110px;">
+    								<a href="#" onclick="openDialog('修改工作流变量', '${ctx}/sys/workflow/sysWorkflowVar/form?id=${sysWorkflowVar.id}','800px', '500px')" class="btn btn-primary btn-xs" ><i class="fa fa-edit"></i> 修改</a>
+					<a href="${ctx}/sys/workflow/sysWorkflowVar/delete?id=${sysWorkflowVar.id}" onclick="return confirmx('确认要删除该工作流变量吗？', this.href)"class="btn btn-danger btn-xs"><i class="fa fa-trash"></i>删除</a>
+				</td></shiro:hasPermission>
+			</tr>
+		</c:forEach>
+		</tbody>
+	</table>
+	<!-- 分页代码 -->
+	<table:page page="${page}"></table:page>
+	<br/>
+	<br/>
+	</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserMonthsumDao">
+
+	<sql id="userMonthsumColumns">
+		a.id AS "id",
+		a.sumdate AS "sumdate",
+		a.update_date AS
+		"updateDate",
+		a.create_by AS "createBy.id",
+		a.isdraft AS "isdraft"
+	</sql>
+
+	<sql id="userMonthsumJoins">
+	</sql>
+
+	<select id="get" resultType="UserMonthsum">
+		SELECT
+		<include refid="userMonthsumColumns" />
+		FROM user_monthsum a
+		<include refid="userMonthsumJoins" />
+		WHERE a.sumdate = #{sumdate} AND a.create_by=#{createBy.id}
+	</select>
+
+	<select id="findList" resultType="UserMonthsum">
+		SELECT
+		<include refid="userMonthsumColumns" />
+		FROM user_monthsum a
+		<include refid="userMonthsumJoins" />
+		WHERE a.sumdate = #{sumdate} AND a.create_by=#{createBy.id}
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="UserMonthsum">
+		SELECT
+		<include refid="userMonthsumColumns" />
+		FROM user_monthsum a
+		<include refid="userMonthsumJoins" />
+		<where>
+
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_monthsum(
+		id,
+		sumdate,
+		update_date,
+		create_by,
+		isdraft
+		) VALUES (
+		#{id},
+		#{sumdate},
+		#{updateDate},
+		#{createBy.id},
+		#{isdraft}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_monthsum SET
+		sumdate = #{sumdate},
+		update_date = #{updateDate},
+		isdraft = #{isdraft}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		DELETE FROM user_monthsum
+		WHERE id = #{id}
+	</update>
+
+</mapper>

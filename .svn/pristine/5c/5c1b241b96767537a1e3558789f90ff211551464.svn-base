@@ -1,0 +1,221 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="utf-8">
+    <meta name="decorator" content="default"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+    <title>修改个人信息</title>
+    <link rel="stylesheet" href="${ctxStatic}/mobile/frame_css/mui.min.css" />
+    <link rel="stylesheet" href="${ctxStatic}/mobile/css/oabase.css" />
+    <style type="text/css">
+    	.a {
+    padding-top: 20px;
+    padding-bottom: 60px;
+    text-align: center;
+    overflow: hidden;
+}
+    </style>
+</head>
+	<body class="userinfo">
+	<header class="mui-bar mui-bar-nav">
+		<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+		<h1 class="mui-title">修改个人信息</h1>
+	</header>
+	    <div class="mui-content">
+	    	<div class="div"></div>
+    		<ul class="userinfo-list">
+    			<li>
+    				<label>姓名</label><span>${user.name}</span><img src="${user.photo}" alt="" style="width: 60px;height:60px;border-radius: 50%;"/>
+    			</li>
+    			<li>
+    				<label>所在部门</label><span>${user.office.name}</span>
+    			</li>
+    			<li>
+    				<label>职位</label><span>${user.remarks}</span>
+    			</li>
+    			<li>
+    				<label>直接上级</label><span>${upperX}</span>
+    			</li>
+    		</ul>
+	    	<div class="div"></div>
+	    	<form action="${ctx}/m/sys/user/info" method="post" id="inputform">
+	    	<input type="hidden" value="${user.name }" name="name" >
+	    		<ul class="userinfo-edit">
+					<li class="">
+						<span>手机号码</span>	<input type="text" value="${user.mobile}" name="mobile" readonly="readonly" style="border: 0px;"/>
+<%-- 						<span>手机号码</span>	<input type="text" value="${user.mobile}" name="mobile" id="mobile" /> --%>
+					</li>
+					<li class="">
+						<span>QQ号</span>	<input type="text" value="${user.qq}" name="qq" />
+					</li>
+					<li class="">
+						<span>电子邮件</span>	<input type="text" value="${user.email}" name="email" />
+					</li>					
+	    		</ul>
+	    		<div class="div"></div>
+	    		<ul class="userinfo-edit">
+					<li class="">
+						<span>性别</span>
+						<%-- <input type="text"
+							<c:if test="${user.gender eq '2'}">value="女"</c:if>
+							<c:if test="${user.gender eq '1'}">value="男"</c:if> name="gender"
+						readonly="readonly" style="background-color: #ECECEC;" /> --%>
+						<c:if test="${user.gender eq '2'}"><span style="display: inline-block;width: 67%;margin-bottom: 0;border: 1px thin red !important;">女</span></c:if>
+						<c:if test="${user.gender eq '1'}"><span style="display: inline-block;width: 67%;margin-bottom: 0;border: 1px thin red;">男</span></c:if>
+					</li>
+					<li class="">
+						<span>办公电话</span>	<input type="text" value="${user.phone}" name="phone" id="phone"/>
+					</li>
+					<li class="">
+						<span>办公地址</span>	<textarea maxlength="100" name="worklocation" rows="4">${user.worklocation}</textarea>
+					</li>					
+	    		</ul>
+	    		<div class="separation"></div>
+	    		<div class="a">
+					<button type="button"  class="btnapp btn-submit" onclick="choose()">保存</button>
+					<button type="reset"  class="btnapp btn-next" onclick="window.history.go(-1)" >返回</button>					
+				</div>
+	    	</form><%-- <jsp:include page="/WEB-INF/views/mobile/modules/sys/foot.jsp"></jsp:include> --%>
+	    </div>
+	    <script src="${ctxStatic}/mobile/frame_js/mui.min.js"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+		mui.init()
+		function choose() {
+			var phone = document.getElementById("phone").value;
+			 if(!(/^$|(0[0-9]{2,3}\-)?([2-9][0-9]{6,7})+(\-[0-9]{1,4})?$/.test(phone))){
+			        mui.alert('办公电话有误，请重填!');
+			        return false; 
+			 }
+			 var btnArray = [ '是', '否' ];
+				mui.confirm('是否保存？', '提示', btnArray, function(e) {
+					if (e.index == 0) {						
+ 						//window.location.href = '${ctx}/m/sys/user/info';
+						$("#inputform").submit();
+						mui.alert('保存成功!');
+					}
+				})
+// 			 return true;
+		}
+	</script>
+	</body>
+</html>
+
+
+
+<%-- 
+<body>
+<header class="mui-bar mui-bar-nav">
+			<a class="mui-action-back mui-icon mui-icon-left-nav mui-pull-left"></a>
+			<h1 class="mui-title">个人信息</h1>
+		</header>
+	<form action="${ctx}/m/sys/user/info" method="post">
+		<input type="hidden" name="name" value="${user.name}">
+		<input type="hidden" name="office.name" value="${user.office.name}">
+		<input type="hidden" name="remarks" value="${user.remarks}">
+		<input type="hidden" name="gender" value="${user.gender}">
+		<sys:message content="${message}" />
+	
+		<div class="fenge1"></div>
+		<div class="main">
+			<div class="xingming">
+				<b>姓&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;名</b> <span>${user.name}</span>	<img src="${user.photo}" style="width: 60px;height:60px;border-radius: 50%;float: right;"/>			
+			</div>
+
+			<div class="datas">
+				<b>所在部门</b><span>${user.office.name}</span>
+			</div>
+			<div class="datas">
+				<b>直接上级</b><span>${user.upper}</span>
+			</div>
+			<div class="datas" style="border-bottom: 0px;">
+				<b>职&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;位</b>
+				<span>${user.remarks}</span><input type="text" value="${user.remarks}"
+					name="remarks" readonly="readonly"
+					style="background-color: #ECECEC;" /></span>
+			</div>
+			
+		</div>
+		<div class="fenge2"></div>
+		<div class="main">
+			<div class="datas">
+				<b>手机号码</b>
+					<span><input type="text" value="${user.mobile}"
+						name="mobile" id="mobile" /></span> 
+			</div>
+
+			<div class="datas">
+				<b>QQ&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;号</b> <span><input type="text" value="${user.qq}"
+					name="qq" /></span> 
+			</div>
+
+			<div class="datas" style="border-bottom: 0px;">
+				<b>电子邮件</b> <span><input type="text" value="${user.email}"
+					name="email" /></span> 
+			</div>
+		</div>
+		<div class="fenge2"></div>
+
+		<div class="main">
+			<div class="datas">
+				<b>性&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;别</b> <span><input type="text"
+					<c:if test="${user.gender eq '2'}">value="女"</c:if>
+					<c:if test="${user.gender eq '1'}">value="男"</c:if> name="gender"
+					readonly="readonly" style="background-color: #ECECEC;" /></span> 
+			</div>
+
+			<div class="datas">
+				<b>办公电话</b> <span><input type="text" value="${user.phone}"
+					name="phone" /></span> 
+			</div>
+
+			<div class="datas" style="border-bottom: 0px;">
+				<b>办公地址</b>
+				<span>
+					<textarea maxlength="100" name="worklocation" value="${user.worklocation}" style="height:100px;padding:4px;overflow: auto;">${user.worklocation}</textarea>
+				</span>
+			</div>
+		</div>
+		<div class="fenge2"></div>
+
+		<div class="button_yn">
+			<div class="bottom_button">
+				<button type="submit" data-loading-text="提交中"
+					class=" bottoms btnapp btn-submit  mui-btn  mui-btn-primary"
+					onclick="return choose();">
+					<span>保存</span>
+				</button>
+			</div>
+			<div class="bottom_button_shanchu">
+				<button type="button" data-loading-text="提交中"
+					class="  btnapp  mui-btn mui-btn-outlined">
+					<span>返回</span>
+				</button>
+			</div>
+
+		</div>
+	</form>
+	<script src="${ctxStatic}/mobile/frame_js/mui.min.js"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+		mui.init()
+
+		function phone() {
+			location.href = "${ctx}/m/sys/user/fixedAsset?name=${user.name}";
+		}
+		
+		function choose() {
+			var phone = document.getElementById("mobile").value;
+			 if(!(/^1(3|4|5|7|8)\d{9}$/.test(phone))){
+			        mui.alert('手机号码有误，请重填!');
+			        return false; 
+			 }
+			 return true;
+		}
+	</script>
+</body>
+
+</html> --%>

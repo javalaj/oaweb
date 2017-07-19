@@ -1,0 +1,328 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>打卡记录列表</title>
+<meta name="decorator" content="default" />
+	<script type="text/javascript" src="${ctxStatic}/tableExport/libs/FileSaver/FileSaver.min.js"></script>
+	<script type="text/javascript" src="${ctxStatic}/tableExport/tableExport.js"></script>
+<script type="text/javascript">
+	$(document).ready(function() {
+		if("${empty isDetail or isDetail eq '0'}"=="true"){
+			$("#btnTotal").hide();
+			$(".detail").hide();
+			$("#isDetail").val("0");
+		}else if("${isDetail eq '1'}"=="true"){
+			$("#btnDetail").hide();
+			$("#isDetail").val("1");
+		}
+		
+		
+		if("${empty showQingjia or showQingjia eq '0'}"=="true"){
+			$("#btnTotal2").hide();
+			$(".kaoqin").hide();
+			$("#showQingjia").val("0");
+		}else if("${showQingjia eq '1'}"=="true"){
+			$("#btnDetail2").hide();
+			$("#showQingjia").val("1");
+		}
+		
+		
+		$("#btnUploadz").click(function() {
+			var tpl = $("#tpl1").html().replace(/(\/\/\<!\-\-)|(\/\/\-\->)/g,"");
+			top.layer.open({
+				type: 1, 
+				area: ["650px","80%"],
+			  	title: "<i class='fa fa-info'></i>考勤说明",
+			  	content: Mustache.render(tpl, {})
+ 			});
+		});
+		$("#btnDetail").click(function() {
+			$("#btnDetail").hide();
+			$("#btnTotal").show();
+			$(".detail").show();
+			$("#isDetail").val("1");
+		});
+		$("#btnTotal").click(function() {
+			$("#btnTotal").hide();
+			$("#btnDetail").show();
+			$(".detail").hide();
+			$("#isDetail").val("0");
+		});
+		
+		$("#btnDetail2").click(function() {
+			$("#btnDetail2").hide();
+			$("#btnTotal2").show();
+			$(".kaoqin").show();
+			$("#showQingjia").val("1");
+		});
+		$("#btnTotal2").click(function() {
+			$("#btnTotal2").hide();
+			$("#btnDetail2").show();
+			$(".kaoqin").hide();
+			$("#showQingjia").val("0");
+		});
+		
+		$("#btnAnalysis").click(function() {
+			var index = layer.load(1); //又换了种风格，并且设定最长等待10秒 
+			var index2= layer.msg('分析程序正在运行中', {
+				  icon: 16,
+				  time: 120*1000 //2秒关闭（如果不配置，默认是3秒）
+				}, function(){
+				  //do something
+					layer.close(index2);
+					layer.close(index);
+					window.location.reload();
+				}); 
+			$.ajax({
+				type:"POST",
+				url:"${ctx}/oa/coding/oaCoding/analysis", 
+				data:{"timerec":$("#timerec").val()},
+				dataType: 'json',
+				success:function(data){  
+					//关闭
+					layer.close(index2);
+					layer.close(index);
+					window.location.reload();              
+				}
+			});	
+		});
+		
+		$("#btnAsync").click(function() {
+			var index = layer.load(1); 
+			var index2= layer.msg('同步分析程序正在运行中', {
+				  icon: 16,
+				  time: 120*1000 
+				}, function(){
+				  //do something
+					layer.close(index2);
+					layer.close(index);
+					window.location.reload();
+				}); 
+			$.ajax({
+				type:"POST",
+				url:"${ctx}/oa/coding/oaCoding/asyncHsqkCloud", 
+				data:{"timerec":$("#timerec").val()},
+				dataType: 'json',
+				success:function(data){  
+					//关闭
+					layer.close(index2);
+					layer.close(index);
+					window.location.reload();              
+				}
+			});	
+		});
+		
+		$("#btnExport").click(function(){
+			$("#contentTable").tableExport({worksheetName: '考勤统计',fileName: '考勤统计'+$("#timerec").val(),type:'excel', excelstyles:['border-bottom', 'border-top', 'border-left', 'border-right']});
+			
+		});
+		
+		
+		
+	});
+	function page(n, s) {
+		$("#pageNo").val(n);
+		$("#pageSize").val(s);
+		$("#searchForm").submit();
+		return false;
+	}
+</script>
+<script type="text/template" id="tpl1">
+	<table class='table table-striped table-bordered table-hover table-condensed dataTables-example dataTable'>
+		<tbody>
+			<tr><td style='background-color:#23c6c8;color:white;'colspan="2"><h3>补签统计项说明</h3></td></tr>
+			<tr><td style='color:#21b9bb;width:220px'>★</td><td style='width:400px'>上班未打卡补卡申请</td></tr>
+			<tr><td style='color:#21b9bb;'>◆</td><td>下班未打卡补卡申请</td></tr>
+			<tr><td style='background-color:#1ab394;color:white;'colspan="2"><h3>签到统计项说明</h3></td></tr>
+			<tr><td style='color:#ed5565;'>○</td><td>迟到（当天最早刷卡时间晚于08:30:00,研发部为10:00:00）</td></tr>
+			<tr><td style='color:#ed5565;'>●</td><td>早退（当天最晚刷卡时间早于17:30:00）</td></tr>
+			<tr><td style='color:#ed5565;'>E</td><td>时长不足（当天最早最晚刷卡时差在9小时以内的）</td></tr>
+			<tr><tr><td style='color:#21b9bb;'>√</td><td>正常（当天既不迟到早退并且最早最晚刷卡时差大于等于9小时的）</td></tr>
+			<tr><td style='color:#ed5565;' colspan="2">特殊说明:时长不足的优先级高于迟到早退优先级，不再重复参与迟到或者早退的统计项（既是时长不足又是迟到早退的，算作时长不足）</td></tr>
+			<tr><td style="background-color:#23c6c8;color: #FFFFFF;" colspan="2"><h3>统计单位</h3></td></tr>
+			<tr><td style='color:#bababa;'>请假统计项单位</td><td>小时</td></tr>
+			<tr><td style='color:#1ab394;'>补签与签到统计项单位</td><td>次</td></tr>
+			<tr><td style="background-color:#1c84c6;color: #FFFFFF;" colspan="2"><h3>员工月度工作时长分析</h3></td></tr>
+			<tr><td style='color:#1ab394;'>当月有效上班天数</td><td>包含正常、迟到、时长不足的工作日，不包含未打卡的工作日</td></tr>
+			<tr><td style='color:#1ab394;'>日平均工作时长</td><td>当月平均每天的工作时长=当月总工作时长/当月有效上班天数</td></tr>
+			<tr><td style='color:#1ab394;'>当月总工作时长</td><td>当月日工作时间的总和(日工作时间=日坐班时间-午休时间)</td></tr>
+		</tbody>
+	</table>
+</script>
+<style type="text/css">
+.rightTd{
+background-color:#21b9bb;
+color:white;
+}
+.wrongTd{
+background-color:#ed5565;
+color:white;
+}
+.textCenter{
+text-align:center;
+}
+.averageWorktime
+{
+	width:100px;
+}
+
+</style>
+</head>
+
+<body style="padding: 0px"  class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>考勤统计</h5>
+				<div class="ibox-tools">
+				</div>
+			</div>
+    		<div class="ibox-content">
+				<div class="row">
+					<div class="col-sm-12">
+						<form:form id="searchForm" modelAttribute="oaCoding" action="${ctx}/oa/coding/oaCoding/" method="post" class="form-inline">
+							<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}" />
+							<input id="pageSize" name="pageSize" type="hidden"
+								value="${page.pageSize}" />
+							<div class="form-group" style="width:100%;">
+								<label>部门：
+									 <sys:treeselect id="office" name="deptid"
+										value="${deptid}" labelName="deptname" labelValue="${deptname}"
+										title="部门" url="/sys/office/treeData?isAll=true" cssClass="form-control"
+										allowClear="true" notAllowSelectParent="true" />
+								</label>
+								<label style="margin-left:4%;">考勤日期：
+									<input id="timerec" name="timerec" type="text" readonly="readonly" maxlength="20" class="form-control Wdate laydate-icon layer-date input-sm"
+										value="${timerec }"
+										onclick="WdatePicker({dateFmt:'yyyy-MM',isShowClear:false,readOnly:true});"/>
+								</label>
+								<input id="isDetail" name="isDetail" type="hidden"/>
+								<input id="showQingjia" name="showQingjia" type="hidden"/>
+							</div>
+						</form:form>					
+						<br/>
+					</div>
+				</div>
+				<!-- 工具栏 -->
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="pull-left">
+							<shiro:hasPermission name="oa:coding:oaCoding:edit">
+								<oa:fileImportForm  actionUrl="${ctx}/oa/coding/oaCoding/fileUploadx" 
+													buttonText="EXCEL导入(NET)" 
+													templateUrl="${ctxStatic}/template/oa/coding/new_coding_template.xls" 
+													title="打卡数据EXCEL导入(NET)" 
+													id="oaCodingx"
+													filePathName="file"></oa:fileImportForm>	
+								<oa:fileImportForm  actionUrl="${ctx}/oa/coding/oaCoding/fileUploady" 
+													buttonText="EXCEL导入(DISK)" 
+													templateUrl="${ctxStatic}/template/oa/coding/u_coding_template.xls" 
+													title="打卡数据EXCEL导入(DISK)" 
+													id="oaCodingy"
+													filePathName="file"></oa:fileImportForm>	
+								<a id="btnAnalysis" href="javascript:void(0);" class="btn btn-white btn-sm"><i class="fa fa-calculator"></i>分析当月签到情况</a>	
+								<a id="btnAsync" href="javascript:void(0);" class="btn btn-white btn-sm"><i class="fa fa-calculator"></i>同步分析昨日签到情况</a>
+								<input id="btnExport" class="btn btn-white btn-sm" type="button" value="导出" />
+							</shiro:hasPermission>
+							
+							<a id="btnUploadz" href="javascript:void(0);" class="btn btn-white btn-sm"><i class="fa fa-info"></i>考勤说明</a>
+							<a id="btnTotal2" href="javascript:void(0);" class="btn btn-default btn-sm"><i class="fa fa-cog"></i>请假统计</a>
+							<a id="btnDetail2" href="javascript:void(0);" class="btn btn-white btn-sm"><i class="fa fa-cogs"></i>请假统计</a>
+							<a id="btnTotal" href="javascript:void(0);" class="btn btn-warning btn-sm"><i class="fa fa-cog"></i>签到详情</a>
+							<a id="btnDetail" href="javascript:void(0);" class="btn btn-white btn-sm"><i class="fa fa-cogs"></i>签到详情</a>
+						</div>
+						<div class="pull-right">
+							<button class="btn btn-primary btn-rounded btn-outline btn-sm "
+								onclick="search()">
+								<i class="fa fa-search"></i> 查询
+							</button>
+							<button id="btnReset" class="btn btn-primary btn-rounded btn-outline btn-sm "
+								onclick="reset()">
+								<i class="fa fa-refresh"></i> 重置
+							</button>
+						</div>
+					</div>
+				</div>					
+				<sys:message content="${message}" />
+				<div id="contentdiv" style="width: 100%; overflow: auto;">
+				<table id="contentTable" class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable" style="white-space: nowrap;" >
+					<thead>
+						<tr>
+							<th colspan="52"style="background-color:#35a5e7;color: #FFFFFF;"><div style='text-align:center'>${timerec}考勤统计</div></th>
+						</tr>
+						<tr>
+							<th colspan="1" rowspan="2" style="background-color:#23c6c8;color: #FFFFFF;"><div style='text-align:center'>人员信息</div></th>
+							<th class="kaoqin" colspan="11"  style="background-color:#bababa;color: #FFFFFF;"><div style='text-align:center'>请假统计</div></th>
+							<th colspan="2"  style="background-color:#23c6c8;color: #FFFFFF;"><div style='text-align:center'>补签统计</div></th>
+							<th colspan="4" style="background-color:#1ab394;color: #FFFFFF;"><div style='text-align:center'>签到统计</div></th>
+							<th class="detail" colspan="${daysLength}" style="background-color:#f7a54a;color: #FFFFFF;"><div style='text-align:center'>签到详情</div></th>
+							<th colspan="3" style="background-color:#1c84c6;color: #FFFFFF;"><div style='text-align:center'>员工月度工作时长分析</div></th>
+						</tr>
+						<tr>
+							<th class="kaoqin" style="color:#ed5565;">事假</th>
+							<th class="kaoqin" style="color:#ed5565;">病假</th>
+							<th class="kaoqin" style="color:#ed5565;">年假</th>
+							<th class="kaoqin" style="color:#ed5565;">调休</th>
+							<th class="kaoqin" style="color:#ed5565;">丧假</th>
+							<th class="kaoqin" style="color:#ed5565;">婚假</th>
+							<th class="kaoqin" style="color:#ed5565;">探亲</th>
+							<th class="kaoqin" style="color:#ed5565;">产假</th>
+							<th class="kaoqin" style="color:#ed5565;">出差</th>
+							<th class="kaoqin" style="color:#ed5565;">外出</th>
+							<th class="kaoqin" style="color:#21b9bb;">加班</th>
+							<th style="color:#21b9bb;">★</th>
+							<th style="color:#21b9bb;">◆</th>
+							<th style="color:#ed5565;">○</th>
+							<th style="color:#ed5565;">●</th>
+							<th style="color:#ed5565;">E</th>
+							<th style="color:#21b9bb;">√</th>
+							<c:forEach items="${days}" var="day">
+								${day}
+							</c:forEach>
+							<th colspan="1" style="background-color:#1c84c6;color: #FFFFFF;"><div style='text-align:center'>当月有效上班天数</div></th>
+							<th colspan="1" style="background-color:#1c84c6;color: #FFFFFF;"><div style='text-align:center'>日平均工作时长</div></th>
+							<th colspan="1" style="background-color:#1c84c6;color: #FFFFFF;"><div style='text-align:center'>当月总工作时长</div></th>
+							
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach items="${page.list}" var="oaViewCoding" >
+							<tr>
+								<td style="width:10%"><a href="javascript:void(0);" class="btn btn-info btn-xs" onclick="openDialogView('查看${oaViewCoding.userName}的签到详情', '${ctx}/oa/coding/oaCollectCoding/list?userId=${oaViewCoding.userNo}&searchDate='+$('#timerec').val(),'800px', '680px')"><i class="fa fa-search-plus"></i>(${oaViewCoding.userNo})${oaViewCoding.userName}</a></td>
+								
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitShijiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitShijiaCount eq '0'?'':oaViewCoding.applyTypeLitShijiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitBingjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitBingjiaCount eq '0'?'':oaViewCoding.applyTypeLitBingjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitNianjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitNianjiaCount eq '0'?'':oaViewCoding.applyTypeLitNianjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitTiaoxiuCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitTiaoxiuCount eq '0'?'':oaViewCoding.applyTypeLitTiaoxiuCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitSangjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitSangjiaCount eq '0'?'':oaViewCoding.applyTypeLitSangjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitHunjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitHunjiaCount eq '0'?'':oaViewCoding.applyTypeLitHunjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitTanqinjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitTanqinjiaCount eq '0'?'':oaViewCoding.applyTypeLitTanqinjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeLitChanjiaCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeLitChanjiaCount eq '0'?'':oaViewCoding.applyTypeLitChanjiaCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeChuchaiCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeChuchaiCount eq '0'?'':oaViewCoding.applyTypeChuchaiCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeWaichuCount eq '0'?'':'wrongTd'}">${oaViewCoding.applyTypeWaichuCount eq '0'?'':oaViewCoding.applyTypeWaichuCount}</td>
+								<td class="kaoqin textCenter ${oaViewCoding.applyTypeJiabanCount eq '0'?'':'rightTd'}">${oaViewCoding.applyTypeJiabanCount eq '0'?'':oaViewCoding.applyTypeJiabanCount}</td>
+								
+								<td class="textCenter ${oaViewCoding.applyTypeShangwuCount eq '0'?'':'rightTd'}">${oaViewCoding.applyTypeShangwuCount eq '0'?'':oaViewCoding.applyTypeShangwuCount}</td>
+								<td class="textCenter ${oaViewCoding.applyTypeXiawuCount eq '0'?'':'rightTd'}">${oaViewCoding.applyTypeXiawuCount eq '0'?'':oaViewCoding.applyTypeXiawuCount}</td>
+								<td class="textCenter ${oaViewCoding.workingMoutDays eq '0'?'':'wrongTd'}">${oaViewCoding.workingMoutDays eq '0'?'':oaViewCoding.workingMoutDays}</td>
+								<td class="textCenter ${oaViewCoding.workingAoutDays eq '0'?'':'wrongTd'}">${oaViewCoding.workingAoutDays eq '0'?'':oaViewCoding.workingAoutDays}</td>
+								
+								<td class="textCenter ${oaViewCoding.workingLessDays eq '0'?'':'wrongTd'}">${oaViewCoding.workingLessDays eq '0'?'':oaViewCoding.workingLessDays}</td>
+								<td class="textCenter ${oaViewCoding.workingDays eq '0'?'':'rightTd'}">${oaViewCoding.workingDays eq '0'?'':oaViewCoding.workingDays}</td>
+								<c:forEach items="${oaViewCoding.oaCollectCodings}" var="dw">
+									<td class="detail textCenter "  <c:if test="${not empty dw.workingType}">title="【签到：<fmt:formatDate value="${dw.codingBegindate}" pattern="HH:mm" />】【签退：<fmt:formatDate value="${dw.codingEnddate}" pattern="HH:mm" />】【坐班时长：${fns:formateWorktime(dw.timeOffset)}】"</c:if> style="<c:if test="${not empty dw.workingType}">cursor: pointer;</c:if>${not empty dw.workingType?'color:white;':''}${dw.workingType eq '√'?'background-color:#21b9bb;':not empty dw.workingType?'background-color:#ed5565;':''}">${dw.workingType}</td>
+								</c:forEach>
+								<td class="textCenter averageWorktime">${oaViewCoding.workingValidDays eq 0 ? '' : oaViewCoding.workingValidDays}</td>
+								<td class="textCenter averageWorktime">${oaViewCoding.averageWorktime eq 0 ? '' : fns:formateWorktime(oaViewCoding.averageWorktime)}</td>
+								<td class="textCenter averageWorktime">${oaViewCoding.workingHours eq 0 ? '' : fns:formateWorktime(oaViewCoding.workingHours)}</td>
+							</tr>
+						</c:forEach>
+					</tbody>
+				</table></div>
+				<table:page page="${page}" ></table:page>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

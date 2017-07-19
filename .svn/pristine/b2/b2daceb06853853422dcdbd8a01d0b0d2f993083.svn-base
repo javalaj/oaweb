@@ -1,0 +1,48 @@
+@CHARSET "UTF-8";
+ /* 公文管理 label错位 */
+input[type=checkbox], input[type=radio]{
+	margin:0;
+	margin-right:4px;
+}
+
+input[type=checkbox] + label{
+	margin-right:10px;
+	height: 34px;
+    line-height: 34px;
+}
+.control-label{
+	height:34px;
+}
+label + a{
+	height: 34px;
+    line-height: 34px;
+}
+
+.form-horizontal .controls{
+	margin-left:160px;
+}
+.upload-ph{
+	float:left;
+	margin-left:0;
+}
+
+ol{
+	display: inline-flex;
+	height:34px;
+	line-height:34px;
+}
+
+/* 公司收文查看 */
+.doc-reg .control-label{
+	line-height:34px;
+}
+.lc-view-div{
+	display: inline;
+	margin-left:0;
+}
+
+/* 通知公告详情错位 */
+.form-horizontal .controls{
+	    height: 34px;
+    line-height: 34px;
+} 

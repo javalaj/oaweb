@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractSalesDao">
+    
+	<sql id="oaContractSalesColumns">
+		a.id AS "id",
+		a.contract_no AS "contractNo",
+		a.contract_name AS "contractName",
+		a.contract_status AS "contractStatus",
+		a.project_id AS "project.id",
+		a.project_old_name AS "projectOldName",
+		a.contract_type AS "contractType",
+		a.contract_money AS "contractMoney",
+		a.contract_time AS "contractTime",
+		a.service_type AS "serviceType",
+		a.custumer_type AS "custumerType",
+		a.contract_partya AS "contractPartya",
+		a.partya_ticket AS "partyaTicket",
+		a.warranty_start_time AS "warrantyStartTime",
+		a.warranty_end_time AS "warrantyEndTime",
+		a.project_leader_id AS "projectLeader.id",
+		a.guarantee_money AS "guaranteeMoney",
+		a.guarantee_money_charge_time AS "guaranteeMoneyChargeTime",
+		a.is_counter_point_contract AS "isCounterPointContract",
+		a.is_bidding_off AS "isBiddingOff",
+		a.contract_electronic_version AS "contractElectronicVersion",
+		a.contract_scan_attachment AS "contractScanAttachment",
+		a.punishment AS "punishment",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u16.name AS "projectLeader.name",
+		u16.login_name AS "projectLeader.loginName",
+		op1.project_no AS "project.projectNo",
+		op1.project_name AS "project.projectName"
+	</sql>
+	
+	<sql id="oaContractSalesJoins">
+		LEFT JOIN sys_user u16 ON u16.id = a.project_leader_id
+		LEFT JOIN oa_project op1 ON op1.id = a.project_id
+	</sql>
+    
+	<select id="get" resultType="OaContractSales">
+		SELECT 
+			<include refid="oaContractSalesColumns"/>
+		FROM oa_contract_sales a
+		<include refid="oaContractSalesJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaContractSales">
+		SELECT 
+			<include refid="oaContractSalesColumns"/>
+		FROM oa_contract_sales a
+		<include refid="oaContractSalesJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractNo != null and contractNo != ''">
+				AND a.contract_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractNo},'%')</if>
+			</if>
+			<if test="contractName != null and contractName != ''">
+				AND a.contract_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractName},'%')</if>
+			</if>
+			<if test="contractStatus != null and contractStatus != ''">
+				AND a.contract_status = #{contractStatus}
+			</if>
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type = #{contractType}
+			</if>
+			<if test="beginContractTime != null and endContractTime != null and beginContractTime != '' and endContractTime != ''">
+				AND a.contract_time BETWEEN #{beginContractTime} AND #{endContractTime}
+			</if>
+			<if test="contractPartya != null and contractPartya != ''">
+				AND a.contract_partya LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractPartya}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractPartya}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractPartya},'%')</if>
+			</if>
+			<if test="project != null and project.id != null and project.id != ''">
+				AND a.project_id = #{project.id}
+			</if>
+			${sqlMap.isOverdue}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListByProjectId" resultType="OaContractSales">
+		SELECT 
+			<include refid="oaContractSalesColumns"/>
+		FROM oa_contract_sales a
+		<include refid="oaContractSalesJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<choose>
+				<when test="project == null">
+					AND (a.project_id = null OR a.project_id ='')
+				</when>
+				<otherwise>
+					AND a.project_id = #{project.id}
+				</otherwise>
+			</choose>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContractSales">
+		SELECT 
+			<include refid="oaContractSalesColumns"/>
+		FROM oa_contract_sales a
+		<include refid="oaContractSalesJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract_sales(
+			id,
+			contract_no,
+			contract_name,
+			contract_status,
+			project_id,
+			project_old_name,
+			contract_type,
+			contract_money,
+			contract_time,
+			service_type,
+			custumer_type,
+			contract_partya,
+			partya_ticket,
+			warranty_start_time,
+			warranty_end_time,
+			project_leader_id,
+			guarantee_money,
+			guarantee_money_charge_time,
+			is_counter_point_contract,
+			is_bidding_off,
+			contract_electronic_version,
+			contract_scan_attachment,
+			punishment,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{contractNo},
+			#{contractName},
+			#{contractStatus},
+			#{project.id},
+			#{projectOldName},
+			#{contractType},
+			#{contractMoney},
+			#{contractTime},
+			#{serviceType},
+			#{custumerType},
+			#{contractPartya},
+			#{partyaTicket},
+			#{warrantyStartTime},
+			#{warrantyEndTime},
+			#{projectLeader.id},
+			#{guaranteeMoney},
+			#{guaranteeMoneyChargeTime},
+			#{isCounterPointContract},
+			#{isBiddingOff},
+			#{contractElectronicVersion},
+			#{contractScanAttachment},
+			#{punishment},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_sales SET 	
+			contract_no = #{contractNo},
+			contract_name = #{contractName},
+			contract_status = #{contractStatus},
+			project_id = #{project.id},
+			project_old_name = #{projectOldName},
+			contract_type = #{contractType},
+			contract_money = #{contractMoney},
+			contract_time = #{contractTime},
+			service_type = #{serviceType},
+			custumer_type = #{custumerType},
+			contract_partya = #{contractPartya},
+			partya_ticket = #{partyaTicket},
+			warranty_start_time = #{warrantyStartTime},
+			warranty_end_time = #{warrantyEndTime},
+			project_leader_id = #{projectLeader.id},
+			guarantee_money = #{guaranteeMoney},
+			guarantee_money_charge_time = #{guaranteeMoneyChargeTime},
+			is_counter_point_contract = #{isCounterPointContract},
+			is_bidding_off = #{isBiddingOff},
+			contract_electronic_version = #{contractElectronicVersion},
+			contract_scan_attachment = #{contractScanAttachment},
+			punishment = #{punishment},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_sales SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+</mapper>

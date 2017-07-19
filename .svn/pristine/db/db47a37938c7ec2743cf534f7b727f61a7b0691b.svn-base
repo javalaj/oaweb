@@ -1,0 +1,241 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.filling.OaFillingDao">
+
+	<sql id="oaFillingColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS
+		"createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS
+		"updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.apply_user AS "applyUser",
+		a.apply_date AS "applyDate",
+		a.apply_type
+		AS
+		"applyType",
+		a.apply_type_lit AS "applyTypeLit",
+		a.filling_date AS
+		"fillingDate",
+		a.apply_reason AS "applyReason",
+		a.begin_date AS
+		"beginDate",
+		a.end_date AS "endDate",
+		a.hours AS "hours",
+		u.name AS
+		"applyUser.name",
+		o.id AS "applyUser.office.id",
+		o.name AS
+		"applyUser.office.name"
+	</sql>
+
+	<sql id="oaFillingJoins">
+		JOIN sys_user u ON u.id=a.apply_user
+		JOIN sys_office o ON
+		o.id=u.office_id
+	</sql>
+
+
+	<select id="get" resultType="OaFilling">
+		SELECT
+		<include refid="oaFillingColumns" />
+		,d.name AS "createBy.name"
+		FROM oa_filling a LEFT JOIN sys_user d ON
+		d.id=a.create_by
+		<include refid="oaFillingJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+
+
+
+
+
+
+	<select id="findList" resultType="OaFilling">
+		SELECT
+		<include refid="oaFillingColumns" />
+		,d.name AS "createBy.name"
+		FROM oa_filling a LEFT JOIN sys_user d ON
+		d.id=a.create_by
+		<include refid="oaFillingJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.apply_type LIKE
+				<if test="dbName == 'oracle'">'%'||#{type}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{type}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{type},'%')</if>
+			</if>
+			<if test="begindate2 != null and enddate2!=null">
+				AND a.filling_date BETWEEN #{begindate2} AND #{enddate2}
+			</if>
+			<if test="updateName != null and updateName != ''">
+				AND a.create_by IN (SELECT b.id FROM sys_user b WHERE b.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{updateName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{updateName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{updateName},'%')</if>
+				)
+			</if>
+			<if test="createName != null and createName != ''">
+				AND a.apply_user IN (SELECT c.id FROM sys_user c WHERE c.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{createName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createName},'%')</if>
+				)
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.filling_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+	<select id="findBySame" resultType="OaFilling">
+		SELECT
+		<include refid="oaFillingColumns" />
+		,d.name AS "createBy.name"
+		FROM oa_filling a LEFT JOIN sys_user d ON
+		d.id=a.create_by
+		<include refid="oaFillingJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.apply_type LIKE
+				<if test="dbName == 'oracle'">'%'||#{type}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{type}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{type},'%')</if>
+			</if>
+			<if test="begindate != null and enddate!=null">
+				AND a.filling_date BETWEEN #{begindate2} AND #{enddate2}
+			</if>
+			<if test="updateName != null and updateName != ''">
+				AND a.create_by IN (SELECT b.id FROM sys_user b WHERE b.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{updateName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{updateName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{updateName},'%')</if>
+				)
+			</if>
+			<if test="createName != null and createName != ''">
+				AND a.apply_user IN (SELECT c.id FROM sys_user c WHERE c.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{createName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createName},'%')</if>
+				)
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.filling_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	<select id="findAllList" resultType="OaFilling">
+		SELECT
+		<include refid="oaFillingColumns" />
+		FROM oa_filling a
+		<include refid="oaFillingJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_filling(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		apply_user,
+		apply_date,
+		apply_type,
+		apply_type_lit,
+		filling_date,
+		apply_reason,
+		begin_date,
+		end_date,
+		hours
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{applyUser.id},
+		#{applyDate},
+		#{applyType},
+		#{applyTypeLit},
+		#{fillingDate},
+		#{applyReason},
+		#{beginDate},
+		#{endDate},
+		#{hours}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_filling SET
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		apply_user =
+		#{applyUser},
+		apply_date = #{applyDate},
+		apply_type = #{applyType},
+		apply_type_lit = #{applyTypeLit},
+		filling_date = #{fillingDate},
+		apply_reason = #{applyReason},
+		begin_date = #{beginDate},
+		end_date =
+		#{endDate},
+		hours = #{hours}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_filling SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

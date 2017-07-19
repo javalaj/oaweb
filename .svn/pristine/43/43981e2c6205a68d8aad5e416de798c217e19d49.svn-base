@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.staffturnover.StaffTurnoverDao">
+    
+	<sql id="staffTurnoverColumns">
+		a.id AS "id",
+		a.name AS "user.id",
+		a.employee_id AS "employeeId",
+		a.position AS "position",
+		a.type AS "type",
+		a.reason AS "reason",
+		a.postition_before AS "postitionBefore",
+		a.postition_after AS "postitionAfter",
+		a.office_located_before AS "officeLocatedBefore",
+		a.office_located_after AS "officeLocatedAfter",
+		a.phone_before AS "phoneBefore",
+		a.phone_after AS "phoneAfter",
+		a.dept_director_suggestion_before AS "deptDirectorSuggestionBefore",
+		a.dept_director_suggestion_after AS "deptDirectorSuggestionAfter",
+		a.dept_manager_suggestion_before AS "deptManagerSuggestionBefore",
+		a.dept_manager_suggestion_after AS "deptManagerSuggestionAfter",
+		a.dept_before AS "deptBefore",
+		a.dept_after AS "deptAfter",
+		a.general_manager_suggestion AS "generalManagerSuggestion",
+		a.effective_date AS "effectiveDate",
+		a.work_turnover_receiver AS "workTurnoverReceiver.id",
+		a.work_takeover_acceptor AS "workTakeoverAcceptor.id",
+		a.assets_turnover_receiver AS "assetsTurnoverReceiver.id",
+		a.assets_takeover_acceptor AS "assetsTakeoverAcceptor.id",
+		a.on_account_yuan AS "onAccountYuan",
+		a.on_account_staff AS "onAccountStaff.id",
+		a.pay_in_back AS "payInBack",
+		a.proc_ins_id AS "procInsId",
+		a.title AS "title",
+		a.finance_status as "financeStatus",
+		a.financial_staff as "financialStaff.id",
+		a.create_by AS "createBy.id",
+		a.update_by AS "updateBy.id",
+		a.create_date AS "createDate",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.status AS "status",
+		a.is_start AS "isStart",
+		u15.login_name AS "user.loginName",
+		u15.name as "user.name",
+		u15.office_id as "user.office.id",
+		u16.login_name AS "workTurnoverReceiver.loginName",
+		u16.name as "workTurnoverReceiver.name",
+		u19.login_name AS "workTakeoverAcceptor.loginName",
+		u19.name as "workTakeoverAcceptor.name",
+		u20.login_name AS "assetsTurnoverReceiver.loginName",
+		u20.name as "assetsTurnoverReceiver.name",
+		u21.login_name AS "assetsTakeoverAcceptor.loginName",
+		u21.name as "assetsTakeoverAcceptor.name",
+		u22.login_name AS "onAccountStaff.loginName",
+		u22.name as "onAccountStaff.name",
+		u23.login_name AS "financialStaff.loginName",
+		u23.name as "financialStaff.name",
+		u30.name as "createBy.name"
+	</sql>
+	
+	<sql id="staffTurnoverJoins">
+		LEFT JOIN sys_office o17 ON o17.id = a.dept_before
+		LEFT JOIN sys_office o18 ON o18.id = a.dept_after
+		LEFT JOIN sys_user u30 ON u30.id = a.create_by
+		LEFT JOIN sys_user u15 ON u15.id = a.name
+		LEFT JOIN sys_user u16 ON u16.id = a.work_turnover_receiver
+		LEFT JOIN sys_user u19 ON u19.id = a.work_takeover_acceptor
+		LEFT JOIN sys_user u20 ON u20.id = a.assets_turnover_receiver
+		LEFT JOIN sys_user u21 ON u21.id = a.assets_takeover_acceptor
+		LEFT JOIN sys_user u22 ON u22.id = a.on_account_staff
+		LEFT JOIN sys_user u23 ON u23.id = a.financial_staff
+	</sql>
+    
+	<select id="get" resultType="StaffTurnover">
+		SELECT 
+			<include refid="staffTurnoverColumns"/>
+		FROM staff_turnover a
+		<include refid="staffTurnoverJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="StaffTurnover">
+		SELECT 
+			<include refid="staffTurnoverColumns"/>
+		FROM staff_turnover a
+		<include refid="staffTurnoverJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	
+	<select id="findList" resultType="StaffTurnover">
+		SELECT 
+			<include refid="staffTurnoverColumns"/>
+		FROM staff_turnover a
+		<include refid="staffTurnoverJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+			<if test="type != null and type != ''">
+				and a.type = #{type}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="StaffTurnover">
+		SELECT 
+			<include refid="staffTurnoverColumns"/>
+		FROM staff_turnover a
+		<include refid="staffTurnoverJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO staff_turnover(
+			id,
+			name,
+			employee_id,
+			position,
+			type,
+			reason,
+			postition_before,
+			postition_after,
+			office_located_before,
+			office_located_after,
+			phone_before,
+			phone_after,
+			dept_director_suggestion_before,
+			dept_director_suggestion_after,
+			dept_manager_suggestion_before,
+			dept_manager_suggestion_after,
+			dept_before,
+			dept_after,
+			general_manager_suggestion,
+			effective_date,
+			work_turnover_receiver,
+			work_takeover_acceptor,
+			assets_turnover_receiver,
+			assets_takeover_acceptor,
+			on_account_yuan,
+			on_account_staff,
+			pay_in_back,
+			proc_ins_id,
+			title,
+			finance_status,
+			financial_staff,
+			create_by,
+			update_by,
+			create_date,
+			update_date,
+			remarks,
+			del_flag,
+			status,
+			is_start
+		) VALUES (
+			#{id},
+			#{user.id},
+			#{employeeId},
+			#{position},
+			#{type},
+			#{reason},
+			#{postitionBefore},
+			#{postitionAfter},
+			#{officeLocatedBefore},
+			#{officeLocatedAfter},
+			#{phoneBefore},
+			#{phoneAfter},
+			#{deptDirectorSuggestionBefore},
+			#{deptDirectorSuggestionAfter},
+			#{deptManagerSuggestionBefore},
+			#{deptManagerSuggestionAfter},
+			#{deptBefore},
+			#{deptAfter},
+			#{generalManagerSuggestion},
+			#{effectiveDate},
+			#{workTurnoverReceiver.id},
+			#{workTakeoverAcceptor.id},
+			#{assetsTurnoverReceiver.id},
+			#{assetsTakeoverAcceptor.id},
+			#{onAccountYuan},
+			#{onAccountStaff.id},
+			#{payInBack},
+			#{procInsId},
+			#{title},
+			#{financeStatus},
+			#{financialStaff.id},
+			#{createBy.id},
+			#{updateBy.id},
+			#{createDate},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{status},
+			#{isStart}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE staff_turnover SET 	
+			name = #{user.id},
+			employee_id = #{employeeId},
+			position = #{position},
+			type = #{type},
+			reason = #{reason},
+			postition_before = #{postitionBefore},
+			postition_after = #{postitionAfter},
+			office_located_before = #{officeLocatedBefore},
+			office_located_after = #{officeLocatedAfter},
+			phone_before = #{phoneBefore},
+			phone_after = #{phoneAfter},
+			dept_director_suggestion_before = #{deptDirectorSuggestionBefore},
+			dept_director_suggestion_after = #{deptDirectorSuggestionAfter},
+			dept_manager_suggestion_before = #{deptManagerSuggestionBefore},
+			dept_manager_suggestion_after = #{deptManagerSuggestionAfter},
+			dept_before = #{deptBefore},
+			dept_after = #{deptAfter},
+			general_manager_suggestion = #{generalManagerSuggestion},
+			effective_date = #{effectiveDate},
+			work_turnover_receiver = #{workTurnoverReceiver.id},
+			work_takeover_acceptor = #{workTakeoverAcceptor.id},
+			assets_turnover_receiver = #{assetsTurnoverReceiver.id},
+			assets_takeover_acceptor = #{assetsTakeoverAcceptor.id},
+			on_account_yuan = #{onAccountYuan},
+			on_account_staff = #{onAccountStaff.id},
+			pay_in_back = #{payInBack},
+			financial_staff = #{procInsId},
+			title = #{title},
+			finance_status = #{financeStatus},
+			financial_staff = #{financialStaff.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			status = #{status},
+			is_start = #{isStart}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE staff_turnover SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	<select id="findUserRoles" parameterType="String" resultMap="UserRolesResult">
+		select role_id from sys_user_role where user_id = #{userId}
+	</select>
+	
+	<resultMap type="com.thinkgem.jeesite.modules.oa.entity.staffturnover.UserRoles" 
+		id="UserRolesResult">
+		<result property="roleId" column="role_id"/>
+	</resultMap>
+	
+</mapper>

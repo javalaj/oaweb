@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.mail.OaMailRecordDao">
+
+	<sql id="oaMailRecordColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS
+		"createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS
+		"updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.text AS
+		"text",
+		a.mail_id AS "mailId"
+	</sql>
+
+	<sql id="oaMailRecordJoins">
+	</sql>
+	<sql id="oaMailRecordJoins2">
+		LEFT JOIN sys_user b ON b.id = a.create_by LEFT JOIN
+		sys_office c ON
+		b.office_id = c.id
+	</sql>
+
+	<select id="get" resultType="OaMailRecord">
+		SELECT
+		<include refid="oaMailRecordColumns" />
+		FROM oa_mail_record a
+		<include refid="oaMailRecordJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaMailRecord">
+		SELECT b.name AS "createBy.name", c.name AS "createBy.office.name",
+		<include refid="oaMailRecordColumns" />
+		FROM oa_mail_record a
+		<include refid="oaMailRecordJoins" />
+		<include refid="oaMailRecordJoins2" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.mail_id = #{mailId}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date ASC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaMailRecord">
+		SELECT
+		<include refid="oaMailRecordColumns" />
+		FROM oa_mail_record a
+		<include refid="oaMailRecordJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_mail_record(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		text,
+		mail_id
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{text},
+		#{mailId}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_mail_record SET
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		text = #{text},
+		mail_id = #{mailId}
+		WHERE id = #{id}
+	</update>
+
+	<!--物理删除 -->
+	<update id="delete">
+		DELETE FROM oa_mail_record
+		WHERE id = #{id}
+	</update>
+
+	<!--逻辑删除 -->
+	<update id="deleteByLogic">
+
+		UPDATE oa_mail_record SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+
+
+
+		WHERE id = #{id}
+	</update>
+
+</mapper>

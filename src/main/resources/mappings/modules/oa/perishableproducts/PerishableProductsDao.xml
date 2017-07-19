@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.perishableproducts.PerishableProductsDao">
+    
+	<sql id="perishableProductsColumns">
+		a.id AS "id",
+		a.serial_number AS "serialNumber",
+		a.item_name AS "itemName",
+		a.item_category AS "itemCategory",
+		a.amount AS "amount",
+		a.unit_price AS "unitPrice",
+		a.model AS "model",
+		a.specifications AS "specifications",
+		a.supplier AS "supplier",
+		a.brand AS "brand",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.del_flag AS "delFlag",
+		a.photo AS "photo",
+		a.total AS "total",
+		a.unit AS "unit" 
+	</sql> 
+	
+	<sql id="perishableProductsJoins">
+	</sql>
+    
+	<select id="get" resultType="PerishableProducts">
+		SELECT 
+			<include refid="perishableProductsColumns"/>
+		FROM perishable_products a
+		<include refid="perishableProductsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PerishableProducts">
+		SELECT 
+			<include refid="perishableProductsColumns"/>
+		FROM perishable_products a
+		<include refid="perishableProductsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="itemName != null and itemName != ''">
+				AND a.item_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{itemName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{itemName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{itemName},'%')</if>
+			</if>
+			<if test="itemCategory != null and itemCategory != ''">
+				AND a.item_category = #{itemCategory}
+			</if>
+			<if test="brand != null and brand != ''">
+				AND a.brand = #{brand}
+			</if>
+			<if test="beginCreateDate != null and endCreateDate != null and beginCreateDate != '' and endCreateDate != ''">
+				AND a.create_date BETWEEN #{beginCreateDate} AND #{endCreateDate}
+			</if>
+			<if test="beginUpdateDate != null and endUpdateDate != null and beginUpdateDate != '' and endUpdateDate != ''">
+				AND a.update_date BETWEEN #{beginUpdateDate} AND #{endUpdateDate}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PerishableProducts">
+		SELECT 
+			<include refid="perishableProductsColumns"/>
+		FROM perishable_products a
+		<include refid="perishableProductsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findOutstockList" resultType="PerishableProducts">
+		SELECT 
+			<include refid="perishableProductsColumns"/>
+		FROM perishable_products a
+		<include refid="perishableProductsJoins"/>
+		<where>
+			a.del_flag = 0
+			and a.id in
+			<foreach item="item" index="index" collection="list"
+			open="(" separator="," close=")">
+			#{item}
+			</foreach> 
+		</where>
+	</select>
+	
+	<select id="findBrand" parameterType="String" resultType="String">
+		select t.label from sys_dict t
+		where t.type = 'equ_brand'
+		and t.value = #{value}
+	</select>
+	
+	<select id="findCategory" resultType="String">
+		select label from sys_dict t
+		where t.type = 'item_category'
+		and t.value = #{value}
+	</select>
+	
+	<select id="findUnit" parameterType="String" resultType="String">
+		select t.label from sys_dict t
+		where t.type = 'unit'
+		and t.value = #{value}
+	</select>
+	
+	<select id="countSerialNumber" resultType="Integer" parameterType="String">
+		select count(1) from perishable_products
+		where serial_number = #{serialNumber}
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO perishable_products(
+			id,
+			serial_number,
+			item_name,
+			item_category,
+			amount,
+			unit_price,
+			model,
+			specifications,
+			supplier,
+			brand,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			del_flag,
+			photo,
+			total,
+			unit
+		) VALUES (
+			#{id},
+			#{serialNumber},
+			#{itemName},
+			#{itemCategory},
+			#{amount},
+			#{unitPrice},
+			#{model},
+			#{specifications},
+			#{supplier},
+			#{brand},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{remarks},
+			#{updateDate},
+			#{delFlag},
+			#{photo},
+			#{total},
+			#{unit}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE perishable_products SET 	
+			serial_number = #{serialNumber},
+			item_name = #{itemName},
+			item_category = #{itemCategory},
+			amount = #{amount},
+			unit_price = #{unitPrice},
+			model = #{model},
+			specifications = #{specifications},
+			supplier = #{supplier},
+			brand = #{brand},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate},
+			photo = #{photo},
+			total = #{total},
+			unit = #{unit}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE perishable_products SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

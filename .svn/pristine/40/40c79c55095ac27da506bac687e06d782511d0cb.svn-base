@@ -1,0 +1,248 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web;
+
+import java.util.Date;
+import java.util.HashMap;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.annotation.Token;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.entity.OaSealUse;
+import com.thinkgem.jeesite.modules.oa.service.OaReceiveFileService;
+import com.thinkgem.jeesite.modules.oa.service.OaSealUseService;
+import com.thinkgem.jeesite.modules.oa.service.coding.OaProVacateService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.OrdersUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 印章借用流程表Controller
+ * 
+ * @author niting
+ * @version 2016-12-13
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/oaSealUse")
+public class OaSealUseController extends BaseController {
+
+	@Autowired
+	private OaSealUseService oaSealUseService;
+	@Autowired
+	private OaProVacateService oaProVacateService;
+	@Autowired
+	private SystemService systemService;
+	@Autowired
+	private OfficeService officeService;
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回交接操作service
+	@Autowired
+	private OaReceiveFileService oaReceiveFileService;
+
+	@ModelAttribute
+	public OaSealUse get(@RequestParam(required = false) String id) {
+		OaSealUse entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaSealUseService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaSealUse();
+		}
+		return entity;
+	}
+
+	@RequiresPermissions("oa:oaSealUse:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaSealUse oaSealUse, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<OaSealUse> page = oaSealUseService.findPage(new Page<OaSealUse>(request, response), oaSealUse);
+		model.addAttribute("page", page);
+		return "modules/oa/oaSealUseList";
+	}
+
+	@RequiresPermissions("oa:oaSealUse:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaSealUse oaSealUse, RedirectAttributes redirectAttributes) {
+		oaSealUseService.delete(oaSealUse);
+		addMessage(redirectAttributes, "删除印章使用成功");
+		return "redirect:" + Global.getAdminPath() + "/oa/oaSealUse/?repage";
+	}
+
+	@RequestMapping(value = "view")
+	public String detail(OaSealUse oaSealUse, Model model) {
+		oaSealUse.setCreateBy(systemService.getUser(oaSealUse.getCreateBy().getId()));// 为页面查询出申请人姓名
+		addTask(model, oaSealUse);
+		model.addAttribute("oaSealUse", oaSealUse);
+//		model.addAttribute("createname", UserUtils.get(oaPublicPrivateCars.getCreateBy().getId()).getName());
+		return "modules/oa/oaSealUseView";
+	}
+	
+	/**
+	 * 新建，打回，页面
+	 */
+	@RequiresPermissions("oa:oaSealUse:view")
+	@RequestMapping(value = "form")
+	@Token(save = true)
+	public String form(OaSealUse oaSealUse, Model model, String flag) {
+		oaReceiveFileService.addProcDefId("oa_seal_use", model);
+		oaSealUse = init(oaSealUse);
+		
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaSealUse.getProcInsId()));
+		
+		String view = "modules/oa/oaSealUseView";
+		if (oaSealUseService.isDeal(oaSealUse) && !"view".equals(flag)) {
+			view = "modules/oa/oaSealUseForm";
+			
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaSealUse.getProcInsId());
+		} else {
+			oaSealUse.setCreateBy(systemService.getUser(oaSealUse.getCreateBy().getId()));// 为页面查询出申请人的名字
+		}
+			
+		//若id为空申请人和申请时间赋值
+		if (StringUtils.isBlank(oaSealUse.getId())) {
+			oaSealUse.setCreateBy(UserUtils.getUser());
+			oaSealUse.setCreateDate(new Date());
+		}
+
+		//审核完成后打回创建人是空值，重新赋值
+		if(oaSealUse.getCreateBy().getName()==null){
+			oaSealUse.setCreateBy(UserUtils.getUser());
+		}
+		
+		//如果申请时，部门显示的是小组名字，则显示小组名字的上级名字。如显示的是oa组，则显示研发部	
+		oaSealUse.setOfficeName(officeService.get(UserUtils.getUser().getOffice().getId()).getName());
+		String officeid = officeService.get(officeService.findOfficeIdByName(oaSealUse.getOfficeName())).getParentId();
+		if(!officeid.equals("0") && !officeid.equals("1")){
+			oaSealUse.setOfficeName(officeService.get(UserUtils.getUser().getOffice().getParentId()).getName());
+		}
+		model.addAttribute("oaSealUse", oaSealUse);
+		addTitle(model, oaSealUse);
+		addTask(model, oaSealUse);
+		return view;
+	}
+
+	/**
+	 * 新建提交，打回修改提交
+	 * 
+	 * flag 0 确定申请 1 取消申请
+	 */
+	@RequiresPermissions("oa:oaSealUse:edit")
+	@RequestMapping("save")
+	@Token(remove = true)
+	public String save(OaSealUse oaSealUse, Model model, RedirectAttributes redirectAttributes, String flag) {
+		if (!beanValidator(model, oaSealUse)) {
+			return form(oaSealUse, model, "");
+		}
+		oaSealUse.setFileId(OrdersUtils.getGenerateOrderNo8("CY_YZ"));//自动生成编号
+		oaSealUseService.save(oaSealUse, flag);
+		if(flag.equals("1")){
+			addMessage(redirectAttributes, "印章使用申请取消");
+		}else{
+			addMessage(redirectAttributes, "印章使用申请成功");
+		}
+		oaSealUse.setCreateBy(systemService.getUser(oaSealUse.getCreateBy().getId()));// 为页面查询出申请人的名字
+		return "redirect:" + Global.getAdminPath() + "/oa/oaSealUse/form?flag="+"view"+"&id=" + oaSealUse.getId();
+		//return "modules/oa/oaSealUseView";
+	}
+
+	/**
+	 * 上级审核页面
+	 */
+	@RequiresPermissions("oa:oaSealUse:view")
+	@RequestMapping("exam")
+	@Token(save = true)
+	public String exam(OaSealUse oaSealUse, Model model, int num) {
+		oaSealUse = init(oaSealUse);
+		
+		// 流程撤回按钮需要的procInsId 的model属性
+		model.addAttribute("procInsId", oaFlowBackService.isCanBack(oaSealUse.getProcInsId()));
+		
+		oaSealUse.setCreateBy(UserUtils.get(oaSealUse.getCreateBy().getId()));// 为页面查询出申请人的名字
+		model.addAttribute("oaSealUse", oaSealUse);
+		String view = "modules/oa/oaSealUseView";// 默认去查看页面
+		if (oaSealUseService.isDeal(oaSealUse)) {
+			// 流程撤回权交接操作
+			oaFlowBackService.saveNULL(oaSealUse.getProcInsId());
+			view = "modules/oa/oaSealUseExam" + num;// 有权限的人去审核页面
+		}
+		addTitle(model, oaSealUse);
+		addTask(model, oaSealUse);
+		return view;
+	}
+
+	/**
+	 * 审核是否通过 0：不同意 1：同意
+	 */
+	@RequiresPermissions("oa:oaSealUse:edit")
+	@RequestMapping("dealExam")
+	@Token(remove = true)
+	public String dealexam(OaSealUse oaSealUse, Model model, RedirectAttributes redirectAttributes, String exam,
+			int sign) {
+		if (!beanValidator(model, oaSealUse)) {
+			return exam(oaSealUse, model, sign);
+		}
+		oaSealUseService.dealexam(oaSealUse, exam, sign);
+		if(exam.equals("1")){
+			addMessage(redirectAttributes, "印章使用审核不通过！");
+		}else{
+			addMessage(redirectAttributes, "印章使用审核通过！");
+		}
+		
+		return "redirect:" + Global.getAdminPath() + "/oa/oaSealUse/form?flag="+"view"+"&id=" + oaSealUse.getId();
+		/*oaSealUse.setCreateBy(systemService.getUser(oaSealUse.getCreateBy().getId()));// 为页面查询出申请人的名字
+		return "modules/oa/oaSealUseView";*/
+	}
+
+	/**
+	 * 流程结束后的获取实体对象的方法
+	 * 
+	 */
+	private OaSealUse init(OaSealUse oaSealUse) {
+		if (oaSealUse.getAct() != null && StringUtils.isNotBlank(oaSealUse.getAct().getProcInsId())) {
+			oaSealUse = oaSealUseService.getByProcInsId(oaSealUse.getAct().getProcInsId());
+		}
+		return oaSealUse;
+	}
+
+	/** 加入流程标题 */
+	private void addTitle(Model model, OaSealUse oaSealUse) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaSealUse.getId())) {
+			name = UserUtils.get(oaSealUse.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaSealUse.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		model.addAttribute("title", "印章申请流程【" + name + " " + date + "】");
+	}
+
+	/** 加入工作台对象，用于显示流程图 */
+	private void addTask(Model model, OaSealUse oaSealUse) {
+		// 如果流程已启动，给出流程图
+		if (oaSealUse.getProcInsId() != null
+				&& oaProVacateService.getTaskByProcInsId(oaSealUse.getProcInsId()) != null) {
+			model.addAttribute("task", oaProVacateService.getTaskByProcInsId(oaSealUse.getProcInsId()));
+		}
+	}
+}

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractSalesStageDao">
+    
+	<sql id="oaContractSalesStageColumns">
+		a.id AS "id",
+		a.contract_sales_id AS "contractSales.id",
+		a.pay_stage AS "payStage",
+		a.check_complete_time AS "checkCompleteTime",
+		a.check_file AS "checkFile",
+		a.is_billing AS "isBilling",
+		a.billing_money AS "billingMoney",
+		a.billing_time AS "billingTime",
+		a.is_gathering AS "isGathering",
+		a.billing_content AS "billingContent",
+		a.billing_no AS "billingNo",
+		a.billing_receipt AS "billingReceipt",
+		a.billing_type AS "billingType",
+		a.situation_description AS "situationDescription",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.pay_stage_index AS "payStageIndex"
+	</sql>
+	
+	<sql id="oaContractSalesStageJoins">
+	</sql>
+    
+	<select id="get" resultType="OaContractSalesStage">
+		SELECT 
+			<include refid="oaContractSalesStageColumns"/>
+		FROM oa_contract_sales_stage a
+		<include refid="oaContractSalesStageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getMaxPayStageIndex" resultType="Integer">
+		SELECT 
+			IFNULL(MAX(a.pay_stage_index), 0) as maxPayStageIndex
+		FROM oa_contract_sales_stage a
+		WHERE a.contract_sales_id = #{contractSalesId} and a.del_flag='0'
+	</select>
+	
+	<select id="findList" resultType="OaContractSalesStage">
+		SELECT 
+			<include refid="oaContractSalesStageColumns"/>
+		FROM oa_contract_sales_stage a
+		<include refid="oaContractSalesStageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractSales != null and contractSales.id != null and contractSales.id != ''">
+				AND a.contract_sales_id=#{contractSales.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.pay_stage_index ASC,a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContractSalesStage">
+		SELECT 
+			<include refid="oaContractSalesStageColumns"/>
+		FROM oa_contract_sales_stage a
+		<include refid="oaContractSalesStageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract_sales_stage(
+			id,
+			contract_sales_id,
+			pay_stage,
+			check_complete_time,
+			check_file,
+			is_billing,
+			billing_money,
+			billing_time,
+			is_gathering,
+			billing_content,
+			billing_no,
+			billing_receipt,
+			billing_type,
+			situation_description,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			pay_stage_index
+		) VALUES (
+			#{id},
+			#{contractSales.id},
+			#{payStage},
+			#{checkCompleteTime},
+			#{checkFile},
+			#{isBilling},
+			#{billingMoney},
+			#{billingTime},
+			#{isGathering},
+			#{billingContent},
+			#{billingNo},
+			#{billingReceipt},
+			#{billingType},
+			#{situationDescription},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{payStageIndex}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_sales_stage SET 	
+			contract_sales_id = #{contractSales.id},
+			pay_stage = #{payStage},
+			check_complete_time = #{checkCompleteTime},
+			check_file = #{checkFile},
+			is_billing = #{isBilling},
+			billing_money = #{billingMoney},
+			billing_time = #{billingTime},
+			is_gathering = #{isGathering},
+			billing_content = #{billingContent},
+			billing_no = #{billingNo},
+			billing_receipt = #{billingReceipt},
+			billing_type = #{billingType},
+			situation_description = #{situationDescription},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			pay_stage_index=#{payStageIndex}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_sales_stage SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE contract_sales_id = #{contractSales.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

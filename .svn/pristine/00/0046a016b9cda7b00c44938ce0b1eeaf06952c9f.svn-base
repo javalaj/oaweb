@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.to.UserTotalrecordsDao">
+    
+	<sql id="userTotalrecordsColumns">
+		a.id AS "id",
+		a.user_id AS "userId",
+		a.sum_score AS "sumScore",
+		a.weeksign AS "weeksign",
+		a.avg_score AS "avgScore",
+		a.pre_commonid AS "preCommonid"
+	</sql>
+	
+	<sql id="userTotalrecordsJoins">
+	</sql>
+    
+	<select id="get" resultType="UserTotalrecords">
+		SELECT 
+			<include refid="userTotalrecordsColumns"/>
+		FROM user_totalrecords a
+		<include refid="userTotalrecordsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="UserTotalrecords">
+		SELECT 
+			<include refid="userTotalrecordsColumns"/>
+		FROM user_totalrecords a
+		<include refid="userTotalrecordsJoins"/>
+		<where>
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="UserTotalrecords">
+		SELECT 
+			<include refid="userTotalrecordsColumns"/>
+		FROM user_totalrecords a
+		<include refid="userTotalrecordsJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="inserti">
+		INSERT INTO user_totalrecords(
+			id,
+			user_id,
+			sum_score,
+			weeksign,
+			avg_score,
+			pre_commonid
+		) VALUES (
+			#{id},
+			#{userId},
+			#{sumScore},
+			#{weeksign},
+			#{avgScore},
+			#{preCommonid}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE user_totalrecords SET 	
+			sum_score = #{sumScore},
+			weeksign = #{weeksign},
+			avg_score = #{avgScore}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM user_totalrecords
+		WHERE pre_commonid  = #{preCommonid}
+	</update>
+	
+		<select id="getList" resultType="UserTotalrecords">
+		SELECT 
+			<include refid="userTotalrecordsColumns"/>
+		FROM user_totalrecords a
+		<include refid="userTotalrecordsJoins"/>
+		WHERE a.pre_commonid = #{preCommonid}
+	</select>
+	<!-- 统计月总评分 月平均分 -->
+	 <select id='toSum'  resultMap="stoMap">
+	SELECT
+	SUM(a.sum_score)AS sum,
+    count(a.weeksign)AS week,
+    a.user_id AS nameid
+FROM
+	user_totalrecords a
+where a.pre_commonid=#{preCommonid}
+GROUP BY 	a.user_id
+	 </select>
+	<resultMap type="Map" id="stoMap">
+		<result property="sum" column="sum"></result>
+		<result property="week" column="week"></result>
+		<result property="nameid" column="nameid"></result>
+	</resultMap>
+	
+	
+	
+</mapper>

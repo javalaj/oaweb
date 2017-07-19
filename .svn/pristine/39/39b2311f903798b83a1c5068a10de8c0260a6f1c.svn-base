@@ -1,0 +1,160 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>申请用车</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document).ready(
+			function() {
+				//$("#name").focus();
+				$("#inputForm")
+						.validate(
+								{
+									submitHandler : function(form) {
+// 										loading('正在提交，请稍等...');
+										form.submit();
+									},
+									errorContainer : "#messageBox",
+									errorPlacement : function(error, element) {
+										$("#messageBox").text("输入有误，请先更正。");
+										if (element.is(":checkbox")
+												|| element.is(":radio")
+												|| element.parent().is(
+														".input-append")) {
+											error.appendTo(element.parent()
+													.parent());
+										} else {
+											error.insertAfter(element);
+										}
+									}
+								});
+			});
+	
+			function choose(){
+				var a=document.getElementsByName("exam");
+				for(i=0;i<a.length;i++){
+					if(a[i].checked==true){
+						return true;
+					}
+				}
+				top.$.jBox.tip.mess = 1;
+				top.$.jBox.tip("请选择是否同意申请！！！", "error", {
+					persistent : true,
+					opacity : 0
+				});
+				$("#messageBox").show();
+				return false;
+			}
+			
+</script>
+</head>
+<body>
+	<ul class="nav nav-tabs">
+		<li class="active"><a
+			href="${ctx}/oa/oaUsecar/exam?id=${oaUsecar.id}">审核-用车申请</a></li>
+	</ul>
+	<br />
+	<form:form id="inputForm" modelAttribute="oaUsecar"
+		action="${ctx}/oa/oaUsecar/dealExam" method="post"
+		class="form-horizontal">
+		<legend>${title }</legend>
+		<input type="hidden" name="token" value="${token }">
+		<form:hidden path="id" />
+		<form:hidden path="procInsId" />
+		<form:hidden path="fileId" />
+		<form:hidden path="department" />
+		<form:hidden path="createBy.id" />
+		<form:hidden path="usereason" />
+		<form:hidden path="destination" />
+		<form:hidden path="usescope" />
+		<input type="hidden" name="usetime"
+			value="<fmt:formatDate value="${oaUsecar.usetime}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+
+
+		<sys:message content="${message}" />
+
+		<div class="control-group">
+			<label class="control-label">用车部门：</label>
+			<div class="controls">
+			<input type="text" value="${oaUsecar.department}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申&nbsp;&nbsp;请&nbsp;&nbsp;人：</label>
+			<div class="controls">
+				<input type="text" value="${oaUsecar.createBy.name}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">用车时间：</label>
+			<div class="controls">
+				<input type="text" value="<fmt:formatDate value="${oaUsecar.usetime}"
+					pattern="yyyy-MM-dd HH:mm:ss" />" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">用车原因：</label>
+			<div class="controls">
+				<input type="text" value="${oaUsecar.usereason}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">目&nbsp;&nbsp;的&nbsp;&nbsp;地：</label>
+			<div class="controls">
+				<input type="text" value="${oaUsecar.destination}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+
+		<div class="control-group">
+			<label class="control-label">用车范围：</label>
+			<div class="controls">
+				<input type="text" value="${oaUsecar.usescope}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		
+		<div class="control-group">
+			<label class="control-label">审批决定：</label>
+			<div class="controls">
+				<input type="radio" name="exam" value="0">同意
+				<input type="radio" name="exam" value="1" checked="checked">不同意
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">人事意见：</label>
+			<div class="controls">
+				<input type="text" name="examtext" value="${oaUsecar.examtext}"
+					class="form-control required" required="required" style="width:40%;" maxlength="100"
+					<c:if test="${not empty oaUsecar.examtext}">disabled</c:if> />
+			</div>
+		</div>
+		<c:if test="${not empty oaUsecar.examtext}">
+		<div class="control-group">
+			<label class="control-label">变更地点：</label>
+			<div class="controls">
+				<input type="text" name="destinationchange" value="${oaUsecar.destinationchange}" readonly="readonly" class="form-control" style="width:40%;"/>			
+			</div>
+		</div>
+		</c:if>
+		<div class="control-group">
+			<label class="control-label">人事意见(变更目的地)：</label>
+			<div class="controls">
+				<input type="text" name="examtext2" value="${oaUsecar.examtext2}" 
+				class="form-control required" style="width:40%;" maxlength="100" 
+				<c:if test="${empty oaUsecar.examtext}">disabled</c:if> />				
+			</div>
+		</div>
+				
+		<div class="form-actions" style="text-align:left; margin-top:15px;margin-bottom: 15px;">
+			<shiro:hasPermission name="oa:oaUsecar:edit">
+				<input id="btnSubmit" class="btn btn-primary" type="submit"
+				   onclick="return choose();" value="提交审核" />&nbsp;</shiro:hasPermission>
+			<input id="btnCancel" class="btn" type="button" value="返 回"
+				onclick="history.go(-1)" />
+			<c:if test="${task != null}">
+				&nbsp;<input onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn" type="button" value="流程跟踪" />
+			</c:if>
+		</div>
+	</form:form>
+</body>
+</html>

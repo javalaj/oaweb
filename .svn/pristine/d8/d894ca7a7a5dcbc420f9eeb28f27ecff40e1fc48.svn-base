@@ -1,0 +1,56 @@
+/**
+ * 
+ * 
+ * 自定义jquery 的特殊 validate验证方法
+ * 
+ * 
+ * 
+ */
+function xin_validate() {
+
+	/** 时间必须大于特定的节点对象的动态值 */
+	jQuery.validator.addMethod("min_date", function(value, element, param) {
+		if (value >= $(param).val()) {
+			return true;
+		}
+		return false;
+	}, $.validator.format("时间错误"));
+
+	/** 时间必须大于特定的节点对象的动态值 */
+	jQuery.validator.addMethod("min_date_ne", function(value, element, param) {
+		if (value > $(param).val()) {
+			return true;
+		}
+		return false;
+	}, $.validator.format("时间错误"));
+
+	/** 小数点一位小数，的正数 (请假/调休) */
+	jQuery.validator.addMethod("number_1", function(value, element, param) {
+		var patten = /^\d+(\.?\d){0,1}$/;
+		if (patten.test(value)) {
+			return true;
+		}
+		return false;
+	}, $.validator.format("请输入最多包含一位小数的正数"));
+
+	/** 验证手机号码 */
+	jQuery.validator
+			.addMethod(
+					"mobile_num",
+					function(value, element, param) {
+						var patten = /^(13[0-9]|14[5|7]|15[0|1|2|3|5|6|7|8|9]|18[0-9]|170)\d{8}$/;
+						if (patten.test(value)) {
+							return true;
+						}
+						return false;
+					}, $.validator.format("请输入合法手机号码"));
+
+	/** 整数几的倍数 (请假 如：4) */
+	jQuery.validator.addMethod("times", function(value, element, param) {
+		var patten = /^\d+$/;
+		if ((patten.test(value)) && (value % param == 0)) {
+			return true;
+		}
+		return false;
+	}, $.validator.format("数据应该为？的倍数"));
+}

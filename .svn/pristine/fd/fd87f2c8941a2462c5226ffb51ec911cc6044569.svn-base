@@ -1,0 +1,329 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>请假流程管理</title>
+<meta name="decorator" content="default" />
+
+<script type="text/javascript">
+	$(document).ready(
+			function() {
+				//重复时间段的提交内容，警告
+				if ('${warn}' == 'true') {
+					confirmx("该时间段，已经存在申请，是否继续？", function() {
+						$("input[name=realGo]").val(true);
+						$(".form-actions").hide();
+						$("#inputForm").submit();
+					});
+				}
+				//加载自已的验证方法
+				xin_validate();
+				//保单验证
+				$("#inputForm")
+						.validate(
+								{
+									rules : {
+										vacatebegindate : {
+											required : true,
+											min_date : $("#shenqingdate")[0]
+										},
+										vacateenddate : {
+											required : true,
+											min_date : $("#vacatebegindate")[0]
+										},
+										vacatedays : {
+											required : true,
+											times : 4,
+											min : 4
+											<c:if test="${isTX}">,max : $("#restTime").val() * 1</c:if>
+										},
+										vacatedesc : {
+											required : true
+										}
+									},
+									messages : {
+										vacatebegindate : {
+											required : "必填信息",
+											min_date : "时间必须大于或等于申请时间"
+										},
+										vacateenddate : {
+											required : "必填信息",
+											min_date : "时间必须大于或等于开始时间"
+										},
+										vacatedays : {
+											required : "必填信息",
+											times    : "时长为正整数且为4的整数倍"
+										},
+										vacatedesc : {
+											required : "必填信息"
+										}
+									},
+									submitHandler : function(form) {
+
+										//loading('正在提交，请稍等...');
+										form.submit();
+									},
+									errorContainer : "#messageBox",
+									errorPlacement : function(error, element) {
+										$("#messageBox").text("输入有误，请先更正。");
+										if (element.is(":checkbox")
+												|| element.is(":radio")
+												|| element.parent().is(
+														".input-append")) {
+											error.appendTo(element.parent()
+													.parent());
+										} else {
+											error.insertAfter(element);
+										}
+									}
+								});
+
+			});
+	/* //表单提交方法
+	$("#btnSubmit").click(function() {
+		//var judge2 = judge22();
+		//return judge2;
+		return true;
+	}); */
+
+	/*if (confirm("该时间段，已经存在申请，是否继续？")) {
+	 $("input[name=realGo]").val(true);
+	 $(".form-actions").hide();
+	 $("#inputForm").submit();
+	 }*/
+
+	/* 	$("#btnPNG")
+	 .click(
+	 function() {
+	 top.$.jBox
+	 .open(
+	 "iframe:/oa/a/act/task/trace/photo/${task.processDefinitionId}/${task.executionId}",
+	 "流程跟踪",
+	 1400,
+	 500,
+	 {
+	 buttons : {
+	 "关闭" : true
+	 },
+	 submit : function(
+	 v, h, f) {
+
+	 },
+	 loaded : function(
+	 h) {
+	 $(
+	 ".jbox-content",
+	 top.document)
+	 .css(
+	 "overflow-y",
+	 "hidden");
+	 }
+	 });
+	 }); */
+	//$("#name").focus();
+	/* function judge22() {
+		var judge = true; */
+	//时间大小判断
+	//not null
+	/* if ($("input[name=vacatebegindate]").val() == "") {
+		$("input[name=vacatebegindate]").next().children().text("必填信息 *");
+		judge = false;
+	} else {
+		$("input[name=vacatebegindate]").next().children().text(" *");
+	}
+	if ($("input[name=vacateenddate]").val() == "") {
+		$("input[name=vacateenddate]").next().children().text("必填信息 *");
+		judge = false;
+	} else {
+		$("input[name=vacateenddate]").next().children().text(" *");
+	} */
+	//start>end
+	/* if (judge) {
+		var min = $("input[name=vacatebegindate]").val();
+		var max = $("input[name=vacateenddate]").val();
+		//var min = new Date($("input[name=vacatebegindate]").val());
+		//var max = new Date($("input[name=vacateenddate]").val());
+		//alert(min.toString()+" "+max.toString());
+		if (min >= max) {
+			$("input[name=vacateenddate]").next().children().text("时间错误 *");
+			judge = false;
+		} else {
+			$("input[name=vacateenddate]").next().children().text(" *");
+		}
+	} */
+	//时长判断
+	/* var patten = /^\d+\.?\d{0,1}$/;
+	if ($("input[name=vacatedays]").val() == '') {
+		$("input[name=vacatedays]").next().children().text("必填信息 *");
+		judge = false;
+	} else {
+		if (patten.test($("input[name=vacatedays]").val())) {
+			if ('${isTX}' == 'true') {
+				//调休小时数范围控制
+				if ($("input[name=vacatedays]").val() * 1 > $("#restTime")
+						.val() * 1) {
+					$("input[name=vacatedays]").next().children().text(
+							"超过可调休时长 *");
+					judge = false;
+				} else {
+					$("input[name=vacatedays]").next().children()
+							.text(" *");
+				}
+			}
+		} else {
+			$("input[name=vacatedays]").next().children()
+					.text("输入一位小数(正)*");
+			judge = false;
+		}
+	} */
+	//请假说明
+	/* if ($("input[name=vacatedesc]").val() == "") {
+		$("input[name=vacatedesc]").next().children().text("必填信息 *");
+		judge = false;
+	} else {
+		$("input[name=vacatedesc]").next().children().text(" *");
+	} */
+	/* 	return judge;
+	} */
+</script>
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/liuxin/css/liucheng.css">
+<style>
+.form-inline .form-control {
+	width: 30%;
+}
+</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title printHidden">
+				<h5>${oaProVacate.vacateTitle}</h5>
+			</div>
+			<div class="ibox-content">
+				<%--
+				<ul class="nav nav-tabs">
+					<li class="active"><a
+						href="${ctx}/oa/coding/oaProVacate/form?id=${oaProVacate.id}">请假流程<shiro:hasPermission
+								name="oa:coding:oaProVacate:edit">${not empty oaProVacate.id?'修改':'添加'}</shiro:hasPermission>
+							<shiro:lacksPermission name="oa:coding:oaProVacate:edit">查看</shiro:lacksPermission>
+					</a></li>
+				</ul>
+				<br />
+				 --%>
+				<form:form id="inputForm" modelAttribute="oaProVacate"
+					action="${ctx}/oa/coding/oaProVacate/save" method="post"
+					class="form-inline">
+					<form:hidden path="id" />
+					<form:hidden path="vacateTitle" />
+					<input type="hidden" name="isTX" value="${isTX}" />
+					<input type="hidden" name="realGo" value="false" />
+					<input type="hidden" name="token" value="${token }">
+					<div class="control-group">
+						<label class="control-label">申请日期：</label> <input name="applydate"
+							id="shenqingdate" type="text" readonly="readonly" maxlength="20"
+							class="laydate-icon form-control"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaProVacate.applydate}" pattern="yyyy-MM-dd HH:mm:ss"/>" />
+						<span class="help-inline"><font color="red"></font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">请假开始时间：</label> <input
+							name="vacatebegindate" type="text" readonly="readonly"
+							id="vacatebegindate" maxlength="20"
+							class="laydate-icon form-control"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaProVacate.vacatebegindate}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" />
+						<span class="help-inline"><font id="vacatebegindateVali"
+							color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">请假截止时间：</label> <input
+							name="vacateenddate" type="text" readonly="readonly"
+							id="vacateenddate" maxlength="20"
+							class="laydate-icon form-control"
+							style="background-color: #FFFFFF;"
+							value="<fmt:formatDate value="${oaProVacate.vacateenddate}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+							onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" />
+						<span class="help-inline"><font id="vacateenddateVali"
+							color="red">*</font> </span>
+					</div>
+					<c:if test="${isTX}">
+						<div class="control-group">
+							<label class="control-label" style="color: blue">可调休时长：</label> <input
+								id="restTime" type="text" value="${restTime}"
+								readonly="readonly" class="form-control input-sm"
+								style="background-color: #FFFFFF;">
+						</div>
+					</c:if>
+					<div class="control-group">
+						<label class="control-label">请假小时数：</label>
+
+						<form:input path="vacatedays" htmlEscape="false" maxlength="11"
+							id="vacatedays" class="form-control input-sm" autocomplete="off" />
+						<span class="help-inline"><font id="vacatedaysVali"
+							color="red">*</font> </span>
+					</div>
+					<c:if test="${!isTX}">
+						<div class="control-group">
+							<label class="control-label">请假事由：</label>
+
+							<form:select path="vacatetype" class="form-control">
+								<form:options items="${fns:getDictList('pro_vacate_type_show')}"
+									itemLabel="label" itemValue="value" htmlEscape="false" />
+							</form:select>
+							<span class="help-inline"><font color="red">*</font> </span>
+						</div>
+					</c:if>
+					<c:if test="${isTX}">
+						<div class="control-group">
+							<label class="control-label">请假事由：</label> <input type="hidden"
+								name="vacatetype" readonly="readonly" value="2" /> 调休
+						</div>
+					</c:if>
+					<div class="control-group">
+						<label class="control-label">请假说明：</label>
+
+						<form:input path="vacatedesc" htmlEscape="false" maxlength="10000"
+							id="vacatedesc" class="form-control input-sm" autocomplete="off" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</div>
+					<div class="control-group">
+						<label class="control-label">是否提交：</label> <input type="radio"
+							class="i-checks" name="exam" value="1" checked="checked"></input>提交
+						<input type="radio" name="exam" value="0" class="i-checks"></input>作废
+					</div>
+					<div class="control-group">
+						<label class="control-label">通知抄送：</label>
+
+						<sys:treeselect id="user" name="toSendMessageUserid"
+							value="${oaProVacate.toSendMessageUserid}"
+							labelName="toSendMessageUsername"
+							labelValue="${oaProVacate.toSendMessageUsername}" title="用户"
+							url="/sys/office/treeData?type=3"
+							cssClass="form-control input-sm"
+							cssStyle="background-color: #FFFFFF;" allowClear="true"
+							notAllowSelectParent="true" checked="true" />
+					</div>
+					<div class="form-actions">
+						<shiro:hasPermission name="oa:coding:oaProVacate:edit">
+							<input id="btnSubmit" class="btn btn-primary" type="submit"
+								value="提 交" />&nbsp;</shiro:hasPermission>
+						<input id="btnCancel" class="btn" type="button" value="返 回"
+							onclick="history.go(-1)" />
+						<c:if test="${task != null}">
+				&nbsp;<input id="btnPNG" class="btn" type="button" value="流程跟踪"
+								onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' />
+						</c:if>
+
+					</div>
+					<c:if test="${not empty oaProVacate.id}">
+						<act:histoicFlow procInsId="${oaProVacate.procInsId}" />
+					</c:if>
+				</form:form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

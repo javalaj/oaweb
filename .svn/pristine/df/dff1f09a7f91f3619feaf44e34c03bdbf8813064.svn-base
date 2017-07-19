@@ -1,0 +1,46 @@
+<%@ tag language="java" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<%@ attribute name="id" type="java.lang.String" required="true"%>
+<%@ attribute name="cssClass" type="java.lang.String" required="false"%>
+<%@ attribute name="cssStyle" type="java.lang.String" required="false"%>
+<div id="${id}" class="mui-segmented-control mui-segmented-control-primary ${cssClass}" style="background: #fff;${cssStyle}"></div>
+<%-- 使用方法： 1.将本tag写在查询的form之前；2.传入table的id和controller的url --%>
+<script type="text/javascript">
+	$(document).ready(function() {
+	    
+	});
+	function addCellTo${id}(data){
+		var tpl = $("#tpl${id}").html().replace(/(\/\/\<!\-\-)|(\/\/\-\->)/g,"");
+		$("#${id}").append(Mustache.render(tpl, data));
+	}
+</script>
+
+<script type="text/template" id="tpl${id}">
+	<a class="overwrite-mui-control-item {{#isActive}}overwrite-mui-active{{/isActive}}" href="javascript:;" onclick="location.href='{{url}}'">
+		<i class="mui-icon {{icon}}" style="font-size:14px;">{{title}}</i>
+	</a>
+</script>
+<style>
+.overwrite-mui-control-item{
+	line-height: 38px;
+    display: table-cell;
+    overflow: hidden;
+    width: 1%;
+    -webkit-transition: background-color .1s linear;
+    transition: background-color .1s linear;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #007aff;
+    border-color: #1a81d1;
+    border-left: 1px solid #1a81d1;
+}
+ .overwrite-mui-active{
+    color: #fff;
+    background-color: #1a81d1;
+}
+
+.overwrite-mui-control-item:first-child {
+    border-left-width: 0;
+}
+</style>

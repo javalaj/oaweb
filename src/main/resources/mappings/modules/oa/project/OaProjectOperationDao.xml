@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.project.OaProjectOperationDao">
+    
+	<sql id="oaProjectOperationColumns">
+		a.id AS "id",
+		a.project_id AS "project.id",
+		a.operation_time AS "operationTime",
+		a.operation_person_id AS "operationPerson.id",
+		a.operation_description AS "operationDescription",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u4.name AS "operationPerson.name",
+		u6.name AS "createBy.name",
+		u8.name AS "updateBy.name"
+	</sql>
+	
+	<sql id="oaProjectOperationJoins">
+		LEFT JOIN oa_project b ON b.id = a.project_id
+		LEFT JOIN sys_user u4 ON u4.id = a.operation_person_id
+		LEFT JOIN sys_user u6 ON u6.id = a.create_by
+		LEFT JOIN sys_user u8 ON u8.id = a.update_by
+	</sql>
+    
+	<select id="get" resultType="OaProjectOperation">
+		SELECT 
+			<include refid="oaProjectOperationColumns"/>
+		FROM oa_project_operation a
+		<include refid="oaProjectOperationJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaProjectOperation">
+		SELECT 
+			<include refid="oaProjectOperationColumns"/>
+		FROM oa_project_operation a
+		<include refid="oaProjectOperationJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="project != null and project.id != null and project.id != ''">
+				AND a.project_id = #{project.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaProjectOperation">
+		SELECT 
+			<include refid="oaProjectOperationColumns"/>
+		FROM oa_project_operation a
+		<include refid="oaProjectOperationJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_project_operation(
+			id,
+			project_id,
+			operation_time,
+			operation_person_id,
+			operation_description,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag
+		) VALUES (
+			#{id},
+			#{project.id},
+			#{operationTime},
+			#{operationPerson.id},
+			#{operationDescription},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_project_operation SET 	
+			project_id = #{project.id},
+			operation_time = #{operationTime},
+			operation_person_id = #{operationPerson.id},
+			operation_description = #{operationDescription},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_project_operation SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE project_id = #{project.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

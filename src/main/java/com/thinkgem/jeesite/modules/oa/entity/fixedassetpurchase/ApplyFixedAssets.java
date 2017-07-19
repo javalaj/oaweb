@@ -1,0 +1,235 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity.fixedassetpurchase;
+
+import org.hibernate.validator.constraints.Length;
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
+
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+
+/**
+ * 固定资产申购Entity
+ * @author zf
+ * @version 2017-01-09
+ */
+public class ApplyFixedAssets extends ActEntity<ApplyFixedAssets> {
+	
+	private static final long serialVersionUID = 1L;
+	private User applyName;		// 申请人
+	private String applyDept;		// 申请部门
+	private Date applyTime;		// 申请时间
+	private Date arriveTime;		// 期望到货时间
+	private String assetsCategory;		// 资产类别
+	private String applyTitle;		// 申请标题
+	private String deptDirectorSuggestion;		// 部门主管意见
+	private String otherDirectorSuggestion;		// 相关部门意见
+	private String generalManagerSuggestion;		// 总经理意见
+	private String purchaser;		// 采购人员意见
+	private String admin;		// 资产管理员意见
+	private String status;		// 审批状态（0：未送审；1：部门主管审批；2：相关部门审批；3：总经理审批；4：商务部审批；5：管理员入库；y：已结案；x:已销毁;z:修改）
+	private String isStart;		// 是否已进入流程（0：未开启；1：已开启）
+	private Date beginApplyTime;		// 开始 申请时间
+	private Date endApplyTime;		// 结束 申请时间
+	
+	private Office reletiveOffice;			//相关部门
+	
+	/**流程id*/
+	public static final String PROC_DEF_KEY = "apply_fixed_assets";
+	
+	/**物业表名称*/
+	public static final String BUSINESS_TABLE = "apply_fixed_assets";
+	
+	/**流程查看路径*/
+	public static final String WORKFLOW_URL = "@@proNotify@@/oa/a/oa/fixedassetpurchase/applyFixedAssets/form?id=";
+	
+	/**流程名称*/	
+	public static final String WORKFLOW_NAME = "固定资产申购";
+	
+	/**未送审*/
+	public static final String WITHOUT_APPROVAL = "0";
+	
+	/**部门主管审批*/
+	public static final String DEPTDIRECTOR_EXAM = "1";
+	
+	/**相关部门审批*/
+	public static final String RELETIVEOFFICE_EXAM = "2";
+	
+	/**总经理审批*/
+	public static final String GENERALMANAGER_EXAM = "3";
+	
+	/**商务部审批*/
+	public static final String PURCHASER_EXAM = "4";
+	
+	/**管理员入库*/
+	public static final String ADMIN_EXAM = "5";
+	
+	/**已结案*/
+	public static final String COMPLETED = "y";
+	
+	/**修改*/
+	public static final String MODIFY = "z";
+
+	private String title;
+	
+	public ApplyFixedAssets() {
+		super();
+	}
+
+	public ApplyFixedAssets(String id){
+		super(id);
+	}
+
+	@Length(min=0, max=255, message="申请部门长度必须介于 0 和 255 之间")
+	public String getApplyDept() {
+		return applyDept;
+	}
+
+	public void setApplyDept(String applyDept) {
+		this.applyDept = applyDept;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getApplyTime() {
+		return applyTime;
+	}
+
+	public void setApplyTime(Date applyTime) {
+		this.applyTime = applyTime;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getArriveTime() {
+		return arriveTime;
+	}
+
+	public void setArriveTime(Date arriveTime) {
+		this.arriveTime = arriveTime;
+	}
+	
+	@Length(min=0, max=255, message="资产类别长度必须介于 0 和 255 之间")
+	public String getAssetsCategory() {
+		return assetsCategory;
+	}
+
+	public void setAssetsCategory(String assetsCategory) {
+		this.assetsCategory = assetsCategory;
+	}
+	
+	@Length(min=0, max=30, message="申请标题长度必须介于 0 和 30 之间")
+	public String getApplyTitle() {
+		return applyTitle;
+	}
+
+	public void setApplyTitle(String applyTitle) {
+		this.applyTitle = applyTitle;
+	}
+	
+	@Length(min=0, max=30, message="部门主管意见长度必须介于 0 和 30 之间")
+	public String getDeptDirectorSuggestion() {
+		return deptDirectorSuggestion;
+	}
+
+	public void setDeptDirectorSuggestion(String deptDirectorSuggestion) {
+		this.deptDirectorSuggestion = deptDirectorSuggestion;
+	}
+	
+	@Length(min=0, max=30, message="相关部门意见长度必须介于 0 和 30 之间")
+	public String getOtherDirectorSuggestion() {
+		return otherDirectorSuggestion;
+	}
+
+	public void setOtherDirectorSuggestion(String otherDirectorSuggestion) {
+		this.otherDirectorSuggestion = otherDirectorSuggestion;
+	}
+	
+	@Length(min=0, max=30, message="总经理意见长度必须介于 0 和 30 之间")
+	public String getGeneralManagerSuggestion() {
+		return generalManagerSuggestion;
+	}
+
+	public void setGeneralManagerSuggestion(String generalManagerSuggestion) {
+		this.generalManagerSuggestion = generalManagerSuggestion;
+	}
+	
+	@Length(min=0, max=30, message="采购人员意见长度必须介于 0 和 20 之间")
+	public String getPurchaser() {
+		return purchaser;
+	}
+
+	public void setPurchaser(String purchaser) {
+		this.purchaser = purchaser;
+	}
+	
+	@Length(min=0, max=30, message="资产管理员意见长度必须介于 0 和 30 之间")
+	public String getAdmin() {
+		return admin;
+	}
+
+	public void setAdmin(String admin) {
+		this.admin = admin;
+	}
+	
+	@Length(min=0, max=1, message="状态长度必须介于 0 和 1 之间")
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	
+	@Length(min=0, max=1, message="是否已进入流程（0：未开启；1：已开启）长度必须介于 0 和 1 之间")
+	public String getIsStart() {
+		return isStart;
+	}
+
+	public void setIsStart(String isStart) {
+		this.isStart = isStart;
+	}
+	
+	public Date getBeginApplyTime() {
+		return beginApplyTime;
+	}
+
+	public void setBeginApplyTime(Date beginApplyTime) {
+		this.beginApplyTime = beginApplyTime;
+	}
+	
+	public Date getEndApplyTime() {
+		return endApplyTime;
+	}
+
+	public void setEndApplyTime(Date endApplyTime) {
+		this.endApplyTime = endApplyTime;
+	}
+
+	public User getApplyName() {
+		return applyName;
+	}
+
+	public void setApplyName(User applyName) {
+		this.applyName = applyName;
+	}
+
+	public String getTitle() {
+		return title;
+	}
+
+	public void setTitle(String title) {
+		this.title = title;
+	}
+
+	public Office getReletiveOffice() {
+		return reletiveOffice;
+	}
+
+	public void setReletiveOffice(Office reletiveOffice) {
+		this.reletiveOffice = reletiveOffice;
+	}
+
+		
+}

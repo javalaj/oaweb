@@ -1,0 +1,197 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>公文审批详情</title>
+	<meta name="decorator" content="default"/>
+	
+	<script type="text/javascript" src="${ctxStatic}/jquery/jquery-ui.min.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			$("#modal-container-262575").draggable({
+				handle : ".modal-header",
+				cursor : 'move',
+				refreshPositions : false
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="ibox-title">
+<!-- 		<h5>查看--发文审核</h5> -->
+	</div>
+	
+	<form:form class="form-horizontal" style="margin-top: 15px;">
+		<sys:message content="${message}"/>
+		<input type="hidden" name="issuedate"
+			value="<fmt:formatDate value="${oaArchives.issuedate}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+		<input type="hidden" name="draftdate"
+			value="<fmt:formatDate value="${oaArchives.draftdate}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+		<input type="hidden" name=qianfadate
+			value="<fmt:formatDate value="${oaArchives.qianfadate}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+		
+		<table class="table-form">
+			<caption>
+				<h3 align="center" style="font-size: 20px;font-weight: bolder;">${fns:getConfig('oaArchivesCaption')}</h3>
+			</caption>			
+				<tbody>
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">发文字号：</label>
+						<input type="text" value=" ${oaArchives.code}" class="form-control"  style="width:20%;" readonly="readonly">
+					</td>
+				</tr>
+					<tr>
+					<td class="all"><label class="control-label">密级：</label> 
+						<input type="text" value=" ${oaArchives.secrets}" class="form-control"  style="width:20%;" readonly="readonly">
+					</td>
+					<td><label class="control-label">紧急程度：</label>
+						<input type="text" value=" ${oaArchives.urgency}" class="form-control"  style="width:20%;" readonly="readonly"></td>
+					<td></td>
+
+				</tr>
+<!-- 					<tr class="note"> -->
+<!-- 						<td class="left" ><label class="control-label" for="manager">核稿：</label>			 -->
+<%-- 							${oaArchives.leadText} --%>
+<!-- 						<td class="right" colspan="2"> -->
+<!-- 							<label class="control-label">拟稿部门和拟稿人：</label> -->
+<%-- 							${oaArchives.office.name}&nbsp;${oaArchives.createBy.name} --%>
+<!-- 						</td>										 -->
+<!-- 					</tr> -->
+					<tr class="note">
+					<td class="left"><label class="control-label" for="manager">核稿人(时间)：</label>
+						${oaArchives.leadText}&nbsp;<fmt:formatDate value="${oaArchives.issuedate}"
+  					pattern="yyyy-MM-dd HH:mm:ss" />
+					<td class="right" colspan="2"><label class="control-label">拟稿部门和拟稿人：</label>
+					<input type="text" value="${oaArchives.officeName}&nbsp;${ oaArchives.createBy.name}&nbsp;
+						<fmt:formatDate value="${oaArchives.draftdate}" pattern="yyyy-MM-dd" />" class="form-control" style="width:40%;" readonly="readonly"/>
+					</td>
+					</tr>
+					<tr >
+						<td class="all" colspan="3">
+						<label class="control-label"  for="tilte">事由：</label>
+							<input type="text" value=" ${oaArchives.title}" class="form-control"  style="width:20%;" readonly="readonly">
+							<span class="help-inline"><font color="red">*</font> </span>
+						</td></tr>
+<!-- 					<tr > -->
+<!-- 						<td class="all" colspan="3"> -->
+<!-- 						<label class="control-label"  for="tilte">发文日期：</label> -->
+<%-- 							<fmt:formatDate value="${oaArchives.exeDate}" --%>
+<%--  								pattern="yyyy-MM-dd HH:mm:ss" />  --%>
+<!-- 						</td> -->
+<!-- 					</tr>	 -->
+						
+						
+<!-- 					<tr > -->
+						<%-- <td class="all" colspan="3">
+						<label class="control-label">发送：</label>
+						<sys:treeselect id="user" name="user.id" value="${oaArchives.user.id}" labelName="user.name" labelValue="${oaArchives.user.name}"
+					title="用户" url="/sys/office/treeData?type=3" cssClass="" allowClear="true" notAllowSelectParent="true"/>
+					
+						</td>
+						
+					
+					
+					 --%>
+												
+<!-- 					</tr> -->
+<tr >
+					<td class="all" colspan="3">
+						<label class="control-label" for="contenthref">正文：</label>
+						<a id="contenthref" href="#modal-container-262575"  
+			 			data-toggle="modal">正文内容</a>	
+					</td>
+				</tr>
+					<tr >
+						<td class="all" colspan="3">
+							<label class="control-label" for="files">附件：</label>
+<%-- 							<form:hidden id="files" path="files" htmlEscape="false" maxlength="255" class="input-xlarge"/>							 --%>
+							<input type="hidden"
+					id="billingFile${oaArchives.id}" value="${oaArchives.files}" /> <div style="margin-left: 10px;float: left;"><sys:ckfinder
+					input="billingFile${oaArchives.id}" readonly="true" type="files"
+					uploadPath="/oa/oaArchives" selectMultiple="true" /><%-- ${oaArchives.files} --%>
+						</div></td>
+												
+					</tr>
+						<tr >
+						<td class="all" colspan="3">
+						<label class="control-label">主题词：</label>
+<%-- 					<form:input path="keyword" htmlEscape="false" maxlength="255" class="input-xlarge " /> --%>
+							<input type="text" value=" ${oaArchives.keyword}" class="form-control"  style="width:20%;" readonly="readonly">
+						</td>
+												
+					</tr>
+					<tr>
+				<td class="all" colspan="3"><label class="control-label">部门负责人意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.leadText}</textarea>
+			</tr>
+			
+			<c:if test="${not empty oaArchives.signYfOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">研发部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signYfOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.signJsOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">技术部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signJsOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.signSwOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">市场拓展部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signSwOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.signScOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">市场部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signScOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.signRsOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">人事部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signRsOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.signCwOpinion }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">财务部副总意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.signCwOpinion}</textarea>
+				</tr>
+			</c:if>
+			<c:if test="${not empty oaArchives.managerText }">
+				<tr>
+					<td class="all" colspan="3"><label class="control-label">总经理签发意见：</label>
+					<textarea rows="0" class="form-control" style="width:20%; height:35px;" readonly="readonly">${oaArchives.managerText}</textarea>
+				</tr>
+			</c:if>												
+				</tbody>
+			</table>
+		<act:histoicFlow procInsId="${oaArchives.act.procInsId}" />
+		<div class="form-actions" style="text-align: left; margin-top: 15px; margin-bottom: 15px;">
+			<input id="btnCancel" class="btn" type="button" value="返 回" onclick="history.go(-1)"/>
+		</div>
+		<c:if test="${task != null}">
+				&nbsp;<input onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn" type="button" value="流程跟踪" />
+		</c:if>
+	</form:form>
+</body>
+</html>

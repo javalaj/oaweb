@@ -1,0 +1,409 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>保存成功</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+
+		$(document).ready(function() {
+			$("#btnCancle2").click(function(){
+				$("#iscancel").val("1");
+				submitForm();
+			})
+			$("#btnSubmit").click(function(){
+				submitForm();
+			})
+			
+			iscode()
+			validateForm = $("#inputForm").validate({
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			
+			$(".add1line").click(
+					function() {
+						$(this)
+							.parent()
+							.parent()
+							.before(
+		 					'<tr class="main-content"><td><input name="date" type="text" readonly="readonly" maxlength="20" style="width: 90%;" class="laydate-icon form-control layer-date input-sm" value="" onclick="WdatePicker({dateFmt:\'yyyy-MM-dd HH:mm:ss\',isShowClear:false});" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="currentunit"  style="width:90%" class="form-control required"/><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="reason" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="meals" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="alcoholtobacco" style="width:90%" class="form-control required" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="numOur" style="width:90%" class="form-control" /><span class="help-inline"><font color="red">*</font> </span></td><td><input type="text" name="numCustomers" class="form-control" style="width:90%" /><span class="help-inline"><font color="red">*</font> </span></td><td><select name="ispriorapproval" class="form-control"  style="width: 100%" onclick="ispriorapprovalClick(this)"><option value="是">是</option><option value="否" selected="selected">否</option></select></td><td><a onclick="del1line(this)"><img class="add-del-png" src=\'${ctxStatic}/images/del.png\'  style="width:16px;height:16px"/></a><input type="hidden" name="delFlag" value="0"></td></tr>');
+						return false;
+					});
+		});
+			
+		function iscode(){
+			var c = ${node};
+			if(c !="0"){
+				var tableId = document.getElementById("tab"); 
+				/* for(var i=1;i<tableId.rows.length;i++)
+				{
+					alert(123);
+					tableId.rows[i].cells[tableId.rows.length].className="display: none;";
+					alert(456);
+				}  */
+			}			
+		}
+		
+		function del1line(item) {
+			$(item).next().val("1");
+			$(item).parent().parent().hide();
+			return false;
+		}
+		
+		
+		function submitForm(){
+			var jstr={
+					enutil:{
+						node:$("input[name=node]").val(),
+						iscancel:$("input[name=iscancel]").val(),
+						fruit:$("input[name=fruit]").val(),
+						examtext:$("input[name=examtext]").val(),
+ 						createname:$("input[name=createname]").val()
+					},
+					log:{
+						id:$("#oaEnreimbStr").find("input[name=id]").val(),
+						procInsId: $("input[name=procInsId]").val(),
+// 						createBy:{id:$("input[name='createBy.id']").val()},
+// 						createBy.date: $("input[name=createBy.date]").val(), */
+						cwtext: $("input[name=cwtext]").val(),
+						moneyDouble: $("input[name=moneyDouble]").val(),
+						moneyString: $("input[name=moneyString]").val(),
+						officename: $("input[name=officename]").val()
+					},
+					list:[]
+			};
+			$(".main-content").each(function() {
+				var date = new Date($(this).find("input[name=date]").val());
+				var wr = {
+						id:$(this).find("input[name=id]").val(),
+						date :date.getTime(),//传到后台的日期是一个long字符
+						currentunit : $(this).find("input[name=currentunit]").val(),
+						reason : $(this).find("input[name=reason]").val(),
+						meals : $(this).find("input[name=meals]").val(),
+						alcoholtobacco : $(this).find("input[name=alcoholtobacco]").val(),
+						numOur : $(this).find("input[name=numOur]").val(),
+						numCustomers : $(this).find("input[name=numCustomers]").val(),
+						ispriorapproval : $(this).find("select[name=ispriorapproval]").val()						
+				};
+				jstr.list.push(wr);	
+			})
+			$.ajax({
+				url : "${ctx}/oa/enreimb/oaEnreimb/save",
+				type : "POST",
+				contentType : "application/json;charset=utf-8",
+				data : JSON.stringify(jstr),
+				dataType : "text",
+				success : function(date) {	
+						window.location.href = "${ctx}/oa/enreimb/oaEnreimb/form?id="+date+"";
+					}					
+			});
+		}
+	/* 	
+		function ispriorapprovalClick(item) {
+			if ($(item).val() == '否') {
+				$(item).parent().next().children().attr("readonly", false).next()
+						.children().text("*");
+			} else {
+				$(item).parent().next().children().attr("readonly", true).val("")
+						.next().children().text("");
+			}
+		}
+		function del1line(item) {
+			$(item).next().val("1");
+			$(item).parent().parent().hide();
+			return false;
+		} */
+	</script>
+	
+	<style type="text/css">
+		.oabody{
+			margin:20px;
+		}
+	</style>
+</head>
+<body class="oabody">
+	<%-- <form:form id="inputForm" class="form-horizontal"> --%>
+		<legend>${title}</legend>
+		<input type="hidden" name="token" value="${token }">
+		<div id="oaEnreimbUtil">			
+			<input type="hidden" value="${node}" name="node">
+			<input type="hidden" value="0" name="iscancel" id="iscancel">
+  			<input type="hidden" value="${oaEnreimb.createBy.id}" name="createname">
+		</div>
+		<div id="oaEnreimbStr">					
+			<input type="hidden" name="id" value="${oaEnreimb.id}">
+			<input type="hidden" name="procInsId" value="${oaEnreimb.procInsId}">
+<%-- 			<input type="hidden" name="createBy.id" value="${oaEnreimb.createBy.id}"> --%>
+			<%-- <input type="hidden" name="createBy.date" value="${oaEnreimb.createBy.date}"> --%>
+			<input type="hidden" name="cwtext" value="${oaEnreimb.cwtext}">
+			<input type="hidden" name="officename" value="${oaEnreimb.officename}">
+			<input type="hidden" name="moneyDouble" value="${oaEnreimb.moneyDouble}">
+			<input type="hidden" name="moneyString" value="${oaEnreimb.moneyString}">
+		<%-- <form:hidden path="id"/>
+		<form:hidden path="procInsId"/>
+		<form:hidden path="createBy.id"/> --%>
+		<sys:message content="${message}"/>
+		</div>
+		
+<!-- <label>招 待 费 报 销 审 批 单</label> -->
+		<table  class="table table-bordered  table-condensed dataTables-example dataTable no-footer"  id="tab">
+		<thead>
+			<tr>
+				<td rowspan="2" width=20%>日期</td>
+				<td rowspan="2" width=15%>往来单位</td>
+				<td rowspan="2" width=15%>洽谈事由及项目名称</td>
+				<td colspan="2" width=20%>实际金额</td>
+				<td colspan="2" width=20%>参与人数</td>
+				<td rowspan="2">是否在事前报批</td>
+				<c:if test="${node eq 0}"><td rowspan="2">操作</td>	</c:if>	
+			</tr>
+			<tr>
+				<td>餐费</td>
+				<td>酒水/烟等</td>
+				<td>我司</td>
+				<td>客户</td>
+			</tr>
+		</thead><tbody>
+		
+			<c:if test="${fn:length(listOaEnter)==0}">
+				
+				<tr class="main-content">
+					<td>
+					<input type="hidden" name="id" />
+						<input name="date" type="text" readonly="readonly"
+									maxlength="20" style="width: 90%;" class="laydate-icon form-control layer-date input-sm"
+									value="<fmt:formatDate value="${oaEnter.date}" pattern="yyyy-MM-dd HH:mm:ss" />"
+									onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" /><span
+									class="help-inline"  onblur="judgeNull()"><font color="red">*</font> </span>
+					</td>
+					<td>					
+						<input type="text" name="currentunit" value="${oaEnter.currentunit}" required="required"  style="width:90%"  class="form-control" onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+					<td>
+						<input type="text" name="reason" value="${oaEnter.reason}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+					<td>
+						<input type="text" name="meals" value="${oaEnter.meals}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+					<td>
+						<input type="text" name="alcoholtobacco" value="${oaEnter.alcoholtobacco}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+					<td>
+						<input type="text" name="numOur" value="${oaEnter.numOur}" style="width:90%" required="required" class="form-control" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>
+					
+					<td>
+						<input type="text" name="numCustomers" value="${oaEnter.numCustomers}" style="width:90%" required="required" class="form-control"   onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</td>					
+					<td>
+						<select name="ispriorapproval" style="width: 100%" class="form-control"
+							onclick="ispriorapprovalClick(this)"  onblur="judgeNull()"><option value="是">是</option>
+							<option value="否" selected="selected">否</option></select>
+					</td>
+					<c:if test="${node ne 0}"><td><a onclick="del1line(this)"><img class="add-del-png"
+							src='${ctxStatic}/images/del.png'  style="width:16px;height:16px"/></a><input type="hidden"
+						name="delFlag" value="0"></td></c:if>
+				</tr>				
+			</c:if>
+			<c:forEach var="oaEnter" items="${listOaEnter}">
+				<tr class="main-content">
+					<td>					
+					<input type="hidden" name="id" value="${oaEnter.id }" />
+						<c:if test="${node eq 0}">
+							<input name="date" type="text" readonly="readonly"
+										maxlength="20" style="width: 90%;" class="laydate-icon form-control layer-date input-sm"
+										value="<fmt:formatDate value="${oaEnter.date}"
+							pattern="yyyy-MM-dd" />"
+										onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});" /><span
+										class="help-inline"  onblur="judgeNull()"><font color="red">*</font> </span>
+						</c:if>
+						<c:if test="${node ne 0}">
+						<input name="date" type="text" value="<fmt:formatDate value="${oaEnter.date}" pattern="yyyy-MM-dd" />" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<td>
+						<c:if test="${node eq 0}">				
+						<input type="text" name="currentunit" value="${oaEnter.currentunit}" required="required"  style="width:90%"  class="form-control" onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+						</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="currentunit" value="${oaEnter.currentunit}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<td>
+ 						<c:if test="${node eq 0}">
+						<input type="text" name="reason" value="${oaEnter.reason}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					 </c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="reason" value="${oaEnter.reason}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<td>
+					<c:if test="${node eq 0}">
+						<input type="text" name="meals" value="${oaEnter.meals}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="meals" value="${oaEnter.meals}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<td>
+					<c:if test="${node eq 0}">
+						<input type="text" name="alcoholtobacco" value="${oaEnter.alcoholtobacco}" style="width:90%" required="required" class="form-control"  onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="alcoholtobacco" value="${oaEnter.alcoholtobacco}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<td>
+					<c:if test="${node eq 0}">
+						<input type="text" name="numOur" value="${oaEnter.numOur}" style="width:90%" required="required" class="form-control" />
+						<span class="help-inline"><font color="red">*</font> </span>
+					</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="numOur" value="${oaEnter.numOur}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					
+					<td>
+					<c:if test="${node eq 0}">
+						<input type="text" name="numCustomers" value="${oaEnter.numCustomers}" style="width:90%" required="required" class="form-control"   onblur="judgeNull()"/>
+						<span class="help-inline"><font color="red">*</font> </span>
+					</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="numCustomers" value="${oaEnter.numCustomers}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>					
+					<td>
+					<c:if test="${node eq 0}">
+						<select name="ispriorapproval" style="width: 100%" class="form-control"
+							onclick="ispriorapprovalClick(this)"  onblur="judgeNull()"><option value="是">是</option>
+							<option value="否" selected="selected">否</option></select>
+					</c:if>
+						<c:if test="${node ne 0}">
+						<input type="text" name="ispriorapproval" value="${oaEnter.ispriorapproval}" readonly="readonly" style="border: none;">
+						</c:if>
+					</td>
+					<c:if test="${node eq 0}">
+					<td><a onclick="del1line(this)"><img class="add-del-png"
+							src='${ctxStatic}/images/del.png' style="width:16px;height:16px"/></a><input type="hidden"
+						name="delFlag" value="0">
+					</td>
+					</c:if>
+				</tr>
+				</c:forEach>
+				<c:if test="${node eq 0}">
+					<tr>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<td></td>
+						<c:if test="${node eq 0}"><td><a class="add1line"><img class="add-del-png"
+											src="${ctxStatic}/images/add.png" style="width:16px;height:16px"/></a></td></c:if>
+					</tr>
+				</c:if>
+				<c:if test="${node ne 0}">
+					<tr>
+						<td colspan="2">
+							合计金额
+						</td>
+						<td colspan="6">
+							${oaEnreimb.moneyDouble}
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							大写金额
+						</td>
+						<td colspan="6">
+							${oaEnreimb.moneyString}
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							审核意见
+						</td>
+						<td colspan="6">
+							<input type="radio" name="fruit" value="0">同意
+							<input type="radio" name="fruit" value="1" checked="checked">不同意	
+						</td>
+					</tr>	
+					<tr>
+						<td colspan="2">审核留言</td>
+						<td colspan="6"><input type="text" name="examtext" maxlength="90" class="form-control"/></td>
+					</tr>
+				</c:if>
+			</tbody>
+		</table>
+		
+		<%-- <table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+		   <tbody>
+				<tr>
+					<td class="width-15 active"><label class="pull-right">审核意见：</label></td>
+					<td class="width-35">
+					<c:if test="${node ne 0}">
+						<div class="controls">
+							<input type="radio" name="fruit" value="0">同意
+							<input type="radio" name="fruit" value="1" <c:if test="${node ne 0}">checked="checked"</c:if>>不同意				
+						</div>
+					</c:if>
+					</td>
+					<td class="width-15 active"><label class="pull-right">审核留言：</label></td>
+					<td class="width-35">
+						<input name="examtext" maxlength="200" class="form-control" <c:if test="${node eq 0}">readonly="readonly"</c:if>>
+					</td>
+				</tr>
+				<tr>
+					<td class="width-15 active"><label class="pull-right">合计金额（小写）：</label></td>
+					<td class="width-35">
+						<form:input path="moneyDouble" htmlEscape="false" class="form-control "/>
+					</td>
+					<td class="width-15 active"><label class="pull-right">合计金额（大写）：</label></td>
+					<td class="width-35">
+						<form:input path="moneyString" htmlEscape="false" maxlength="100" class="form-control "/>
+					</td>
+				</tr>
+			</tbody>
+		</table>  --%>
+		
+		<div class="form-actions" style="text-align:center;">
+			<input id="btnSubmit" class="btn btn-primary" type="submit" value="提交" />
+			<c:if test="${not empty oaEnreimb.id && node eq 0}">
+				<input id="btnCancle2" class="btn btn-primary" type="submit"
+					value="取消申请" />&nbsp;
+			</c:if>
+			<input id="btnCancel" class="btn" type="button" value="返 回"
+				onclick="history.go(-1)" />
+			<c:if test="${task != null}">
+				&nbsp;<input
+				onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+				class="btn" type="button" value="流程跟踪" />
+		</c:if>
+		</div>
+<%-- 	</form:form> --%>
+</body>
+</html>

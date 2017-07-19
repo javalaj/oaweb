@@ -1,0 +1,89 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.oa.web.leaveMore;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.mobile.modules.oa.entity.leaveMore.LeaveMore;
+import com.thinkgem.jeesite.mobile.modules.oa.service.leaveMore.LeaveMoreService;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 考情管理Controller
+ * 
+ * @author liuxin
+ * @version 2016-11-18
+ */
+@Controller("mLeaveMoreController")
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/leaveMore")
+public class LeaveMoreController extends BaseController {
+	@Autowired
+	private LeaveMoreService leaveMoreService;
+	@Autowired
+	private OfficeService officeService;// 获取部门
+
+	/**
+	 * 
+	 * 手机端，查询考情单据.
+	 * 
+	 * 请假、调休 外出、出差
+	 * 
+	 */
+	// @RequiresPermissions("oa:leaveMore:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(String officeid, String officename, Date querydate, RedirectAttributes redirectAttributes,
+			Model model) {
+		// 加入默认值
+		if (querydate == null) {
+			Calendar c = Calendar.getInstance();
+			c.set(Calendar.HOUR, 0);
+			c.set(Calendar.MINUTE, 0);
+			c.set(Calendar.SECOND, 0);
+			c.set(Calendar.MILLISECOND, 0);
+			querydate = c.getTime();
+		}
+		if (StringUtils.isBlank(officeid)) {
+			officeid = UserUtils.getUser().getOffice().getId();
+			officename = UserUtils.getUser().getOffice().getName();
+		}
+		model.addAttribute("officeid", officeid);
+		model.addAttribute("officename", officename);
+		model.addAttribute("querydate", querydate);
+		// 页面类型的载体
+		ArrayList<String> types = new ArrayList<String>();
+		// 页面数据载体
+		ArrayList<ArrayList<LeaveMore>> list0 = new ArrayList<ArrayList<LeaveMore>>();
+		// 查询的具体过程
+		types.add("调休");
+		list0.add(leaveMoreService.getMoreByType(querydate, "oa_pro_vacate2", officeid));
+		types.add("请假");
+		list0.add(leaveMoreService.getMoreByType(querydate, "oa_pro_vacate", officeid));
+		types.add("外出");
+		list0.add(leaveMoreService.getMoreByType(querydate, "oa_goout", officeid));
+		types.add("出差");
+		list0.add(leaveMoreService.getMoreByType(querydate, "oa_outwork", officeid));
+		//
+		model.addAttribute("types", types);
+		model.addAttribute("list0", list0);
+		// 拿去部门列表
+		List<Office> offices = new ArrayList<Office>();
+		offices = officeService.findChildList(UserUtils.getUser().getOffice());
+		model.addAttribute("offices", offices);
+		return "mobile/modules/oa/leaveMore/leaveMoreList";
+	}
+
+}

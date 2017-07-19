@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.AssetsClaimDao">
+    
+	<sql id="assetsClaimColumns">
+		a.id AS "id",
+		a.assets_id AS "fixedAssets.id",
+		b.assets_name as "fixedAssets.assetsName",
+		b.serial_number as "fixedAssets.serialNumber",
+		b.assets_category as "fixedAssets.assetsCategory",
+		b.brand as "fixedAssets.brand",
+		b.amount as "fixedAssets.amount",
+		b.specifications as "fixedAssets.specifications",
+		b.supplier as "fixedAssets.supplier",
+		b.photo as "fixedAssets.photo",
+		b.purchase_date as "fixedAssets.purchaseDate",
+		b.unit_price as "fixedAssets.unitPrice",
+		b.unit as "fixedAssets.unit",
+		b.model as "fixedAssets.model",
+		b.create_date as "fixedAssets.createDate",
+		b.create_by as "fixedAssets.createBy.name",
+		a.claimant AS "claimant",
+		a.claim_time AS "claimTime",
+		a.claim_number AS "claimNumber",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.del_flag AS "delFlag",
+		u9.name AS "operator",
+		a.type AS "type",
+		a.phone AS "phone",
+		a.address AS "address",
+		u6.name AS "createBy.name",
+		u8.name AS "updateBy.name"
+	</sql>
+	
+	<sql id="assetsClaimJoins">
+		LEFT JOIN fixed_assets b ON b.id = a.assets_id
+		LEFT JOIN sys_user u6 ON u6.id = a.create_by
+		LEFT JOIN sys_user u8 ON u8.id = a.update_by
+		LEFT JOIN sys_user u9 ON u9.id = a.operator
+	</sql>
+    
+	<select id="get" resultType="AssetsClaim">
+		SELECT 
+			<include refid="assetsClaimColumns"/>
+		FROM assets_claim a
+			<include refid="assetsClaimJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findHistoryBydevice" resultType="AssetsClaim">
+		SELECT 
+			<include refid="assetsClaimColumns"/>
+		FROM assets_claim a
+			<include refid="assetsClaimJoins"/>
+		<where>
+			 a.claim_number = #{id}
+		</where>
+			ORDER BY a.create_date ASC
+	</select>
+	
+	<select id="findList" resultType="AssetsClaim">
+		SELECT 
+			<include refid="assetsClaimColumns"/>
+		FROM assets_claim a
+			<include refid="assetsClaimJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="fixedAssets != null and fixedAssets.serialNumber != null and fixedAssets.serialNumber != ''">
+				AND b.serial_number LIKE 
+					<if test="dbName == 'oracle'">'%'||#{fixedAssets.serialNumber}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{fixedAssets.serialNumber}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{fixedAssets.serialNumber},'%')</if>
+			</if>
+			<if test="fixedAssets != null and fixedAssets.assetsName != null and fixedAssets.assetsName != ''">
+				AND b.assets_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{fixedAssets.assetsName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{fixedAssets.assetsName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{fixedAssets.assetsName},'%')</if>
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getAll" resultType="map">
+		select 
+			b.assets_name as "assetsName",
+			b.serial_number as "serialNumber",
+			b.assets_category as "assetsCategory",
+			b.brand as "brand",
+			b.unit_price as "unitPrice",
+			a.claimant AS "claimant",
+			a.claim_time AS "claimTime",
+			a.claim_number AS "claimNumber",
+			a.type AS "type"
+		from assets_claim as a left join fixed_assets as b on b.id =a.assets_id WHERE a.claimant = #{claimant} and a.type != '归还' and a.type != '报废'  
+	</select>
+	
+	<select id="findAllList" resultType="AssetsClaim">
+		SELECT 
+			<include refid="assetsClaimColumns"/>
+		FROM assets_claim a
+			<include refid="assetsClaimJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO assets_claim(
+			id,
+			assets_id,
+			claimant,
+			claim_time,
+			claim_number,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			del_flag,
+			operator,
+			type,
+			phone,
+			address
+		) VALUES (
+			#{id},
+			#{fixedAssets.id},
+			#{claimant},
+			#{claimTime},
+			#{claimNumber},
+			#{createBy.name},
+			#{createDate},
+			#{updateBy.name},
+			#{remarks},
+			#{updateDate},
+			#{delFlag},
+			#{operator},
+			#{type},
+			#{phone},
+			#{address}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE assets_claim SET 	
+			assets_id = #{fixedAssets.id},
+			claimant = #{claimant},
+			claim_time = #{claimTime},
+			claim_number = #{claimNumber},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate},
+			operator = #{operator},
+			type = #{type},
+			phone = #{phone},
+			address = #{address}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE assets_claim SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE assets_id = #{FixedAssets.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

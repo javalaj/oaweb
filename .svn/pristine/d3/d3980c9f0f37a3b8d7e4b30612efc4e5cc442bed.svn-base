@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.project.OaProjectDao">
+    
+	<sql id="oaProjectColumns">
+		a.id AS "id",
+		a.project_stage AS "projectStage",
+		a.contract_type AS "contractType",
+		a.is_bid AS "isBid",
+		a.write_time AS "writeTime",
+		a.expected_bid_time AS "expectedBidTime",
+		a.establishment_time AS "establishmentTime",
+		a.book_contract_time AS "bookContractTime",
+		a.actual_contract_time AS "actualContractTime",
+		a.actual_bid_time AS "actualBidTime",
+		a.project_start_time AS "projectStartTime",
+		a.project_money AS "projectMoney",
+		a.expected_money AS "expectedMoney",
+		a.contract_money AS "contractMoney",
+		a.account_manager_id AS "accountManager.id",
+		a.business_manager_id AS "businessManager.id",
+		a.technical_manager_id AS "technicalManager.id",
+		a.project_manager_id AS "projectManager.id",
+		a.account_name AS "accountName",
+		a.project_no AS "projectNo",
+		a.project_name AS "projectName",
+		a.project_bg_description AS "projectBgDescription",
+		a.owned_industry AS "ownedIndustry",
+		a.proc_ins_id AS "procInsId",
+		a.project_file AS "projectFile",
+		a.marketing_director_opinion AS "marketingDirectorOpinion",
+		a.vice_minister_opinion AS "viceMinisterOpinion",
+		a.pre_sales_manager_opinion AS "preSalesManagerOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.view_permission AS "viewPermission",
+		a.write_way AS "writeWay",
+		a.start_date AS "startDate",
+		a.plan_day AS "planDay",
+		a.pause_date AS "pauseDate",
+		a.cancel_date AS "cancelDate",
+		a.state AS "state",
+		a.program_version AS "programVersion",
+		u15.name AS "accountManager.name",
+		u15.login_name AS "accountManager.loginName",
+		u16.name AS "businessManager.name",
+		u16.login_name AS "businessManager.loginName",
+		u17.name AS "technicalManager.name",
+		u17.login_name AS "technicalManager.loginName",
+		u18.name AS "projectManager.name",
+		u18.login_name AS "projectManager.loginName",
+		u29.name AS "createBy.name"
+	</sql>
+	
+	<sql id="oaProjectJoins">
+		LEFT JOIN sys_user u15 ON u15.id = a.account_manager_id
+		LEFT JOIN sys_user u16 ON u16.id = a.business_manager_id
+		LEFT JOIN sys_user u17 ON u17.id = a.technical_manager_id
+		LEFT JOIN sys_user u18 ON u18.id = a.project_manager_id
+		LEFT JOIN sys_user u29 ON u29.id = a.create_by
+		LEFT JOIN sys_user u31 ON u31.id = a.update_by
+	</sql>
+    
+	<select id="get" resultType="OaProject">
+		SELECT 
+			<include refid="oaProjectColumns"/>
+		FROM oa_project a
+		<include refid="oaProjectJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaProject">
+		SELECT 
+			<include refid="oaProjectColumns"/>
+		FROM oa_project a
+		<include refid="oaProjectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="projectStage != null and projectStage != ''">
+				AND a.project_stage = #{projectStage}
+			</if>
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type = #{contractType}
+			</if>
+			<if test="beginEstablishmentTime != null and endEstablishmentTime != null and beginEstablishmentTime != '' and endEstablishmentTime != ''">
+				AND a.establishment_time BETWEEN #{beginEstablishmentTime} AND #{endEstablishmentTime}
+			</if>
+			<if test="beginProjectMoney != null and beginProjectMoney != ''">
+				AND a.project_money &gt;= #{beginProjectMoney}
+			</if>
+			<if test="endProjectMoney != null and endProjectMoney != ''">
+				AND a.project_money  &lt;=#{endProjectMoney}
+			</if>
+			<if test="projectNo != null and projectNo != ''">
+				AND a.project_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectNo},'%')</if>
+			</if>
+			<if test="projectName != null and projectName != ''">
+				AND a.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<!-- ${sqlMap.dsf} -->
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<sql id="oaProjectColumnsAdd">
+		<include refid="oaProjectColumns"/>,
+		pdv.document_count AS "documentCount",
+		pwv.weekreport_count AS "weekreportCount",
+		IFNULL(opcv.total_change_day,0) AS "totalChangeDay",
+		IFNULL(oppcv.oaPlanCount,0) AS "oaPlanCount"
+	</sql>
+	<sql id="oaProjectJoinsAdd">
+		LEFT JOIN sys_user u15 ON u15.id = a.account_manager_id
+		LEFT JOIN sys_user u16 ON u16.id = a.business_manager_id
+		LEFT JOIN sys_user u17 ON u17.id = a.technical_manager_id
+		LEFT JOIN sys_user u18 ON u18.id = a.project_manager_id
+		LEFT JOIN sys_user u29 ON u29.id = a.create_by
+		LEFT JOIN sys_user u31 ON u31.id = a.update_by
+		LEFT JOIN (<include refid="oaProjectDocumentView"/>) pdv ON pdv.project_id = a.id
+		LEFT JOIN (<include refid="oaProjectWeekreportView"/>) pwv ON pwv.project_id = a.id
+		LEFT JOIN (<include refid="oaProjectChangeView"/>) opcv ON opcv.project_id = a.id
+		LEFT JOIN (<include refid="oaProjectPlanCountView"/>) oppcv ON oppcv.project_id = a.id
+	</sql>
+	<sql id="oaProjectDocumentView">
+		SELECT 
+        	COUNT(*) AS document_count, project_id
+    	FROM
+        	oa_project_document AS pt
+    	GROUP BY pt.project_id
+	</sql>
+	<sql id="oaProjectWeekreportView">
+		SELECT 
+        	COUNT(*) AS weekreport_count, project_id
+    	FROM
+        	oa_project_weekreport AS pt
+    	GROUP BY pt.project_id
+	</sql>
+	<!-- 项目暂停的总天数-->
+	<sql id="oaProjectChangeView">
+		SELECT 
+			SUM(opc.change_day) as total_change_day,opc.change_project_id as project_id
+		FROM 
+			oa_project_change AS opc 
+		WHERE
+			change_type = '0'
+		GROUP BY 
+			opc.change_project_id
+	</sql>
+	
+	<!-- 项目暂停的总天数-->
+	<sql id="oaProjectPlanCountView">
+		SELECT 
+			count(opc.id) as oaPlanCount,opc.projectid as project_id
+		FROM 
+			oa_plan AS opc 
+		GROUP BY 
+			opc.projectid
+	</sql>
+	<select id="findListAdd" resultType="OaProject">
+		SELECT 
+			<include refid="oaProjectColumnsAdd"/>
+		FROM oa_project a
+		<include refid="oaProjectJoinsAdd"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="projectStage != null and projectStage != ''">
+				AND a.project_stage = #{projectStage}
+			</if>
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type = #{contractType}
+			</if>
+			<if test="beginEstablishmentTime != null and endEstablishmentTime != null and beginEstablishmentTime != '' and endEstablishmentTime != ''">
+				AND a.establishment_time BETWEEN #{beginEstablishmentTime} AND #{endEstablishmentTime}
+			</if>
+			<if test="beginProjectMoney != null and beginProjectMoney != ''">
+				AND a.project_money &gt;= #{beginProjectMoney}
+			</if>
+			<if test="endProjectMoney != null and endProjectMoney != ''">
+				AND a.project_money  &lt;=#{endProjectMoney}
+			</if>
+			<if test="projectNo != null and projectNo != ''">
+				AND a.project_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectNo},'%')</if>
+			</if>
+			<if test="projectName != null and projectName != ''">
+				AND a.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<!-- ${sqlMap.dsf} -->
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	
+	<select id="findListBySearchUserId" resultType="OaProject">
+		SELECT 
+			<include refid="oaProjectColumns"/>
+		FROM oa_project a
+		<include refid="oaProjectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="projectStage != null and projectStage != ''">
+				AND a.project_stage = #{projectStage}
+			</if>
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type = #{contractType}
+			</if>
+			<if test="beginEstablishmentTime != null and endEstablishmentTime != null and beginEstablishmentTime != '' and endEstablishmentTime != ''">
+				AND a.establishment_time BETWEEN #{beginEstablishmentTime} AND #{endEstablishmentTime}
+			</if>
+			<if test="beginProjectMoney != null and beginProjectMoney != ''">
+				AND a.project_money &gt;= #{beginProjectMoney}
+			</if>
+			<if test="endProjectMoney != null and endProjectMoney != ''">
+				AND a.project_money  &lt;=#{endProjectMoney}
+			</if>
+			<if test="projectNo != null and projectNo != ''">
+				AND a.project_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectNo},'%')</if>
+			</if>
+			<if test="projectName != null and projectName != ''">
+				AND a.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<if test="searchUserId != null and searchUserId != ''">
+				AND (a.view_permission LIKE 
+					<if test="dbName == 'oracle'">'%"'||#{searchUserId}||'"%'</if>
+					<if test="dbName == 'mssql'">'%"'+#{searchUserId}+'"%'</if>
+					<if test="dbName == 'mysql'">concat('%"',#{searchUserId},'"%')</if>
+					OR 
+					a.account_manager_id = #{searchUserId}
+					OR
+					a.business_manager_id = #{searchUserId}
+					OR
+					a.technical_manager_id = #{searchUserId}
+					OR
+					a.project_manager_id = #{searchUserId}
+					OR
+					a.id in (SELECT b.project_id FROM oa_project_member b where user_id=#{searchUserId})
+					)
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	<select id="getProjectsCountBySearchUserId" resultType="Integer">
+		SELECT 
+			IFNULL(count(a.id) , 0) as countNum
+		FROM oa_project a
+		<where>
+			a.del_flag = '0'
+			
+				AND (a.view_permission LIKE 
+					
+					concat('%"',#{searchUserId},'"%')
+					OR 
+					a.account_manager_id = #{searchUserId}
+					OR
+					a.business_manager_id = #{searchUserId}
+					OR
+					a.technical_manager_id = #{searchUserId}
+					OR
+					a.project_manager_id = #{searchUserId}
+					)
+			
+		</where>
+	</select>
+	
+	<select id="findAllList" resultType="OaProject">
+		SELECT 
+			<include refid="oaProjectColumns"/>
+		FROM oa_project a
+		<include refid="oaProjectJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_project(
+			id,
+			project_stage,
+			contract_type,
+			is_bid,
+			write_time,
+			expected_bid_time,
+			establishment_time,
+			book_contract_time,
+			actual_contract_time,
+			actual_bid_time,
+			project_start_time,
+			project_money,
+			expected_money,
+			contract_money,
+			account_manager_id,
+			business_manager_id,
+			technical_manager_id,
+			project_manager_id,
+			account_name,
+			project_no,
+			project_name,
+			project_bg_description,
+			owned_industry,
+			proc_ins_id,
+			project_file,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag,
+			view_permission,
+			write_way,
+			start_date,
+			plan_day,
+			pause_date,
+			cancel_date,
+			state,
+			program_version
+		) VALUES (
+			#{id},
+			#{projectStage},
+			#{contractType},
+			#{isBid},
+			#{writeTime},
+			#{expectedBidTime},
+			#{establishmentTime},
+			#{bookContractTime},
+			#{actualContractTime},
+			#{actualBidTime},
+			#{projectStartTime},
+			#{projectMoney},
+			#{expectedMoney},
+			#{contractMoney},
+			#{accountManager.id},
+			#{businessManager.id},
+			#{technicalManager.id},
+			#{projectManager.id},
+			#{accountName},
+			#{projectNo},
+			#{projectName},
+			#{projectBgDescription},
+			#{ownedIndustry},
+			#{procInsId},
+			#{projectFile},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag},
+			#{viewPermission},
+			#{writeWay},
+			#{startDate},
+			#{planDay},
+			#{pauseDate},
+			#{cancelDate},
+			#{state},
+			#{programVersion}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_project SET 	
+			project_stage = #{projectStage},
+			contract_type = #{contractType},
+			is_bid = #{isBid},
+			expected_bid_time = #{expectedBidTime},
+			establishment_time = #{establishmentTime},
+			book_contract_time = #{bookContractTime},
+			actual_contract_time = #{actualContractTime},
+			actual_bid_time = #{actualBidTime},
+			project_start_time = #{projectStartTime},
+			project_money = #{projectMoney},
+			expected_money = #{expectedMoney},
+			contract_money = #{contractMoney},
+			account_manager_id = #{accountManager.id},
+			business_manager_id = #{businessManager.id},
+			technical_manager_id = #{technicalManager.id},
+			project_manager_id = #{projectManager.id},
+			account_name = #{accountName},
+			project_no = #{projectNo},
+			project_name = #{projectName},
+			project_bg_description = #{projectBgDescription},
+			owned_industry = #{ownedIndustry},
+			proc_ins_id = #{procInsId},
+			project_file = #{projectFile},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			del_flag = #{delFlag},
+			view_permission = #{viewPermission},
+			write_way = #{writeWay},
+			start_date = #{startDate},
+			plan_day = #{planDay},
+			pause_date = #{pauseDate},
+			cancel_date = #{cancelDate},
+			state = #{state},
+			program_version = #{programVersion}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_project SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.plan.dao.SysPlanDao">
+    
+	<sql id="sysPlanColumns">
+		a.id AS "id",
+		a.plan_icon AS "planIcon",
+		a.plan_title AS "planTitle",
+		a.content AS "content",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.plan_type AS "planType",
+		a.state AS "state",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="sysPlanJoins">
+	</sql>
+    
+	<select id="get" resultType="SysPlan">
+		SELECT 
+			<include refid="sysPlanColumns"/>
+		FROM sys_plan a
+		<include refid="sysPlanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="SysPlan">
+		SELECT 
+			<include refid="sysPlanColumns"/>
+		FROM sys_plan a
+		<include refid="sysPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="planTitle != null and planTitle != ''">
+				AND a.plan_title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{planTitle}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{planTitle}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{planTitle},'%')</if>
+			</if>
+			<if test="planType != null and planType != ''">
+				AND a.plan_type = #{planType}
+			</if>
+			<if test="createDate != null and createDate != ''">
+				AND a.create_date = #{createDate}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="SysPlan">
+		SELECT 
+			<include refid="sysPlanColumns"/>
+		FROM sys_plan a
+		<include refid="sysPlanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO sys_plan(
+			id,
+			plan_icon,
+			plan_title,
+			content,
+			start_time,
+			end_time,
+			plan_type,
+			state,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{planIcon},
+			#{planTitle},
+			#{content},
+			#{startTime},
+			#{endTime},
+			#{planType},
+			#{state},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE sys_plan SET 	
+			plan_icon = #{planIcon},
+			plan_title = #{planTitle},
+			content = #{content},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			plan_type = #{planType},
+			state = #{state},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE sys_plan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

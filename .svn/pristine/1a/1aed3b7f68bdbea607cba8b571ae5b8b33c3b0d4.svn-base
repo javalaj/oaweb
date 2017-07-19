@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.emp.OaEmpJoinApprovalDao">
+    
+	<sql id="oaEmpJoinApprovalColumns">
+		a.id AS "id",
+		a.sex AS "sex",
+		a.degrees AS "degrees",
+		a.entry_time AS "entryTime",
+		a.emp_name AS "empName",
+		a.nation AS "nation",
+		a.office_id AS "office.id",
+		a.duty AS "duty",
+		a.title AS "title",
+		a.id_number AS "idNumber",
+		a.home_address AS "homeAddress",
+		a.probation_salary AS "probationSalary",
+		a.regular_salary AS "regularSalary",
+		a.proc_ins_id AS "procInsId",
+		a.dept_minister_opinion AS "deptMinisterOpinion",
+		a.hr_opinion AS "hrOpinion",
+		a.hr_minister_opinion AS "hrMinisterOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.status AS "status",
+		a.is_converttouser AS "isConverttouser",
+		a.is_start AS "isStart",
+		o7.name AS "office.name",
+		a.examiner_opinion AS "examinerOpinion",
+		a.emp_dept_minister_opinion AS "empDeptMinisterOpinion",
+		a.telephone AS "telephone",
+		a.titles AS "titles"
+	</sql>
+	
+	<sql id="oaEmpJoinApprovalJoins">
+		LEFT JOIN sys_office o7 ON o7.id = a.office_id
+	</sql>
+    
+	<select id="get" resultType="OaEmpJoinApproval">
+		SELECT 
+			<include refid="oaEmpJoinApprovalColumns"/>
+		FROM oa_emp_join_approval a
+		<include refid="oaEmpJoinApprovalJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaEmpJoinApproval">
+		SELECT 
+			<include refid="oaEmpJoinApprovalColumns"/>
+		FROM oa_emp_join_approval a
+		<include refid="oaEmpJoinApprovalJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	
+	<select id="findList" resultType="OaEmpJoinApproval">
+		SELECT 
+			<include refid="oaEmpJoinApprovalColumns"/>
+		FROM oa_emp_join_approval a
+		<include refid="oaEmpJoinApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="sex != null and sex != ''">
+				AND a.sex = #{sex}
+			</if>
+			<if test="beginEntryTime != null and endEntryTime != null and beginEntryTime != '' and endEntryTime != ''">
+				AND a.entry_time BETWEEN #{beginEntryTime} AND #{endEntryTime}
+			</if>
+			<if test="empName != null and empName != ''">
+				AND a.emp_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{empName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{empName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{empName},'%')</if>
+			</if>
+			<if test="office != null and office.id != null and office.id != ''">
+				AND a.office_id = #{office.id}
+			</if>
+			<if test="duty != null and duty != ''">
+				AND a.duty LIKE 
+					<if test="dbName == 'oracle'">'%'||#{duty}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{duty}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{duty},'%')</if>
+			</if>
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaEmpJoinApproval">
+		SELECT 
+			<include refid="oaEmpJoinApprovalColumns"/>
+		FROM oa_emp_join_approval a
+		<include refid="oaEmpJoinApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_emp_join_approval(
+			id,
+			sex,
+			degrees,
+			entry_time,
+			emp_name,
+			nation,
+			office_id,
+			duty,
+			title,
+			id_number,
+			home_address,
+			probation_salary,
+			regular_salary,
+			proc_ins_id,
+			dept_minister_opinion,
+			hr_opinion,
+			hr_minister_opinion,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			status,
+			is_converttouser,
+			is_start,
+			examiner_opinion,
+			emp_dept_minister_opinion,
+			telephone,
+			titles
+		) VALUES (
+			#{id},
+			#{sex},
+			#{degrees},
+			#{entryTime},
+			#{empName},
+			#{nation},
+			#{office.id},
+			#{duty},
+			#{title},
+			#{idNumber},
+			#{homeAddress},
+			#{probationSalary},
+			#{regularSalary},
+			#{procInsId},
+			#{deptMinisterOpinion},
+			#{hrOpinion},
+			#{hrMinisterOpinion},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{status},
+			#{isConverttouser},
+			#{isStart},
+			#{examinerOpinion},
+			#{empDeptMinisterOpinion},
+			#{telephone},
+			#{titles}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_emp_join_approval SET 	
+			sex = #{sex},
+			degrees = #{degrees},
+			entry_time = #{entryTime},
+			emp_name = #{empName},
+			nation = #{nation},
+			office_id = #{office.id},
+			duty = #{duty},
+			title = #{title},
+			id_number = #{idNumber},
+			home_address = #{homeAddress},
+			probation_salary = #{probationSalary},
+			regular_salary = #{regularSalary},
+			proc_ins_id = #{procInsId},
+			dept_minister_opinion = #{deptMinisterOpinion},
+			hr_opinion = #{hrOpinion},
+			hr_minister_opinion = #{hrMinisterOpinion},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			status = #{status},
+			is_converttouser = #{isConverttouser},
+			is_start = #{isStart},
+			examiner_opinion = #{examinerOpinion},
+			emp_dept_minister_opinion = #{empDeptMinisterOpinion},
+			telephone = #{telephone},
+			titles = #{titles}
+		WHERE id = #{id}
+	</update>
+	<update id="delete">
+		UPDATE oa_emp_join_approval SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

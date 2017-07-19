@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaArchivesRecordDao">
+	<sql id="oaArchivesRecordColumns">
+		a.id AS "id",
+		a.oa_archives_id AS "oaArchivesId",
+		a.user_id AS "user.id",
+		a.read_flag AS "readFlag",
+		a.read_date AS "readDate",
+		u3.name AS "user.name"
+	</sql>
+	<sql id="oaArchivesRecordJoins"> LEFT JOIN sys_user u3 ON u3.id = a.user_id </sql>
+	<select id="get" resultType="OaArchivesRecord">
+		SELECT
+		<include refid="oaArchivesRecordColumns" />
+		FROM oa_archives_record a
+		<include refid="oaArchivesRecordJoins" />
+		WHERE a.id = #{id}
+	</select>
+	<select id="findList" resultType="OaArchivesRecord">
+		SELECT
+		<include refid="oaArchivesRecordColumns" />
+		FROM oa_archives_record a
+		<include refid="oaArchivesRecordJoins" />
+		<where>
+			<if test="id != null and id != ''"> AND a.id = #{id} </if>
+			<if test="oaArchivesId != null and oaArchivesId != ''"> AND a.oa_archives_id = #{oaArchivesId} </if>
+			<if test="user != null and user.id != null and user.id != ''"> AND a.user_id = #{user.id} </if>
+			<if test="readFlag != null and readFlag != ''"> AND a.read_flag = #{readFlag} </if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''"> ORDER BY ${page.orderBy} </when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaArchivesRecord">
+		SELECT
+		<include refid="oaArchivesRecordColumns" />
+		FROM oa_archives_record a
+		<include refid="oaArchivesRecordJoins" />
+		<where>
+		</where>
+		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''"> ORDER BY ${page.orderBy} </when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	<insert id="insert"> INSERT INTO oa_archives_record( id, oa_archives_id,
+		user_id, read_flag, read_date ) VALUES ( #{id}, #{oaArchivesId},
+		#{user.id}, #{readFlag}, #{readDate} ) </insert>
+	<update id="update"> UPDATE oa_archives_record SET oa_archives_id =
+		#{oaArchivesId}, user_id = #{user.id}, read_flag = #{readFlag},
+		read_date = #{readDate} WHERE id = #{id} </update>
+	<update id="delete"> DELETE FROM oa_archives_record WHERE id = #{id}
+	</update>
+	
+	<insert id="insertAll" parameterType="List">
+		INSERT INTO oa_archives_record( ID, oa_archives_id, USER_ID,
+		READ_FLAG, READ_DATE ) -
+		<if test="list.get(0).dbName == 'oracle'">
+			<foreach separator=" union all " item="e" collection="list"> SELECT
+				#{e.id}, #{e.oaArchives.id}, #{e.user.id}, #{e.readFlag},
+				#{e.readDate} FROM dual </foreach>
+		</if>
+		
+		<if test="list.get(0).dbName == 'mssql' or list.get(0).dbName == 'mysql'">
+			VALUES
+			<foreach separator="," item="e" collection="list" close=""
+				open=""> (#{e.id}, #{e.oaArchives.id}, #{e.user.id}, #{e.readFlag},
+				#{e.readDate}) </foreach>
+		</if>
+	</insert>
+	<delete id="deleteByOaArchivesId"> DELETE FROM oa_archives_record WHERE oa_archives_id
+		= #{oaArchivesId} </delete>
+
+</mapper>
+
+

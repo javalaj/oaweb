@@ -1,0 +1,776 @@
+@charset "utf-8";
+/* reset */
+body {
+	font-family: "Helvetica Neue", Helvetica, "PingFang SC", 微软雅黑, Tahoma, Arial, sans-serif;
+	font-size: 13px;
+	color: #666a6d;
+}
+ul, ol, li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+label {
+	margin-bottom: 0;
+    font-weight: 400;
+}
+.form-group label {
+	margin-bottom: 5px;
+	margin-right: 8px;
+}
+.table>thead>tr>th, .table>tbody>tr>th, .table>tfoot>tr>th, .table>thead>tr>td, .table>tbody>tr>td, .table>tfoot>tr>td {
+    vertical-align: middle;
+}
+a:hover {
+	color: #35a5e7;
+}   
+.gray-bg {
+    background-color: #f9f9f9;
+}
+/* reset */
+
+/* 统一button 样式*/
+.btn-myoa {
+    color: #fff;
+    background-color: #35a5e7;
+    border-color: #35a5e7;
+}
+.btn-myoa:hover, .btn-myoa:active, .btn-myoa:focus {
+    color: #fff;
+    background-color: #1f96db;
+    border-color: #1f96db;
+}
+.btn-myoa-sec {
+    color: #fff;
+    background-color: #336ee8;
+    border-color: #336ee8;
+}
+.btn-myoa-sec:hover, .btn-myoa-sec:active, .btn-myoa-sec:focus{
+    color: #fff;
+    background-color: #1f5adb;
+    border-color: #1f5adb;
+}
+
+.btn-myoa-normal {
+    padding: 6px 24px;
+}
+.btn-myoa-large {
+    padding: 6px 40px;
+}
+.btn.btn-white.btn-sm {
+	margin-right: 5px;
+	background-color: #35a5e7;
+	border-color: #35a5e7;
+	color: #fff;
+}
+.btn.btn-white.btn-sm:hover, 
+.btn.btn-white.btn-sm:active, 
+.btn.btn-white.btn-sm:focus {
+	color: #fff;
+    background-color: #1f96db;
+    border-color: #1f96db;
+}
+input[type="button"].btn.btn-primary,
+input[type="submit"].btn.btn-primary,
+a.btn.btn-primary {
+	background-color: #35a5e7;
+	border-color: #35a5e7;
+	color: #fff;
+}
+input[type="button"].btn.btn-primary:hover, 
+input[type="button"].btn.btn-primary:active, 
+input[type="button"].btn.btn-primary:focus,
+input[type="submit"].btn.btn-primary:hover, 
+input[type="submit"].btn.btn-primary:active, 
+input[type="submit"].btn.btn-primary:focus,
+a.btn.btn-primary:hover, 
+a.btn.btn-primary:active, 
+a.btn.btn-primary:focus {
+	color: #fff;
+    background-color: #1f96db;
+    border-color: #1f96db;
+} 
+/* 统一button 样式*/
+
+
+/* 统一 输入框 样式*/
+.form-control {
+    border: 1px solid #ddd;
+    box-shadow: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    background-color: #fff!important;
+}
+.form-control:focus,
+.single-line:focus {
+    border-color: #35a6e7 !important;
+}
+.btn-inverse {
+    border: 1px solid #ddd;
+    background-color: #fff;   
+    border-radius: 4px;
+}
+.input-group.treeselect-div {
+	width: 201px;
+}
+.dropdown-menu>.selected.active>a, 
+.dropdown-menu>.selected.active>a:focus, 
+.dropdown-menu>.selected.active>a:hover {
+	background-color: rgba(53, 165, 231, 0.80);
+}
+
+.iradio_square-green + label {
+	margin-right: 24px;
+	margin-left: 2px;
+}
+/* 统一 输入框 样式*/
+
+/* 框架默认弹窗框样式修改  */
+.ibox {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.ibox-title {
+    padding: 10px 15px;
+    border: none;
+    background-color: #eff4f8;
+    color: #434f66;
+    overflow: hidden;
+    min-height: 42px;
+}
+.ibox-title h5 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 22px;
+}
+.ibox-title>h5>a, .ibox-title>h5>a:hover {
+	color: #434f66;
+}
+.ibox-content {
+	border-width: 0;
+    color: #666a6d;
+} 
+/* 框架默认弹窗框样式修改  */
+
+/* 表格样式修改  */
+.table > thead > tr > th, 
+.table > tbody > tr > th, 
+.table > tfoot > tr > th, 
+.table > thead > tr > td, 
+.table > tbody > tr > td, 
+.table > tfoot > tr > td {
+	border-top: 1px solid #ddd;
+}
+.table-bordered > thead > tr > th, 
+.table-bordered > tbody > tr > th, 
+.table-bordered > tfoot > tr > th, 
+.table-bordered > thead > tr > td, 
+.table-bordered > tbody > tr > td, 
+.table-bordered > tfoot > tr > td {
+	border: 1px solid #ddd;
+}
+.myoa-table-width280 > thead > tr > th, 
+.myoa-table-width280 > tbody > tr > th, 
+.myoa-table-width280 > tfoot > tr > th, 
+.myoa-table-width280 > thead > tr > td, 
+.myoa-table-width280 > tbody > tr > td, 
+.myoa-table-width280 > tfoot > tr > td {
+	max-width: 280px;
+	white-space: nowrap;
+	word-break: normal;
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+.table.myoa-table-noborder > thead > tr > th, 
+.table.myoa-table-noborder > tbody > tr > th, 
+.table.myoa-table-noborder > tfoot > tr > th, 
+.table.myoa-table-noborder > thead > tr > td, 
+.table.myoa-table-noborder > tbody > tr > td, 
+.table.myoa-table-noborder > tfoot > tr > td {
+	border-top: none;
+}
+.table.myoa-table-noborder > tbody > tr > td:nth-child(odd) {
+	width: 16%;
+}
+/* 新增页面表格样式修改  */
+.table.myoa-newitem-table>tbody>tr>td {
+	border-top-width: 0;
+}
+.table.myoa-newitem-table>tbody>tr>td:nth-child(odd) {
+	width: 24%;
+	text-align: right;
+}
+.table.myoa-newitem-table>tbody>tr>td:nth-child(even) {
+	width: 80%;
+}
+.myoa-details-form .control-group {
+	border-bottom: none;
+}
+/* 新增页面表格样式修改  */
+
+/* 表格样式修改  */
+
+/* 打印页面需要给 body加类名 myoa-print-page */
+body.myoa-print-page {
+	height: initial;
+}
+@media print {
+	.myoa-print-noprint {
+		display: none;
+	}
+}
+/* 打印页面需要给 body加类名 myoa-print-page */
+
+/* tab切换卡样式，基于<ul class="nav nav-tabs myoa-tabs"></ul>  */
+.myoa-tabs {
+    margin: 0;
+    padding: 0 15px;
+    border-bottom: 1px solid #ddd;
+    background-color: #fff;
+}
+.myoa-tabs>li {
+    list-style: none;
+    display: inline-block;
+    padding: 0;
+}
+.myoa-tabs>li>a, .myoa-tabs>li>a:hover,
+.myoa-tabs>li.active>a:hover {
+    display: block;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 16px;
+    margin: 0;
+    border: none;
+    font-weight: 400;
+    font-size: 16px;
+    color: #c8c7cc;
+    text-align: center;
+    text-decoration: none;
+}
+.myoa-tabs>li.active>a,
+.myoa-tabs>li.active>a:hover {
+	border: none;
+    border-bottom: 3px solid #35a5e7;
+    color: #35a5e7;
+    cursor: pointer;
+}	
+.myoa-tabs>li>a:hover {
+	background-color: #fff;
+	border-radius: 0;
+	border: none;
+	border-bottom: 1px solid #ddd;
+	cursor: pointer;
+}
+/* 表格样式修改样式修改  */
+
+/* 正在提交提示框 样式修改  */
+.layui-layer-content.layui-layer-loading1{
+	display: none;
+}
+.layui-layer.layui-layer-dialog.layui-layer-border.layui-layer-msg.layer-anim{
+	background-color: rgba(0,0,0,0.6);
+	color: #fff;
+}	
+/* 正在提交提示框 样式修改  */
+
+.fixed-table-pagination {
+	overflow: hidden;
+}
+/* 我的项目 */
+.myoa-project-list {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0;
+    margin: 10px 0;
+}
+.myoa-project {
+    position: relative;
+    padding: 10px;
+}
+.myoa-project-name {
+    width: 100%;
+    height: 36px;
+    line-height: 36px;
+    margin-bottom: 16px;
+    padding-left: 36px;
+    text-align: center;
+    font-size: 16px;
+    color: #333;
+    overflow: hidden;
+}
+.myoa-project-name>a {
+    display: inline-block;
+    max-width: 130px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #333;
+}
+.myoa-project-name>a:hover {
+    color: #35a5e7;
+    text-decoration: none;
+}
+.myoa-project-state {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    border-radius: 20px;
+    background-color: #02d1a5;
+    color: #fff;
+    text-align: center;
+}
+.myoa-project-state::before {
+    content: "";
+    width: 16px;
+    height: 20px;
+    background-color: #02d1a5;
+    position: absolute;
+    left: 12px;
+    top: -8px;
+}
+.myoa-project-oprate {
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    float:right;
+}
+.myoa-project-oprate i {
+    line-height: 36px;
+    font-size: 20px;
+}
+
+.myoa-project-oprate .myoa-project-oprate-cont {
+    position: absolute;
+    top: 44px;
+    right: -14px;
+    width: 82px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 0 2px 1px rgba(0,0,0,0.06);
+    padding: 5px 4px;
+    background-color: #fff;
+    display: none;
+}
+.myoa-project-oprate:hover .myoa-project-oprate-cont {
+    display: block;
+}
+.myoa-project-oprate-cont li {
+    list-style: none;
+    text-align: center;
+    height: 22px;
+    line-height: 22px;
+    font-size: 13px;
+}
+.myoa-project-oprate-cont::before {
+    position: absolute;
+    top: -7px;
+    left: 36px;
+    display: inline-block;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #ddd;
+    border-left: 6px solid transparent;
+    border-bottom-color: rgba(0,0,0,0.3);
+    content: '';
+}
+.myoa-progress {
+    margin-bottom: 16px;
+}
+.myoa-progress .progress {
+    display: inline-block;
+    height: 10px;
+    width: 80%;
+    margin-bottom:0;
+}
+.myoa-project-time {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+    height: 86px;
+}
+.myoa-project-time li{
+    margin-bottom: 6px;
+}
+.myoa-project p {
+    padding: 5px 0;
+    margin: 0;
+    line-height: 20px;
+}
+.myoa-project-bot {
+    width: 100%;
+    padding: 10px;
+    background-color: #02d1a5;
+    overflow: hidden;
+    color: #fff;
+}
+.myoa-project-list .progress-bar {
+    background-color: #02d1a5;
+}
+.myoa-project-list p i.fa {
+    color: #02d1a5;
+}
+/* ~~ 暂停项目  ~~*/
+.myoa-pro-pause .myoa-project-state,
+.myoa-pro-pause .myoa-project-state::before,
+.myoa-pro-pause .myoa-project-bot,
+.myoa-pro-pause .progress-bar {
+    background-color: #35a5e7;
+}
+.myoa-pro-pause p i.fa {
+    color: #35a5e7;
+}
+/* ~~ 新项目  ~~*/
+.myoa-pro-new .myoa-project-state,
+.myoa-pro-new .myoa-project-state::before,
+.myoa-pro-new .myoa-project-bot,
+.myoa-pro-new .progress-bar {
+    background-color: #fea35b;
+}
+.myoa-pro-new p i.fa {
+    color: #fea35b;
+}
+
+/* ~~ 完成项目  ~~*/
+.myoa-pro-done .myoa-project-state,
+.myoa-pro-done .myoa-project-state::before,
+.myoa-pro-done .myoa-project-bot,
+.myoa-pro-done .progress-bar {
+    background-color: #c7cbd6;
+}
+.myoa-pro-done p i.fa {
+    color: #c7cbd6;
+}
+/* ~~ 取消项目  ~~*/
+.myoa-pro-cancel .myoa-project-state,
+.myoa-pro-cancel .myoa-project-state::before,
+.myoa-pro-cancel .myoa-project-bot,
+.myoa-pro-cancel .progress-bar {
+    background-color: #c7cbd6;
+}
+.myoa-pro-cancel p i.fa {
+    color: #c7cbd6;
+}
+
+.myoa-project-tabs {
+    float: right;
+    overflow: hidden;
+}
+.myoa-project-tabs ul {
+    width: 63px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.myoa-project-tabs ul li {
+    list-style: none;
+    float: left;
+    border-right: 1px solid #ddd;
+}
+.myoa-project-tabs ul li:last-child {
+    border-right: none;
+}
+.myoa-project-tabs ul li a {
+    display: block;
+    width: 30px;
+    height: 28px;
+    margin: 0;
+    text-align: center;
+    font-size: 18px;
+    color: #ddd;
+}
+.myoa-project-tabs ul>li>a>i {
+    line-height: 28px;
+}
+.myoa-project-tabs ul>li.active>a {
+    color: #666;
+}
+
+
+/* table.myoa-project-table, table.myoa-project-table thead>tr>th {
+    text-align: center;
+} */
+table.myoa-project-table thead>tr>th {
+    background-color: #efefef;
+}
+table.myoa-project-table .myoa-add-tableline {
+    background-color: #efefef;
+}
+table.myoa-project-table>tbody>tr>td:last-child {
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+}
+
+table.myoa-project-table>tbody>tr>td>a:hover {
+    color: #35a5e7;
+    text-decoration: none;
+}
+.myoa-project-table .myoa-project-oprate-cont {
+    position: absolute;
+    top: 90%;
+    right: 0;
+    width: 82px;
+    border: 1px solid #ddd;
+    border-radius: 5px 4px;
+    box-shadow: 0 0 2px 1px rgba(0,0,0,0.06);
+    padding: 4px;
+    background-color: #fff;
+    z-index: 99;
+    display: none;
+}
+.myoa-project-oprate-cont>li>a { 
+	color: #35a5e7;
+}	
+.myoa-project-oprate-cont>li>a:hover { 
+	text-decoration: underline;
+}	
+table.myoa-project-table>tbody>tr>td:last-child:hover .myoa-project-oprate-cont {
+    display: block;
+}
+.myoa-project-state-intable {
+    color: #02d1a5;
+}
+.myoa-pro-pause .myoa-project-state-intable {
+    color: #35a5e7;
+}
+.myoa-pro-new .myoa-project-state-intable {
+    color: #fea35b;
+}
+.myoa-pro-done .myoa-project-state-intable,
+.myoa-pro-cancel .myoa-project-state-intable {
+    color: #c7cbd6;
+}
+/* 我的项目 */
+
+/* 项目详情 */
+.myoa-project-info {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+}
+.myoa-project-tit {
+    width: 100%;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 15px;
+    box-sizing: border-box;
+    background-color: #35a5e7;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.myoa-project-info-tabs {
+    margin: 0;
+    padding: 0 15px;
+    border-bottom: 1px solid #ddd
+}
+.myoa-project-info-tabs>li {
+    list-style: none;
+    display: inline-block;
+}
+.myoa-project-info-tabs>li>a {
+    display: block;
+    width: 110px;
+    height: 48px;
+    line-height: 48px;
+    font-size: 18px;
+    color: #c8c7cc;
+    text-align: center;
+    text-decoration: none;
+}
+.myoa-project-info-tabs>li.active>a {
+    border-bottom: 3px solid #35a5e7;
+    color: #35a5e7;
+}
+.myoa-project-info .tab-content {
+    padding: 20px 15px 0 15px;
+}
+.myoa-project-timeline {
+    width: 80%;
+    height: 220px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+.myoa-project-addcourse p {
+    margin-top: 20px;
+}
+.myoa-project-newcourse-info {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-width: 1px 0;
+    margin-bottom: 20px;
+    background-color: #efefef;
+}
+.myoa-project-course-done li table {
+    border-bottom: 1px solid #ddd;
+    background-color: #efefef;
+    text-align: left;
+}
+.myoa-project-detdate {
+    font-size: 14px;
+    font-weight: 700;
+}
+.myoa-project-h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-right: 30px;
+}
+
+a.conform-add2 {
+     color: #366ee8;
+ }
+a.conform-add2:hover {
+    color: #366ee8;
+    text-decoration: under-line;
+}
+a.cancel-add2 {
+    color: #f25d5d;
+}
+a.cancel-add2:hover {
+    color: #f25d5d;
+    text-decoration: under-line;
+}
+/* 项目详情 */
+
+/* 添加项目 */
+.myoa-project-add {
+    width: 800px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fff;
+    margin: 0 auto;
+}
+.myoa-add-tit {
+    width: 100%;
+    height: 48px;
+    line-height: 48px;
+    padding: 0 15px;
+    box-sizing: border-box;
+    background-color: #35a5e7;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+.myoa-project-form {
+    padding: 20px 40px;
+}
+.myoa-addperson-data {
+    padding: 25px 0 10px 0;
+    font-size: 16px;
+}
+.myoa-addperson-data span {
+    font-size: 18px;
+    color: #35a5e7;
+    font-weight: 700;
+}
+.myoa-person-img img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+.myoa-person-role img {
+    width: 30px;
+    margin-right: 6px;
+}
+.myoa-form-searchinput {
+    padding: 6px 8px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.forminline-addperson {
+    margin-top: 25px;
+}
+.forminline-addperson span {
+    border: 1px solid #ddd;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    background-color: #fff;
+}
+.forminline-addperson button {
+    margin-left: 10px;
+}
+/* 添加项目 */
+
+/* 项目文档 */
+#projectDocCards>ul>li {
+    width: 16.66%;
+    float: left;
+    box-sizing: border-box;
+    padding: 10px;
+    position: relative;
+}
+#projectDocCards>ul>li>a {
+    display: block;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 15px 10px;
+    background-color: #fff;
+    text-align: center;
+    color: #333;
+}
+
+#projectDocCards>ul>li>a:hover {
+    background-color: #efefef;
+    text-decoration: none;
+    color: #333;
+}
+
+#projectDocCards>ul>li>a>span {
+    height: 40px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+
+}
+#projectDocCards>ul>li .myoa-project-oprate-cont {
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    width: 80px;
+    margin-top: 15px;
+    margin-left: -40px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 0 2px 1px rgba(0,0,0,0.06);
+    padding: 4px;
+    background-color: #fff;
+    z-index: 99;
+    display: none;
+}
+#projectDocCards>ul>li:hover .myoa-project-oprate-cont {
+    display: block;
+}
+
+.myoa-required::after {
+    content: "*";
+    position: absolute;
+    right: 4%;
+    top: 20%;
+    color: #f00;
+}
+
+
+@media (min-width: 1601px) {
+    .col-oa-5 {
+        width: 20%;
+    }
+    #projectDocCards>ul>li {
+        width: 12.5%;
+    }
+    .myoa-project-name>a {
+	    max-width: 180px;
+	}
+}

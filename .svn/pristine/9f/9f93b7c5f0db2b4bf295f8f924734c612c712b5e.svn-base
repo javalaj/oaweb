@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaReceiveFileDao">
+
+	<sql id="oaReceiveFileColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS
+		"delFlag",
+		a.officename AS "officename",
+		a.code AS "code",
+		a.unitcode AS
+		"unitcode",
+		a.date AS "date",
+		a.unitname AS "unitname",
+		a.title AS
+		"title",
+		a.content AS "content",
+		a.mainfile AS "mainfile",
+		a.otherfiles AS
+		"otherfiles",
+		a.examname AS "examname",
+		a.examtext AS
+		"examtext",
+		a.examname2 AS "examname2",
+		a.examtext2 AS "examtext2",
+		a.examname3 AS
+		"examname3",
+		a.examtext3 AS "examtext3",
+		a.isdraft AS
+		"isdraft"
+	</sql>
+
+	<sql id="oaReceiveFileJoins">
+	</sql>
+
+	<select id="getByProcInsId" resultType="OaReceiveFile">
+		SELECT
+		<include refid="oaReceiveFileColumns" />
+		FROM oa_receive_file a
+		<include refid="oaReceiveFileJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+
+	<select id="findProcDefIdByKey" resultType="java.lang.String">
+		SELECT a.id_ FROM
+		act_re_procdef a WHERE a.key_=#{key}
+	</select>
+
+	<select id="get" resultType="OaReceiveFile">
+		SELECT
+		<include refid="oaReceiveFileColumns" />
+		FROM oa_receive_file a
+		<include refid="oaReceiveFileJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaReceiveFile">
+		SELECT
+		<include refid="oaReceiveFileColumns" />
+		FROM oa_receive_file a
+		<include refid="oaReceiveFileJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{createBy.id}
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaReceiveFile">
+		SELECT
+		<include refid="oaReceiveFileColumns" />
+		FROM oa_receive_file a
+		<include refid="oaReceiveFileJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_receive_file(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		officename,
+		code,
+		unitcode,
+		date,
+		unitname,
+		title,
+		content,
+		mainfile,
+		otherfiles,
+		examname,
+		examtext,
+		examname2,
+		examtext2,
+		examname3,
+		examtext3,
+		isdraft
+		)
+		VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{officename},
+		#{code},
+		#{unitcode},
+		#{date},
+		#{unitname},
+		#{title},
+		#{content},
+		#{mainfile},
+		#{otherfiles},
+		#{examname},
+		#{examtext},
+		#{examname2},
+		#{examtext2},
+		#{examname3},
+		#{examtext3},
+		#{isdraft}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_receive_file SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		officename = #{officename},
+		code = #{code},
+		unitcode =
+		#{unitcode},
+		date = #{date},
+		unitname = #{unitname},
+		title = #{title},
+		content = #{content},
+		mainfile = #{mainfile},
+		otherfiles =
+		#{otherfiles},
+		examname = #{examname},
+		examtext = #{examtext},
+		examname2
+		= #{examname2},
+		examtext2 = #{examtext2},
+		examname3 = #{examname3},
+		examtext3 = #{examtext3},
+		isdraft=#{isdraft}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_receive_file SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

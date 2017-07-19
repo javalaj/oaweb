@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.loan.OaLoanRepaymentDao">
+    
+	<sql id="oaLoanRepaymentColumns">
+		a.id AS "id",
+		a.repayment_money AS "repaymentMoney",
+		a.repayment_type AS "repaymentType",
+		a.loan_main_id AS "loanMain.id",
+		a.loan_user_id AS "loanUser.id",
+		a.billing_no AS "billingNo",
+		a.deal_user_id AS "dealUser.id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u5.name AS "loanUser.name",
+		u5.login_name AS "loanUser.loginName",
+		u7.name AS "dealUser.name",
+		u7.login_name AS "dealUser.loginName",
+		lm1.loan_no AS "loanMain.loanNo",
+		lm1.loan_time AS "loanMain.loanTime",
+		lm1.loan_money AS "loanMain.loanMoney"
+	</sql>
+	
+	<sql id="oaLoanRepaymentJoins">
+		LEFT JOIN sys_user u5 ON u5.id = a.loan_user_id
+		LEFT JOIN sys_user u7 ON u7.id = a.deal_user_id
+		LEFT JOIN oa_loan_main lm1 ON lm1.id = a.loan_main_id
+	</sql>
+    
+	<select id="get" resultType="OaLoanRepayment">
+		SELECT 
+			<include refid="oaLoanRepaymentColumns"/>
+		FROM oa_loan_repayment a
+		<include refid="oaLoanRepaymentJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getSumRepaymentMoney" resultType="Double">
+		SELECT 
+			IFNULL(SUM(a.repayment_money), 0) as sumRepaymentMoney
+		FROM oa_loan_repayment a
+		WHERE a.loan_user_id = #{loanUserId} and a.del_flag='0'
+		GROUP BY a.loan_user_id
+	</select>
+	
+	<select id="getSumRepaymentMoneyByLoanMainId" resultType="Double">
+		SELECT 
+			IFNULL(SUM(a.repayment_money), 0) as sumRepaymentMoney
+		FROM oa_loan_repayment a
+		WHERE a.loan_main_id = #{loanMainId} and a.del_flag='0'
+		GROUP BY a.loan_main_id
+	</select>
+	
+	<select id="findList" resultType="OaLoanRepayment">
+		SELECT 
+			<include refid="oaLoanRepaymentColumns"/>
+		FROM oa_loan_repayment a
+		<include refid="oaLoanRepaymentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="repaymentType != null and repaymentType != ''">
+				AND a.repayment_type = #{repaymentType}
+			</if>
+			<if test="loanMain != null and loanMain.id != null and loanMain.id != ''">
+				AND a.loan_main_id = #{loanMain.id}
+			</if>
+			<if test="loanUser != null and loanUser.id != null and loanUser.id != ''">
+				AND a.loan_user_id = #{loanUser.id}
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND a.loan_user_id = #{currentUserId}
+			</if>
+			
+			
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaLoanRepayment">
+		SELECT 
+			<include refid="oaLoanRepaymentColumns"/>
+		FROM oa_loan_repayment a
+		<include refid="oaLoanRepaymentJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_loan_repayment(
+			id,
+			repayment_money,
+			repayment_type,
+			loan_main_id,
+			loan_user_id,
+			billing_no,
+			deal_user_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{repaymentMoney},
+			#{repaymentType},
+			#{loanMain.id},
+			#{loanUser.id},
+			#{billingNo},
+			#{dealUser.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_loan_repayment SET 	
+			repayment_money = #{repaymentMoney},
+			repayment_type = #{repaymentType},
+			loan_main_id = #{loanMain.id},
+			loan_user_id = #{loanUser.id},
+			billing_no = #{billingNo},
+			deal_user_id = #{dealUser.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_loan_repayment SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

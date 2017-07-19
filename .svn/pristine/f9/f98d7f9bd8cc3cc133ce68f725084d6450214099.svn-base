@@ -1,0 +1,300 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.fixedassets;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.google.common.collect.Lists;
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.mapper.JsonMapper;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.act.entity.Act;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableApply;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableSerial;
+import com.thinkgem.jeesite.modules.oa.entity.perishableproducts.PerishableProducts;
+import com.thinkgem.jeesite.modules.oa.service.fixedassets.PerishableSerialService;
+import com.thinkgem.jeesite.modules.oa.service.perishableproducts.PerishableProductsService;
+
+/**
+ * 易耗品序列Controller
+ * @author 易耗品序列
+ * @version 2016-12-02
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/fixedassets/perishableSerial")
+public class PerishableSerialController extends BaseController {
+
+	@Autowired
+	private PerishableSerialService perishableSerialService;
+
+	@Autowired
+	private PerishableProductsService perishableProductsService;
+	
+	@ModelAttribute
+	public PerishableSerial get(@RequestParam(required=false) String id) {
+		PerishableSerial entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = perishableSerialService.get(id);
+		}
+		if (entity == null){
+			entity = new PerishableSerial();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "saveForAct")
+	public String saveForAct(RedirectAttributes redirectAttributes,
+			String[] perishableId,Integer[] amount, String remarks)
+	{
+		if (perishableId==null || (perishableId!=null&&perishableId.length==0))
+		{
+			addMessage(redirectAttributes, "请选择物品");
+			
+			return "redirect:"+Global.getAdminPath()+"/perishableproducts/perishableProducts";
+		}
+		else
+		{
+			PerishableSerial perishableSerial = perishableSerialService.saveForAct(perishableId, amount, remarks);
+			
+			addMessage(redirectAttributes, "保存申请流程成功");
+			
+			return "redirect:"+Global.getAdminPath()+"/oa/fixedassets/perishableSerial/view?id=" 
+					+ perishableSerial.getId();
+		}
+		
+	}
+	
+	/**
+	 * 查看页面
+	 * @param obj
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "view")
+	public String view(PerishableSerial obj, Model model) 
+	{
+		if (obj.getId() != null) {
+			obj = perishableSerialService.get(obj.getId());
+		} else if (obj.getProcInsId() != null) {
+			obj = perishableSerialService.getByProcInsId(obj
+					.getProcInsId());
+		}
+		
+		List<PerishableApply> list = perishableSerialService.getApplyList(
+				perishableSerialService.selectSerialById(obj.getId()).getApplyList());
+		
+		model.addAttribute("task", perishableSerialService
+				.getTaskByProcInsId(obj.getProcInsId()));
+		
+		model.addAttribute("list", list);
+		
+		model.addAttribute("perishableSerial", obj);
+
+		if (perishableSerialService.isDeal(obj)) 
+		{
+			List<String> idList = Lists.newArrayList();
+			
+			for (PerishableApply perishableApply : list) 
+				idList.add(perishableApply.getPerishable().getId());
+			
+			
+			List<PerishableProducts> list1 = perishableProductsService
+					.findOutstockList(idList);
+			
+			model.addAttribute("list", list1);
+			
+			String view = "1";
+			
+			model.addAttribute("view", view);
+			
+			return "modules/perishableproducts/findOutStockList";
+		}
+		
+		return "modules/oa/fixedassets/view";
+	}
+
+	/**
+	 * 查看页面
+	 * @param obj
+	 * @param model
+	 * @return
+	 */
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "applicationView")
+	public String applicationView(PerishableSerial obj, Model model, Act act) 
+	{
+		if (act.getProcInsId() != null && !"".equals(act.getProcInsId()))
+		{
+			obj = perishableSerialService.get(obj.getId());
+		} 
+		else if (obj.getAct() != null
+				&& obj.getAct().getProcInsId() != null) 
+		{
+			obj = perishableSerialService.getByProcInsId(obj
+					.getAct().getProcInsId());
+		}
+		
+		List<PerishableApply> list = perishableSerialService.getApplyList(
+				perishableSerialService.selectSerialById(obj.getId()).getApplyList());
+		
+		model.addAttribute("task", perishableSerialService
+				.getTaskByProcInsId(obj.getProcInsId()));
+		
+		model.addAttribute("list", list);
+		
+		model.addAttribute("perishableSerial", obj);
+		
+		if (!perishableSerialService.isDeal(obj))
+		{
+			String view = "1";
+			
+			model.addAttribute("view", view);
+		}
+		return "modules/oa/fixedassets/application";
+	}
+	
+	/**
+	 * 审批页面
+	 * @param obj
+	 * @param model
+	 * @param act
+	 * @return
+	 */
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "exam")
+	public String exam(PerishableSerial obj, Model model, Act act) 
+	{
+		if (act.getProcInsId() != null && !"".equals(act.getProcInsId()))
+		{
+			obj = perishableSerialService.get(obj.getId());
+		} 
+		else if (obj.getAct() != null
+				&& obj.getAct().getProcInsId() != null) 
+		{
+			obj = perishableSerialService.getByProcInsId(obj
+					.getAct().getProcInsId());
+		}
+		List<PerishableApply> list = perishableSerialService.getApplyList(
+				perishableSerialService.selectSerialById(obj.getId()).getApplyList());
+		
+		model.addAttribute("task", perishableSerialService
+				.getTaskByProcInsId(obj.getProcInsId()));
+		
+		model.addAttribute("list", list);
+		
+		model.addAttribute("perishableSerial", obj);
+		// 判断是否为该人员应该操作
+		String str = "modules/oa/fixedassets/view";
+		
+		if (perishableSerialService.isDeal(obj)) {
+			str = "modules/oa/fixedassets/exam";
+		}
+		
+		model.addAttribute("task", perishableSerialService
+				.getTaskByProcInsId(obj.getProcInsId()));
+		
+		return str;
+	}
+	
+	/**
+	 * 领用
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "application")
+	@ResponseBody
+	public String application(HttpServletRequest request,
+			HttpServletResponse response)
+	{
+		
+		String id = request.getParameter("id");
+		
+		perishableSerialService.application(get(id));
+		
+		return JsonMapper.getInstance().toJson(true);
+	}
+
+	/**
+	 * 审核(通过归档,不通过时更新库存)
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequiresPermissions("perishableproducts:perishableProducts:view")
+	@RequestMapping(value = "doexam")
+	@ResponseBody
+	public String doexam(HttpServletRequest request,
+			HttpServletResponse response)
+	{
+		String perishableIds = request.getParameter("perishableIdList");
+		
+		String amounts = request.getParameter("amountList");
+		
+		String exam = request.getParameter("exam");
+		
+		String [] ids = perishableIds.split(",");
+		
+		String [] amount = amounts.split(",");
+		
+		String id = request.getParameter("id");
+		
+		perishableSerialService.exam(exam.equals("2") , ids, amount, get(id));
+		
+		return JsonMapper.getInstance().toJson(true);
+	}	
+	
+	@RequiresPermissions("oa:fixedassets:perishableSerial:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(PerishableSerial perishableSerial, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<PerishableSerial> page = perishableSerialService.findPage(new Page<PerishableSerial>(request, response), perishableSerial); 
+		model.addAttribute("page", page);
+		return "modules/oa/fixedassets/perishableSerialList";
+	}
+
+	@RequiresPermissions("oa:fixedassets:perishableSerial:view")
+	@RequestMapping(value = "form")
+	public String form(PerishableSerial perishableSerial, Model model) {
+		model.addAttribute("perishableSerial", perishableSerial);
+		return "modules/oa/fixedassets/perishableSerialForm";
+	}
+
+	@RequiresPermissions("oa:fixedassets:perishableSerial:view")
+	@RequestMapping(value = "save")
+	public String save(PerishableSerial perishableSerial, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, perishableSerial)){
+			return form(perishableSerial, model);
+		}
+		perishableSerialService.save(perishableSerial);
+		addMessage(redirectAttributes, "保存办公用品序列成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/fixedassets/perishableSerial/?repage";
+	}
+	
+	@RequiresPermissions("oa:fixedassets:perishableSerial:view")
+	@RequestMapping(value = "delete")
+	public String delete(PerishableSerial perishableSerial, RedirectAttributes redirectAttributes) {
+		perishableSerialService.delete(perishableSerial);
+		addMessage(redirectAttributes, "删除办公用品序列成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/fixedassets/perishableSerial/?repage";
+	}
+
+}

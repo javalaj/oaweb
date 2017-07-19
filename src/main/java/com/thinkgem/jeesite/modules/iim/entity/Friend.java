@@ -1,0 +1,45 @@
+package com.thinkgem.jeesite.modules.iim.entity;
+
+public class Friend {
+	
+	private String id;
+	
+	private String name;
+	
+	private String face;
+	
+	private String time;
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setFace(String face) {
+		this.face = face;
+	}
+
+	public String getFace() {
+		return face;
+	}
+
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
+
+}

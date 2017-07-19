@@ -1,0 +1,205 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>办公电脑申购</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			$("#btnPrint").click(function(){
+				var src="${ctx}/oa/computerpurchase/computerPurchase/print?id=${computerPurchase.id}";
+				top.layer.open({
+					  type: 2, 
+					  area: [$("body").width()+'px', $("body").height()+'px'],
+					  title: "打印预览", 
+			          maxmin: true, 
+			          shadeClose: true,
+					  content: src
+				});
+			});
+			
+			 $("#btnView").click(function(){
+				var src="${ctx}/act/process/resource/read?procDefId=${fns:getWorkflowVarValue('computer_purchase','procDefId','')}&resType=image";
+				if("${not empty computerPurchase.procInsId}"=="true"){
+					src="${ctx}/act/task/trace/photo/${fns:getWorkflowVarValue('computer_purchase','procDefId','')}/${computerPurchase.procInsId}";
+				}
+				top.layer.open({
+					  type: 2, 
+					  area: [$("body").width()+'px', $("body").height()+'px'],
+					  title: "办公电脑申购流程图", 
+			          maxmin: true, 
+			          shadeClose: true,
+					  content: src
+				});	
+			}); 
+		});
+		
+		function goBack(){
+			
+			var strUrl=document.referrer;
+			
+			var arrObj=strUrl.split("//");
+			var start=arrObj[1].indexOf("/");
+			var end=arrObj[1].indexOf(";");
+			var newurl=arrObj[1].substring(start);
+			if(end>0){
+				var newurl=arrObj[1].substring(start,end);
+				}
+			
+			 if(newurl == "/oa/a/oa/computerpurchase/computerPurchase" || 
+				newurl == "/oa/a/oa/computerpurchase/computerPurchase/?repage"){
+				window.location.href="${ctx}/oa/computerpurchase/computerPurchase";			
+			}else{
+				history.go(-1);
+			} 
+		}
+	</script>
+	<style>
+	@media print {
+		.noprint {
+			display: none
+		}
+	}
+	</style>
+</head>
+<body class="gray-bg" style="padding: 0;">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>办公电脑采购详情</h5>		
+			</div>
+			<div class="ibox-content" style="padding: 5px 0;">
+				<form:form id="inputForm" modelAttribute="computerPurchase" action="" method="post" class="form-horizontal">
+					<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+						<tr>
+							<td class="width-15 active noprint" colspan="6"><div style='text-align:left'><input id="btnCancel" class="btn" type="button" value="返 回" onclick="goBack();"/>&nbsp;
+							<input id="btnPrint" type="button" value="打印" class="btn btn-primary"/>&nbsp;&nbsp;
+							<input id="btnView" class="btn btn-primary" type="button" value="查看流程图"/>&nbsp;&nbsp;
+							<c:if test="${computerPurchase.status ne 'x' && computerPurchase.status ne 'y'}">
+								<act:flow-back-btn/>
+							</c:if>
+							</div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>办公电脑申请表</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">申请部门</td>
+							<td>
+									${computerPurchase.applyDept}
+							</td>
+							<td class="width-15 active" style="width:100px">申请时间</td>
+							<td>
+									<fmt:formatDate value="${computerPurchase.applyTime}" pattern="yyyy-MM-dd"/>
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" style="width:100px">申请人</td>
+							<td colspan="3">
+									${computerPurchase.userName.name}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" style="width:100px">配置</td>
+							<td colspan="3">
+									${fns:getDictLabel(computerPurchase.configure,'computer_configure','')}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" style="width:100px">要求型号</td>
+							<td colspan="3">
+									${computerPurchase.demandModel}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" style="width:100px">cpu</td>
+							<td colspan="3">
+									${computerPurchase.cpu}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">内存</td>
+							<td colspan="3">
+									${computerPurchase.memory}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">硬盘容量</td>
+							<td colspan="3">
+									${computerPurchase.hardDisk}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">显卡</td>
+							<td colspan="3">
+									${computerPurchase.videoCard}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active">其他要求</td>
+							<td colspan="3">
+									${computerPurchase.other}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>申请部门主管</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">申请部门主管意见</td>
+							<td colspan="3">
+								${computerPurchase.deptDirectorSuggestion}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>申请部门副总</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">申请部门副总意见</td>
+							<td colspan="3">
+								${computerPurchase.deputyManagerSuggestion}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>人事行政副总</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">人事行政副总意见</td>
+							<td colspan="3">
+								${computerPurchase.adminDeptManagerSuggestion}
+							</td>
+						</tr>
+						
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>总经理</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">总经理意见</td>
+							<td colspan="3">
+								${computerPurchase.generalManagerSuggestion}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>采购执行</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">采购情况</td>
+							<td colspan="3">
+								${computerPurchase.purchaser}
+							</td>
+						</tr>
+						<tr>
+							<td class="width-15 active" colspan="4"><div style='text-align:left'><fieldset><legend>固定资产管理员</legend></fieldset></div></td>
+						</tr>
+						<tr>
+							<td class="width-15 active">固定资产情况</td>
+							<td colspan="3">
+								${computerPurchase.admin}
+							</td>
+						</tr>
+					</table>
+				</form:form>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

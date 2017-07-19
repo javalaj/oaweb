@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.entertainmentr.OaEntertainmentReimbursementDao">
+    
+	<sql id="oaEntertainmentReimbursementColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.file_id AS "fileId",
+		a.date AS "date",
+		a.currentunit AS "currentunit",
+		a.reason AS "reason",
+		a.meals AS "meals",
+		a.alcoholtobacco AS "alcoholtobacco",
+		a.num_our AS "numOur",
+		a.num_customers AS "numCustomers",
+		a.ispriorapproval AS "ispriorapproval",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname1 AS "examname1",
+		a.examtext1 AS "examtext1",
+		a.examname2 AS "examname2",
+		a.examtext2 AS "examtext2",
+		a.money_double AS "moneyDouble",
+		a.money_string AS "moneyString",
+		a.sameid as "sameid",
+		a.isagree as "isagree",
+		a.isagree1 as "isagree1",
+		a.isagree2 as "isagree2"
+	</sql>
+	
+	<sql id="oaEntertainmentReimbursementJoins">
+	</sql>
+    
+	<select id="get" resultType="OaEntertainmentReimbursement">
+		SELECT 
+			<include refid="oaEntertainmentReimbursementColumns"/>
+		FROM oa_entertainment_reimbursement a
+		<include refid="oaEntertainmentReimbursementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getOaEnterBySameid" resultType="OaEntertainmentReimbursement">
+		SELECT 
+			<include refid="oaEntertainmentReimbursementColumns"/>
+		FROM oa_entertainment_reimbursement a
+		<include refid="oaEntertainmentReimbursementJoins"/>
+		WHERE a.sameid = #{sameid}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaEntertainmentReimbursement">
+    	select 
+    		<include refid="oaEntertainmentReimbursementColumns"/>
+    	from oa_entertainment_reimbursement a 
+    		<include refid="oaEntertainmentReimbursementJoins"/>
+    	where a.proc_ins_id = #{procInsId}
+    </select>
+	
+	<select id="findList" resultType="OaEntertainmentReimbursement">
+		SELECT 
+			<include refid="oaEntertainmentReimbursementColumns"/>
+		FROM oa_entertainment_reimbursement a
+		<include refid="oaEntertainmentReimbursementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaEntertainmentReimbursement">
+		SELECT 
+			<include refid="oaEntertainmentReimbursementColumns"/>
+		FROM oa_entertainment_reimbursement a
+		<include refid="oaEntertainmentReimbursementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_entertainment_reimbursement(
+			id,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			file_id,
+			date,
+			currentunit,
+			reason,
+			meals,
+			alcoholtobacco,
+			num_our,
+			num_customers,
+			ispriorapproval,
+			examname,
+			examtext,
+			examname1,
+			examtext1,
+			examname2,
+			examtext2,
+			money_double,
+			money_string,
+			sameid,
+			isagree,
+			isagree1,
+			isagree2
+		) VALUES (
+			#{id},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{fileId},
+			#{date},
+			#{currentunit},
+			#{reason},
+			#{meals},
+			#{alcoholtobacco},
+			#{numOur},
+			#{numCustomers},
+			#{ispriorapproval},
+			#{examname},
+			#{examtext},
+			#{examname1},
+			#{examtext1},
+			#{examname2},
+			#{examtext2},
+			#{moneyDouble},
+			#{moneyString},
+			#{sameid},
+			#{isagree},
+			#{isagree1},
+			#{isagree2}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_entertainment_reimbursement SET 	
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			file_id = #{fileId},
+			date = #{date},
+			currentunit = #{currentunit},
+			reason = #{reason},
+			meals = #{meals},
+			alcoholtobacco = #{alcoholtobacco},
+			num_our = #{numOur},
+			num_customers = #{numCustomers},
+			ispriorapproval = #{ispriorapproval},
+			examname = #{examname},
+			examtext = #{examtext},
+			examname1 = #{examname1},
+			examtext1 = #{examtext1},
+			examname2 = #{examname2},
+			examtext2 = #{examtext2},
+			money_double = #{moneyDouble},
+			money_string = #{moneyString},
+			sameid=#{sameid},
+			isagree=#{isagree},
+			isagree1=#{isagree1},
+			isagree2=#{isagree2}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_entertainment_reimbursement SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

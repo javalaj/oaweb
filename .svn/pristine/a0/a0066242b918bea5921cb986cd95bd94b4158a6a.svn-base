@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaOutworkDao">
+
+	<sql id="oaOutworkColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.file_id AS "fileId",
+		a.office_name AS
+		"officeName",
+		a.task AS "task",
+		a.address AS "address",
+		a.unit_name AS
+		"unitName",
+		a.unit_user_name AS "unitUserName",
+		a.start_time AS
+		"startTime",
+		a.end_time AS "endTime",
+		a.cost AS "cost",
+		a.examname AS
+		"examname",
+		a.examtext AS "examtext",
+		a.examname2 AS "examname2",
+		a.examtext2 AS "examtext2",
+		a.examname3 AS "examname3",
+		a.examtext3 AS
+		"examtext3",
+		a.examname4 AS "examname4",
+		a.examtext4 AS "examtext4",
+		a.project_name AS "projectName",
+		a.schedule_program AS
+		"scheduleProgram",
+		a.fileurl AS "fileurl",
+		a.real_end_time AS
+		"realEndTime",
+		a.time AS "time"
+	</sql>
+
+	<sql id="oaOutworkJoins">
+	</sql>
+	<select id="getByProcInsId" resultType="OaOutwork">
+		SELECT
+		<include refid="oaOutworkColumns" />
+		FROM oa_outwork a
+		<include refid="oaOutworkJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaOutwork">
+		SELECT
+		<include refid="oaOutworkColumns" />
+		FROM oa_outwork a
+		<include refid="oaOutworkJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaOutwork">
+		SELECT
+		<include refid="oaOutworkColumns" />
+		FROM oa_outwork a
+		<include refid="oaOutworkJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaOutwork">
+		SELECT
+		<include refid="oaOutworkColumns" />
+		FROM oa_outwork a
+		<include refid="oaOutworkJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_outwork(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		file_id,
+		office_name,
+		task,
+		address,
+		unit_name,
+		unit_user_name,
+		start_time,
+		end_time,
+		cost,
+		examname,
+		examtext,
+		examname2,
+		examtext2,
+		examname3,
+		examtext3,
+		examname4,
+		examtext4,
+		project_name,
+		schedule_program,
+		fileurl,
+		real_end_time,time
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{fileId},
+		#{officeName},
+		#{task},
+		#{address},
+		#{unitName},
+		#{unitUserName},
+		#{startTime},
+		#{endTime},
+		#{cost},
+		#{examname},
+		#{examtext},
+		#{examname2},
+		#{examtext2},
+		#{examname3},
+		#{examtext3},
+		#{examname4},
+		#{examtext4},
+		#{projectName},
+		#{scheduleProgram},
+		#{fileurl},
+		#{realEndTime},#{time}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_outwork SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		file_id = #{fileId},
+		office_name = #{officeName},
+		task =
+		#{task},
+		address = #{address},
+		fileurl=#{fileurl},
+		unit_name =
+		#{unitName},
+		unit_user_name =
+		#{unitUserName},
+		start_time = #{startTime},
+		end_time = #{endTime},
+		cost =
+		#{cost},
+		examname = #{examname},
+		examtext =
+		#{examtext},
+		examname2 =
+		#{examname2},
+		examtext2 = #{examtext2},
+		examname3 = #{examname3},
+		examtext3 = #{examtext3},
+		examname4 =
+		#{examname4},
+		examtext4 =
+		#{examtext4},
+		project_name = #{projectName},
+		schedule_program =
+		#{scheduleProgram},
+		real_end_time = #{realEndTime},time = #{time}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_outwork SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

@@ -1,0 +1,229 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>人员增补管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+				$("#btnSubmit").click(function() {
+							var judge1 = judgeInt1(); 
+							var judge2 =judgeInt2();
+							var judge3 =judgeInt3();
+							var judge4 =judgeInt4();
+							return judge1&& judge2&&judge3 &&judge4;
+						}); 
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					oaLoading('操作正在进行中，请耐心等待');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+		function judgeInt1() {
+			var judge = true;
+			var str = "";
+			var str1 = "*"
+			var str2 = "输入正整数 *";
+			$("input[name='number']").each(function() {
+				if (!$(this).is(":hidden") && $(this).val() != "") {
+					if (!(/^\d+$/.test($(this).val()))) {
+						judge = false;
+						str = str2;
+					} else {
+						str = str1;
+					}
+					$(this).next().children().text(str);
+				}
+			});
+			return judge;
+		}
+		function judgeInt2() {
+			var judge = true;
+			var str = "";
+			var str1 = "*"
+			var str2 = "输入正整数 *";
+			$("input[name='upNumber']").each(function() {
+				if (!$(this).is(":hidden") && $(this).val() != "") {
+					if (!(/^\d+$/.test($(this).val()))) {
+						judge = false;
+						str = str2;
+					} else {
+						str = str1;
+					}
+					$(this).next().children().text(str);
+				}
+			});
+			return judge;
+		}
+		function judgeInt3() {
+			var judge = true;
+			var str = "";
+			var str1 = "*"
+			var str2 = "输入正整数 *";
+			$("input[name='trial']").each(function() {
+				if (!$(this).is(":hidden") && $(this).val() != "") {
+					if (!(/^\d+$/.test($(this).val()))) {
+						judge = false;
+						str = str2;
+					} else {
+						str = str1;
+					}
+					$(this).next().children().text(str);
+				}
+			});
+			return judge;
+		}
+		function judgeInt4() {
+			var judge = true;
+			var str = "";
+			var str1 = "*"
+			var str2 = "输入正整数 *";
+			$("input[name='official']").each(function() {
+				if (!$(this).is(":hidden") && $(this).val() != "") {
+					if (!(/^\d+$/.test($(this).val()))) {
+						judge = false;
+						str = str2;
+					} else {
+						str = str1;
+					}
+					$(this).next().children().text(str);
+				}
+			});
+			return judge;
+		} 
+	</script>
+	<style type="text/css">
+	
+	#cz{width: 50px;}
+	
+	</style>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>人员增补-申请 </h5>
+		<div class="ibox-tools">
+		</div>
+	</div>
+   <div class="ibox-content">
+   	<sys:message content="${message}"/>
+   	<div class="row">
+	<div class="col-sm-12">
+	<br/>
+	</div>
+	</div>
+	<div class="row">
+	<div class="col-sm-12">
+		<div class="pull-left">
+	</div>
+	</div>
+	<form:form id="inputForm" modelAttribute="oaStaffupdated" action="${ctx}/oa/staff/oaStaffupdated/save" method="post" class="form-inline">
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>		
+		<table class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+			<tr>
+
+				<td colspan="6"><h3 align='center'>人员新增申请表</h3></td>
+			</tr>
+			<tr>
+
+				<td colspan="4">申请人：${name }</td>
+				<td colspan="4">申请时间：	
+				<fmt:formatDate value="${date}" pattern="yyyy-MM-dd"/>
+					</td>
+			</tr>
+		<tr>
+			<td>需求部门：</td>
+			<td>
+				<form:input path="department" htmlEscape="false" maxlength="255" class="form-control required"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			<td>现有人数：</td>
+			<td>
+				<form:input path="number"   id="cz"   name="number"  htmlEscape="false" maxlength="11" class="form-control required number" />
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			<td>拟增人数：</td>
+			<td>
+				<form:input  id="cz" path="upNumber" name="upNumber"  htmlEscape="false" maxlength="11" class="form-control required number"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+		</tr>
+		<tr>
+			<td style="width: 250px;">岗位名称：</td>
+		<td>
+				<form:input path="upPostname"    htmlEscape="false" maxlength="255" class="form-control required "/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			    	<td>试用期薪资：</td>
+			<td>
+				<form:input  id="cz" path="trial"  name="trial" htmlEscape="false" maxlength="11" class="form-control required number" />
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			<td>转正薪资：</td>
+			<td>
+				<form:input  id="cz" path="official" name="official"  htmlEscape="false" maxlength="11" class="form-control required number"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			</tr>
+		<tr>
+			<td>增补原因<!-- (0:补缺，1：增加，2：储备) -->：</td>
+			<td>
+				<form:radiobuttons path="upReason" items="${fns:getDictList('up_reason')}" itemLabel="label" itemValue="value" htmlEscape="false" class="required i-checks"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+			<td>期望到岗日期：</td>
+			<td colspan="6">
+				<input name="expectationTime" type="text" readonly="readonly" maxlength="20" class="laydate-icon form-control layer-date input-sm required"
+					value="<fmt:formatDate value="${oaStaffupdated.expectationTime}" pattern="yyyy-MM-dd"/>"
+					onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:false});"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+		</tr>
+		<tr>
+			<td>岗位工作内容：</td>
+			<td colspan="6">
+			<form:textarea path="upPostcontent"
+						htmlEscape="false" rows="2" maxlength="600"
+						class="input-xxlarge required" disabled="disabled" />
+			<%-- 	<form:input path="upPostcontent" htmlEscape="false" maxlength="255" class="input-xlarge required"/> --%>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+		</tr>
+	<tr>
+			<td>增补岗位要求：</td>
+		<td colspan="6">
+		<form:textarea path="upPostclaim"
+						htmlEscape="false" rows="2" maxlength="600"
+						class="input-xxlarge required" disabled="disabled" />
+	<%-- 			<form:input path="upPostclaim" htmlEscape="false" maxlength="255" class="input-xlarge required"/> --%>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</td>
+</tr>
+<tr>
+		<td></td>
+		<td colspan="6"><shiro:hasPermission name="oa:staff:oaStaffupdated:edit"><input id="btnSubmit" class="btn btn-myoa-sec btn-myoa-large" type="submit" value="提 交"/>&nbsp;</shiro:hasPermission>
+			<input id="btnCancel" class="btn btn-myoa" type="button" value="返 回" onclick="history.go(-1)"/></td>
+		
+		</tr>
+</table>
+	</form:form>
+	<br/>
+	<br/>
+	</div>
+	</div>
+	</div>
+</body>
+</html>

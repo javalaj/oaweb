@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractPurchaseStageDao">
+    
+	<sql id="oaContractPurchaseStageColumns">
+		a.id AS "id",
+		a.contract_purchase_id AS "contractPurchase.id",
+		a.pay_stage AS "payStage",
+		a.is_goods_arrived AS "isGoodsArrived",
+		a.is_inspection_sheet_ready AS "isInspectionSheetReady",
+		a.pay_time AS "payTime",
+		a.pay_money AS "payMoney",
+		a.billing_money AS "billingMoney",
+		a.billing_no AS "billingNo",
+		a.billing_type AS "billingType",
+		a.billing_time AS "billingTime",
+		a.billing_content AS "billingContent",
+		a.billing_file AS "billingFile",
+		a.is_work_progress_completed AS "isWorkProgressCompleted",
+		a.work_progress_file AS "workProgressFile",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.pay_stage_index AS "payStageIndex",
+		a.pay_stage_name AS "payStageName",
+		a.pay_stage_status AS "payStageStatus",
+		ocppa1.id AS "oaContractPurchasePayApproval.id",
+		ocppa1.status AS "oaContractPurchasePayApproval.status",
+		ocppa1.is_start AS "oaContractPurchasePayApproval.isStart"
+	</sql>
+	
+	<sql id="oaContractPurchaseStageJoins">
+		LEFT JOIN oa_contract_purchase_pay_approval ocppa1 ON ocppa1.oa_contract_purchase_stage_id = a.id
+	</sql>
+    
+	<select id="get" resultType="OaContractPurchaseStage">
+		SELECT 
+			<include refid="oaContractPurchaseStageColumns"/>
+		FROM oa_contract_purchase_stage a
+		<include refid="oaContractPurchaseStageJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	
+	<select id="getMaxPayStageIndex" resultType="Integer">
+		SELECT 
+			IFNULL(MAX(a.pay_stage_index), 0) as maxPayStageIndex
+		FROM oa_contract_purchase_stage a
+		WHERE a.contract_purchase_id = #{contractPurchaseId} and a.del_flag='0'
+	</select>
+	
+	<select id="findList" resultType="OaContractPurchaseStage">
+		SELECT 
+			<include refid="oaContractPurchaseStageColumns"/>
+		FROM oa_contract_purchase_stage a
+		<include refid="oaContractPurchaseStageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractPurchase != null and contractPurchase.id != null and contractPurchase.id != ''">
+				AND a.contract_purchase_id=#{contractPurchase.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.pay_stage_index ASC,a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContractPurchaseStage">
+		SELECT 
+			<include refid="oaContractPurchaseStageColumns"/>
+		FROM oa_contract_purchase_stage a
+		<include refid="oaContractPurchaseStageJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract_purchase_stage(
+			id,
+			contract_purchase_id,
+			pay_stage,
+			is_goods_arrived,
+			is_inspection_sheet_ready,
+			pay_time,
+			pay_money,
+			billing_money,
+			billing_no,
+			billing_type,
+			billing_time,
+			billing_content,
+			billing_file,
+			is_work_progress_completed,
+			work_progress_file,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			pay_stage_index,
+			pay_stage_name,
+			pay_stage_status
+		) VALUES (
+			#{id},
+			#{contractPurchase.id},
+			#{payStage},
+			#{isGoodsArrived},
+			#{isInspectionSheetReady},
+			#{payTime},
+			#{payMoney},
+			#{billingMoney},
+			#{billingNo},
+			#{billingType},
+			#{billingTime},
+			#{billingContent},
+			#{billingFile},
+			#{isWorkProgressCompleted},
+			#{workProgressFile},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{payStageIndex},
+			#{payStageName},
+			#{payStageStatus}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_purchase_stage SET 	
+			contract_purchase_id = #{contractPurchase.id},
+			pay_stage = #{payStage},
+			is_goods_arrived = #{isGoodsArrived},
+			is_inspection_sheet_ready = #{isInspectionSheetReady},
+			pay_time = #{payTime},
+			pay_money = #{payMoney},
+			billing_money = #{billingMoney},
+			billing_no = #{billingNo},
+			billing_type = #{billingType},
+			billing_time = #{billingTime},
+			billing_content = #{billingContent},
+			billing_file = #{billingFile},
+			is_work_progress_completed = #{isWorkProgressCompleted},
+			work_progress_file = #{workProgressFile},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			pay_stage_index=#{payStageIndex},
+			pay_stage_name=#{payStageName},
+			pay_stage_status=#{payStageStatus}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_purchase_stage SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE contract_purchase_id = #{contractPurchase.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

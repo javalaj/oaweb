@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.coding.OaProVacateDao">
+
+	<sql id="oaProVacateColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS
+		"createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS
+		"updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.applydate AS "applydate",
+		a.vacatebegindate AS "vacatebegindate",
+		a.vacateenddate AS "vacateenddate",
+		a.vacatedays AS "vacatedays",
+		a.vacatetype AS "vacatetype",
+		a.vacatedesc AS "vacatedesc",
+		a.proc_ins_id AS "procInsId",
+		a.vacatetitle AS "vacateTitle"
+	</sql>
+
+	<sql id="oaProVacateJoins">
+	</sql>
+
+	<select id="getByProcInsId" resultType="OaProVacate">
+		SELECT
+		<include refid="oaProVacateColumns" />
+		FROM oa_pro_vacate a
+		<include refid="oaProVacateJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+
+	<select id="get" resultType="OaProVacate">
+		SELECT
+		<include refid="oaProVacateColumns" />
+		FROM oa_pro_vacate a
+		<include refid="oaProVacateJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaProVacate">
+		SELECT
+		<include refid="oaProVacateColumns" />
+		FROM oa_pro_vacate a
+		<include refid="oaProVacateJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaProVacate">
+		SELECT
+		<include refid="oaProVacateColumns" />
+		FROM oa_pro_vacate a
+		<include refid="oaProVacateJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_pro_vacate(
+		id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		applydate,
+		vacatebegindate,
+		vacateenddate,
+		vacatedays,
+		vacatetype,
+		vacatedesc,
+		proc_ins_id,
+		vacatetitle
+		) VALUES (
+		#{id},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{applydate},
+		#{vacatebegindate},
+		#{vacateenddate},
+		#{vacatedays},
+		#{vacatetype},
+		#{vacatedesc},
+		#{procInsId},
+		#{vacateTitle}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_pro_vacate SET
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		applydate =
+		#{applydate},
+		vacatebegindate = #{vacatebegindate},
+		vacateenddate =
+		#{vacateenddate},
+		vacatedays = #{vacatedays},
+		vacatetype =
+		#{vacatetype},
+		vacatedesc = #{vacatedesc}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_pro_vacate SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<select id="getByTime" resultType="java.lang.Integer">
+		SELECT COUNT(a.id) FROM
+		oa_pro_vacate a WHERE a.create_by = #{createBy.id} AND
+		a.vacatebegindate = #{vacatebegindate} AND
+		a.vacateenddate =
+		#{vacateenddate} AND a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+
+</mapper>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaTaskDao">
+   
+	<sql id="oaTaskColumns">
+		a.id AS "id",
+		a.parentid AS "parentid",
+		a.type AS "type",
+		a.title AS "title",
+		a.content AS "content",
+		a.files AS "files",
+		a.prefer AS "prefer",
+		a.backfiles AS "backfiles",
+		a.status AS "status",
+		a.projectid AS "projectid",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	<sql id="oaTaskJoins">
+	<!-- 查询任务状态的数目-->
+		LEFT JOIN (
+            SELECT r.oa_task_id, 
+                   sum(case when r.task_flag = '0' then 1 else 0 end) inDoing_num,
+                   sum(case when r.task_flag = '1' then 1 else 0 end) isdone_num,
+                    sum(case when r.task_flag = '2' then 1 else 0 end) overDate_num,
+                    sum(case when r.task_flag = '3' then 1 else 0 end) todo_num,
+            FROM oa_task_record r GROUP BY r.oa_task_id
+    	) b ON b.oa_task_id = a.id
+	</sql>
+    
+	<select id="get" resultType="OaTask">
+		SELECT 
+			<include refid="oaTaskColumns"/>
+		FROM oa_task a
+		<include refid="oaTaskJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaTask">
+		SELECT 
+			<include refid="oaTaskColumns"/>
+		FROM oa_task a
+		<include refid="oaTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{create_by}
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaTask">
+		SELECT 
+			<include refid="oaTaskColumns"/>
+		FROM oa_task a
+		<include refid="oaTaskJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}  and backgroundColor:"#F96A2E" ,
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 插入数据 -->
+	<insert id="insert">
+		INSERT INTO oa_task(
+			id,
+			parentid,
+			type,
+			title,
+			content,
+			files,
+			prefer,
+			backfiles,
+			status,
+			projectid,
+			start_time,
+			end_time,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{parentid},
+			#{type},
+			#{title},
+			#{content},
+			#{files},
+			#{prefer},
+			#{backfiles},
+			#{status},
+			#{projectid},
+			#{startTime},
+			#{endTime},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_task SET 	
+			parentid = #{parentid},
+			type = #{type},
+			title = #{title},
+			content = #{content},
+			files = #{files},
+			prefer = #{prefer},
+			backfiles = #{backfiles},
+			status = #{status},
+			projectid = #{projectid},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_task SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

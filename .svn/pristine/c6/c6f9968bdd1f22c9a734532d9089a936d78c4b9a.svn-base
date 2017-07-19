@@ -1,0 +1,268 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>固定资产管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript" src="${ctxStatic}/tableExport/libs/FileSaver/FileSaver.min.js"></script>
+	<script type="text/javascript" src="${ctxStatic}/tableExport/tableExport.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function()
+		 {
+			$("#btnExport").click(function(){
+				if(getExplorer()=='ie')  
+	            {
+					var idChecks=$("input[name='idCheck']");
+					
+					var tablee = document.createElement("table");
+					
+					var $tablee=$(tablee);
+					$tablee.attr("id","exportTable2")
+					$tablee.addClass("table table-striped table-bordered table-hover table-condensed dataTables-example dataTable");
+					$tablee.append($("#threadHead").clone());
+					
+					var tbody = document.createElement("tbody");
+					var $tbody=$(tbody);
+					for ( var i = 0; i < idChecks.length; i+=1) {
+						
+						$tbody.append($(idChecks[i]).parent().parent().parent().clone());
+						
+					}
+					$tablee.append($tbody);
+					var tableee=$tablee[0];
+					document.body.appendChild(tableee);
+					var timex = new Date().Format("yyyyMMddhhmmss");
+	    	        var name = "固定资产-已报废" + timex;
+					$("#exportTable2").tableExport({worksheetName: '固定资产-已报废',fileName: name,type:'excel', excelstyles:['border-bottom', 'border-top', 'border-left', 'border-right']});
+					document.body.removeChild(tablee);
+	            }else{
+	            	method5('contentTable1');
+	            }
+			});				
+		});
+		function page(n,s){
+			$("#pageNo").val(n);
+			$("#pageSize").val(s);
+			$("#searchForm").submit();
+        	return false;
+        }
+		
+		function equipmentType(type)
+		{
+			window.location.replace("${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition="+ type);
+		}
+		
+		function add(){
+			window.location.replace("${ctx}/fixedassets/fixedAssets/form");
+		}
+	</script>
+</head>
+<body class="gray-bg">
+		
+	<div class="wrapper wrapper-content">
+	<div class="ibox">
+	
+<%-- 	<div class="ibox-title">
+	<h5>已报废</h5>
+	<ibox:tools/>
+	</div> --%>
+	<ul class="nav nav-tabs myoa-tabs">
+		<li><a href="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=1">在库</a></li>
+		<li><a href="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=2">外借</a></li>
+		<li><a href="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=3">已领用</a></li>
+		<li class="active"><a href="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=4">已报废</a></li>
+		<li><a href="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=5">待报废</a></li>
+		<li><a href="${ctx}/fixedassets/assetsEquipment/">全部</a></li>
+		<%-- <shiro:hasPermission name="fixedassets:fixedAssets:edit">
+		<li><a href="${ctx}/fixedassets/fixedAssets/form">资产登记</a></li>
+		</shiro:hasPermission> --%>
+	</ul>	
+	<div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<div class="row">
+	<div class="col-sm-12">
+	
+	<form:form id="searchForm" modelAttribute="assetsEquipment" 
+	action="${ctx}/fixedassets/assetsEquipment/claimList?assetsEquipment.condition=4" 
+	method="post" class="breadcrumb form-search">
+		<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}"/>
+		<input id="pageSize" name="pageSize" type="hidden" value="${page.pageSize}"/>
+		<div class="form-group">
+			<label>资产名称：</label>
+				<form:input path="fixedAssets.assetsName" htmlEscape="false" maxlength="255" 
+				class=" form-control input-sm" style="width: 165px;"/>
+			
+			<label>资产编号：</label>
+				<form:input path="serialNumber" htmlEscape="false" maxlength="255" 
+				class=" form-control input-sm" style="width: 165px;"/>
+				<!-- <input type="hidden" name="condition" value="报废"> -->
+			<label>报废日期：</label>
+				<input name="scrapBeginTime" type="text" readonly="readonly" maxlength="20" class="form-control Wdate laydate-icon layer-date input-sm"
+				value="${assetsEquipment.scrapBeginTime}" style="width: 165px;"
+				onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:true});"/> - 
+				<input name="scrapEndTime" type="text" readonly="readonly" maxlength="20" class="form-control Wdate laydate-icon layer-date input-sm"
+				value="${assetsEquipment.scrapEndTime}" style="width: 165px;"
+				onclick="WdatePicker({dateFmt:'yyyy-MM-dd',isShowClear:true});"/>				
+		</div>
+	</form:form>
+			<br/>
+	</div>
+	</div>
+	
+	<!-- 工具栏 -->
+	<div class="row">
+	<div class="col-sm-12">
+		<div class="pull-left">
+			<button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" id="btnExport" title="导出当前页">
+			 导出当前页</button>
+<%-- 			<button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" onclick="equipmentType(1);" title="在库">
+			 在库</button>
+			 
+			 <button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" onclick="equipmentType(2);" title="外借">
+			 外借</button>
+			 
+			 <button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" onclick="equipmentType(3);" title="已领用">
+			 已领用</button>
+			 
+			 <button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" onclick="equipmentType(5);" title="待报废">
+			 待报废</button>
+			 
+			 <button class="btn btn-white btn-sm " data-toggle="tooltip" 
+			data-placement="left" onclick="window.location.replace('${ctx}/fixedassets/assetsEquipment/');" title="全部">
+			 全部</button> --%>
+			 
+			<%-- <shiro:hasPermission name="fixedassets:fixedAssets:edit">
+			<button class="btn btn-white btn-sm" data-toggle="tooltip" 
+			 style="outline-style: none;"  data-placement="left" onclick="add()" title="资产登记"> 资产登记</button>
+			</shiro:hasPermission>  --%>
+		</div>
+		<div class="pull-right">
+			<table:search/>
+			<table:reset/>
+		</div>
+	</div>
+	</div>
+	<table id="contentTable" class="table table-striped table-bordered  table-hover table-condensed  dataTables-example dataTable no-footer">
+		<thead>
+			<tr>
+				<th>资产名称</th>
+				<th>资产类别</th>
+				<th>资产编号</th>
+				<th>品牌</th>
+				<th>数量</th>
+				<th>单价</th>
+				<th>单位</th>
+				<th>采购日期</th>
+				<th>报废日期</th>
+				<%-- <shiro:hasPermission name="fixedassets:fixedAssets:edit"><th>操作</th></shiro:hasPermission> --%>
+			</tr>
+		</thead>
+		<tbody>
+		<form:form id="apply" modelAttribute="fixedAssets" method="post"
+		action="${ctx}/fixedassets/fixedAssets/apply">
+		<c:forEach items="${page.list}" var="assetsEquipment">
+			<tr>
+				<td>
+					${assetsEquipment.fixedAssets.assetsName}
+				</a></td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.assetsCategory, 'assets_category', '')}
+				</td>
+				<td>
+					${assetsEquipment.serialNumber}
+				</td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.brand, 'equ_brand', '')}
+				</td>
+				<td>
+					<%-- ${assetsClaim.fixedAssets.amount} --%>1
+				</td>
+				<td>
+					${assetsEquipment.fixedAssets.unitPrice}
+				</td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.unit, 'unit', '')}
+				</td>
+				<td>
+					<fmt:formatDate value="${assetsEquipment.fixedAssets.purchaseDate}" pattern="yyyy-MM-dd "/>
+				</td>
+				<td>
+					<fmt:formatDate value="${assetsEquipment.updateDate}" pattern="yyyy-MM-dd "/>
+				</td>
+				<%-- <shiro:hasPermission name="fixedassets:fixedAssets:edit"><td>
+    				<a href="${ctx}/fixedassets/assetsEquipment/form?id=${assetsEquipment.id}">归还</a>
+				</td></shiro:hasPermission> --%>
+			</tr>
+		</c:forEach>
+		</tbody>
+	</table>
+	</form:form>
+	
+	<table id="contentTable1" style="display: none;">
+		<thead id="threadHead">
+			<tr style="border:1px solid black">
+			<th class="noprint noexport" style="width: 20px"id="checkHeader"><input type="checkbox"
+										id="checkAll" class="i-checks"/></th>
+				<th>资产名称</th>
+				<th>资产类别</th>
+				<th>资产编号</th>
+				<th>品牌</th>
+				<th>数量</th>
+				<th>单价</th>
+				<th>单位</th>
+				<th>采购日期</th>
+				<th>报废日期</th>
+			</tr>
+		</thead>
+		<tbody>
+		<c:forEach items="${page.list}" var="assetsEquipment">
+		<tr style="border:1px solid black">
+				<td class="noprint noexport"><input
+					type="checkbox" name="idCheck" value="" class="i-checks"/></td>
+				<td>
+					${assetsEquipment.fixedAssets.assetsName}
+				</td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.assetsCategory, 'assets_category', '')}
+				</td>
+				<td>
+					${assetsEquipment.serialNumber}
+				</td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.brand, 'equ_brand', '')}
+				</td>
+				<td>
+					<%-- ${assetsClaim.fixedAssets.amount} --%>1
+				</td>
+				<td>
+					${assetsEquipment.fixedAssets.unitPrice}
+				</td>
+				<td>
+					${fns:getDictLabel(assetsEquipment.fixedAssets.unit, 'unit', '')}
+				</td>
+				<td>
+					<fmt:formatDate value="${assetsEquipment.fixedAssets.purchaseDate}" pattern="yyyy-MM-dd "/>
+				</td>
+				<td>
+					<fmt:formatDate value="${assetsEquipment.createDate}" pattern="yyyy-MM-dd "/>
+				</td>
+			</tr>
+		</c:forEach>
+		</tbody>
+	</table>
+
+		<table:page page="${page}"></table:page>
+	
+		<br>
+	<br>
+	</div>
+</div>
+</div>
+</body>
+</html>

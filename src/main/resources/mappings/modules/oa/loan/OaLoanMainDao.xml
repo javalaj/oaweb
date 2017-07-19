@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.loan.OaLoanMainDao">
+    
+	<sql id="oaLoanMainColumns">
+		a.id AS "id",
+		a.loan_type AS "loanType",
+		a.loan_status AS "loanStatus",
+		a.loan_user_id AS "loanUser.id",
+		a.loan_no AS "loanNo",
+		a.approval_time AS "approvalTime",
+		a.loan_money AS "loanMoney",
+		a.loan_time AS "loanTime",
+		a.write_off_time AS "writeOffTime",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u4.name AS "loanUser.name",
+		u4.login_name AS "loanUser.loginName"
+	</sql>
+	
+	<sql id="oaLoanMainJoins">
+		LEFT JOIN sys_user u4 ON u4.id = a.loan_user_id
+	</sql>
+    
+	<select id="get" resultType="OaLoanMain">
+		SELECT 
+			<include refid="oaLoanMainColumns"/>
+		FROM oa_loan_main a
+		<include refid="oaLoanMainJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getSumLoanMoney" resultType="Double">
+		SELECT 
+			IFNULL(SUM(a.loan_money), 0) as sumLoanMoney
+		FROM oa_loan_main a
+		WHERE a.loan_user_id = #{loanUserId} and a.del_flag='0'
+		GROUP BY a.loan_user_id
+	</select>
+	
+	<select id="findList" resultType="OaLoanMain">
+		SELECT 
+			<include refid="oaLoanMainColumns"/>
+		FROM oa_loan_main a
+		<include refid="oaLoanMainJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="loanType != null and loanType != ''">
+				AND a.loan_type = #{loanType}
+			</if>
+			<if test="loanStatus != null and loanStatus != ''">
+				AND a.loan_status = #{loanStatus}
+			</if>
+			<if test="loanUser != null and loanUser.id != null and loanUser.id != ''">
+				AND a.loan_user_id = #{loanUser.id}
+			</if>
+			<if test="loanNo != null and loanNo != ''">
+				AND a.loan_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{loanNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{loanNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{loanNo},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaLoanMain">
+		SELECT 
+			<include refid="oaLoanMainColumns"/>
+		FROM oa_loan_main a
+		<include refid="oaLoanMainJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_loan_main(
+			id,
+			loan_type,
+			loan_status,
+			loan_user_id,
+			loan_no,
+			approval_time,
+			loan_money,
+			loan_time,
+			write_off_time,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{loanType},
+			#{loanStatus},
+			#{loanUser.id},
+			#{loanNo},
+			#{approvalTime},
+			#{loanMoney},
+			#{loanTime},
+			#{writeOffTime},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_loan_main SET 	
+			loan_type = #{loanType},
+			loan_status = #{loanStatus},
+			loan_user_id = #{loanUser.id},
+			loan_no = #{loanNo},
+			approval_time = #{approvalTime},
+			loan_money = #{loanMoney},
+			loan_time = #{loanTime},
+			write_off_time = #{writeOffTime},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_loan_main SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

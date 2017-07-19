@@ -1,0 +1,429 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.fixedassets;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.IdGen;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.dao.fixedassets.AssetsSerialDao;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.ApplyVo;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsEquipment;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.AssetsSerial;
+import com.thinkgem.jeesite.modules.oa.entity.fixedassets.FixedAssetsApply;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 资产序列Service
+ * @author zf
+ * @version 2016-11-20
+ */
+@Service
+@Transactional(readOnly = true)
+public class AssetsSerialService extends CrudService<AssetsSerialDao, AssetsSerial> {
+
+	/**自定义流程id*/
+	public static final String PROC_DEF_KEY = "assets_quisitions";
+	
+	public static final String WORKFLOW_NAME = "固定资产申请";
+	
+	public AssetsSerial get(String id) {
+		return super.get(id);
+	}
+	
+	public AssetsSerial getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+	
+	public List<AssetsSerial> findList(AssetsSerial assetsSerial) {
+		return super.findList(assetsSerial);
+	}
+	
+	public Page<AssetsSerial> findPage(Page<AssetsSerial> page, AssetsSerial assetsSerial) {
+		return super.findPage(page, assetsSerial);
+	}
+	
+	@Transactional(readOnly = false)
+	public AssetsSerial save(String type,String[] assetsid, 
+			String[] equid, String remarks, boolean b) 
+	{
+		//新增申请
+		AssetsSerial obj = new AssetsSerial();
+		
+		if ("1".equals(type))
+			type = "领用";
+		else if ("2".equals(type))
+			type = "外借";
+		else if ("3".equals(type))
+			type = "报废";
+		
+		if (obj.getTitle() == null)
+			obj.setTitle(UserUtils.getUser().getLoginName() + type + "申请");
+		
+		if (obj.getType() == null)
+			obj.setType(type);
+		
+		String serialNumber = IdGen.uuid();
+	
+		obj.setSerialNumber(serialNumber);
+		
+		for (int i = 0;i < assetsid.length;i ++)
+		{
+			FixedAssetsApply apply = new FixedAssetsApply();
+			
+			apply.setSerialNumber(serialNumber);
+			
+			apply.setFixedId(assetsid[i]);
+			
+			apply.setEquId(equid[i]);
+			
+			apply.setAccount(1);
+			
+			apply.setRemarks(remarks);
+			
+			fixedAssetsApplyService.save(apply);
+			
+			AssetsEquipment assetsEquipment = assetsEquipmentService.get(equid[i]);
+			
+			assetsEquipment.setCondition(type + "申请中");
+			
+			assetsEquipment.setRemarks(remarks);
+			
+			assetsEquipmentService.save(assetsEquipment);
+		}
+		
+		obj.setRemarks(remarks);
+		
+		super.save(obj);
+		
+		// 初始化工作流中的变量的值，带入vars中放到后面使用
+		Map<String, Object> vars = initVars();
+		
+		String title = titleHandle("固定资产"+obj.getType()+"申请"); 
+		
+		if (obj.getProcInsId() == null)
+		{
+			// 第一次申请，启动工作流
+			String procInsId = actTaskService.startProcess("assets_quisitions",
+					"assets_serial", obj.getId(),
+					title, vars);
+			// 线程暂停两秒
+			try 
+			{
+				Thread.sleep(2000);
+			}
+			catch (InterruptedException e) 
+			{
+				e.printStackTrace();
+			}
+			// 通过procinsid获取任务的列表，一般只有一条，在出现分支或子流程的情况下会有多条，不建议现在配置那种，即并行网关
+			List<Task> list = actTaskService.getProcessEngine()
+					.getTaskService().createTaskQuery()
+					.processInstanceId(procInsId).list();
+			
+			if (list.size() > 0) {
+				// 任务完成，跟着流程的线继续走到下一个节点
+				vars.put("flag", true);
+				
+				actTaskService.complete(list.get(0).getId(), procInsId, "【提交】",
+						title, vars);
+			}
+		}
+		else 
+		{
+			// 打回后重新提交
+			List<Task> list = actTaskService.getProcessEngine()
+					.getTaskService().createTaskQuery()
+					.processInstanceId(obj.getProcInsId())
+					.taskAssignee(UserUtils.getUser().getLoginName()).list();
+			if (b) 
+			{
+				vars.put("flag", true);
+				
+				actTaskService.complete(list.get(0).getId(),
+						obj.getProcInsId(), "【重新提交】",
+						title, vars);
+			} 
+			else 
+			{
+				vars.put("flag", false);
+				
+				actTaskService.complete(list.get(0).getId(),
+						obj.getProcInsId(), "【作废】",
+						title, vars);
+			}
+
+		}
+		return obj;
+	}
+	
+	/**
+	 * 重新申请
+	 * @param obj
+	 * @param b
+	 */
+	@Transactional(readOnly = false)
+	public void reapply(AssetsSerial obj, boolean b)
+	{
+		// 初始化工作流中的变量的值，带入vars中放到后面使用
+		Map<String, Object> vars = initVars();
+		
+		String title = titleHandle("固定资产"+obj.getType()+"申请");;
+		
+		// 打回后重新提交
+		List<Task> list = actTaskService.getProcessEngine()
+				.getTaskService().createTaskQuery()
+				.processInstanceId(obj.getProcInsId())
+				.taskAssignee(UserUtils.getUser().getLoginName()).list();
+		if (b) 
+		{
+			vars.put("flag", true);
+			
+			actTaskService.complete(list.get(0).getId(),
+					obj.getProcInsId(), "【重新提交】",
+					title, vars);
+		} 
+		else 
+		{
+			vars.put("flag", false);
+			
+			actTaskService.complete(list.get(0).getId(),
+					obj.getProcInsId(), "【作废】",
+					title, vars);
+		}
+	}
+	
+	/**
+	 * 根据流程实例Id查询任务
+	 * @param procInsId
+	 * @return
+	 */
+	public Task getTaskByProcInsId(String procInsId) {
+
+		List<Task> list = actTaskService.getProcessEngine().getTaskService()
+				.createTaskQuery().processInstanceId(procInsId).list();
+		if (list.size() > 0) {
+			return list.get(0);
+		}
+		return null;
+	}
+	
+	/**
+	 * 判断是否该当前人员处理
+	 * 
+	 * @param id
+	 * @return true/false
+	 */
+	public boolean isDeal(AssetsSerial assetsSerial) {
+		System.out.println(assetsSerial.getProcInsId());
+		if (assetsSerial.getProcInsId() == null) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine()
+					.getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName())
+					.processInstanceId(assetsSerial.getProcInsId()).list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * 行政审批
+	 * @param assetsSerial
+	 * @param b
+	 */
+	@Transactional(readOnly = false)
+	public void dealExam(AssetsSerial assetsSerial, String flag) 
+	{
+		// 通过procinsid和当前人两个维度取得任务列表，一般只有一条
+		List<Task> list = actTaskService.getProcessEngine().getTaskService()
+				.createTaskQuery()
+				.processInstanceId(assetsSerial.getProcInsId())
+				.taskAssignee(UserUtils.getUser().getLoginName()).list();
+		
+		Map<String, Object> vars = initVars();
+		
+		if ("1".equals(flag))
+		{
+			vars.put("flag", 1);
+			
+			if (list.size() > 0) 
+			{
+				actTaskService.complete(list.get(0).getId(),
+						assetsSerial.getProcInsId(), "【同意】", vars);
+			}
+		} 
+		else if ("2".equals(flag))
+		{
+			vars.put("flag", 2);
+			
+			if (list.size() > 0)
+			{
+				vars.put("apply", UserUtils.get(assetsSerial.getCreateBy().getId()).getLoginName());
+				
+				String title = "【" + UserUtils.get(assetsSerial.getCreateBy().getId()).getName() + "】【" + "固定资产申请"
+						+ "】已被" + "【" + UserUtils.getUser().getUsername() + "】" + "退回";
+				
+				String content = "@@proNotify@@/oa/a/fixedassets/assetsSerial/form?id=" + assetsSerial.getId();
+				
+				WorkflowUtils.sendOaNotify(title,content,assetsSerial.getCreateBy().getId());
+				
+				actTaskService.complete(list.get(0).getId(),
+						assetsSerial.getProcInsId(), "【退回】",title, vars);
+			}
+		}
+		else if ("3".equals(flag))
+		{
+			vars.put("flag", 3);
+			
+			if (list.size() > 0)
+			{
+				actTaskService.complete(list.get(0).getId(),
+						assetsSerial.getProcInsId(), "【不同意】", vars);
+			}
+		}
+			
+	}
+
+	/**
+	 * 初始化工作流中的变量的值，带入vars中放到后面使用
+	 * @return
+	 */
+	public Map<String, Object> initVars()
+	{
+		Map<String, Object> vars = new HashMap<String, Object>();
+		
+		vars.put("apply", UserUtils.getUser().getLoginName());
+		
+		vars.put("staff", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "staff", ""));
+		
+		vars.put("filling",  WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "filling", ""));
+		
+		return vars;
+	}
+	
+	/**
+	 * 根据单据id查询申请物品
+	 * @param id
+	 * @return
+	 */
+	public List<ApplyVo> findApply(String id)
+	{
+		return ad.findApply(id);
+	}
+	
+	/**
+	 * 更新申请资产物品的数量
+	 * @param amount
+	 * @param id
+	 */
+	@Transactional(readOnly = false)
+	public void updateApply(Integer amount, String id)
+	{
+		dao.updateApply(amount, id);
+	}
+	
+	/**
+	 * 更新申请单备注
+	 * @param remarks
+	 */
+	@Transactional(readOnly = false)
+	public void updateRemarks(String remarks, String id)
+	{
+		dao.updateRemarks(remarks,id);
+	}
+	
+	/**
+	 * 资产使用情况登记并更新库存状态(将资产编号加入的申请列表中)
+	 * @param list
+	 * @return
+	 */
+	@Transactional(readOnly = false)
+	public List<ApplyVo> claimList(AssetsSerial assetsSerial,
+			List<ApplyVo> list)
+	{
+		List<ApplyVo> claimList = new ArrayList<ApplyVo>();
+		
+		for (ApplyVo applyVo : list) 
+		{
+			//查询设备编号
+			List<String> deviceIDList = assetsEquipmentService
+					.findDeviceID(applyVo.getFixed_id(), applyVo.getAmount());
+			
+			//更新设备状态和使用人员(人员暂时设置为空,在申请登记之后加入人员名称)
+			assetsEquipmentService.updateCondition(assetsSerial.getType(),
+					"",
+					assetsEquipmentService
+					.findIdByAssetsId(applyVo.getFixed_id(), applyVo.getAmount()));
+			
+			for (String deviceID : deviceIDList) 
+			{
+				ApplyVo obj = new ApplyVo();
+				
+				obj.setAssetsName(applyVo.getAssetsName());
+				
+				obj.setBrand(applyVo.getBrand());
+				
+				obj.setFixed_id(applyVo.getFixed_id());
+				
+				obj.setModel(applyVo.getModel());
+				
+				obj.setUnit(applyVo.getUnit());
+				
+				obj.setUnitPrice(applyVo.getUnitPrice());
+				
+				obj.setDeviceID(deviceID);
+				
+				claimList.add(obj);
+			}
+			
+		}
+		
+		return claimList;
+	}
+	
+	public List<ApplyVo> getClaimList(List<ApplyVo> list)
+	{
+		for (ApplyVo applyVo : list)
+		{
+			AssetsEquipment assetsEquipment = assetsEquipmentService.get(applyVo.getEquId());
+			
+			applyVo.setDeviceID(assetsEquipment.getSerialNumber());
+		}
+		
+		return list;
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(AssetsSerial assetsSerial) {
+		super.delete(assetsSerial);
+	}
+	
+	@Autowired
+	private ActTaskService actTaskService;
+
+	@Autowired
+	private FixedAssetsApplyService fixedAssetsApplyService;
+	
+	@Autowired
+	private AssetsSerialDao ad;
+	
+	@Autowired
+	private AssetsEquipmentService assetsEquipmentService;
+
+}

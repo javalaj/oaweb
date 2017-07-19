@@ -1,0 +1,111 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.sys.web.workflow;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.ibatis.annotations.Param;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.sys.entity.Dict;
+import com.thinkgem.jeesite.modules.sys.entity.workflow.SysWorkflowVar;
+import com.thinkgem.jeesite.modules.sys.service.workflow.SysWorkflowVarService;
+
+/**
+ * 工作流变量维护Controller
+ * @author 李廷龙
+ * @version 2016-11-29
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/sys/workflow/sysWorkflowVar")
+public class SysWorkflowVarController extends BaseController {
+
+	@Autowired
+	private SysWorkflowVarService sysWorkflowVarService;
+	
+	@ModelAttribute
+	public SysWorkflowVar get(@RequestParam(required=false) String id) {
+		SysWorkflowVar entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = sysWorkflowVarService.get(id);
+		}
+		if (entity == null){
+			entity = new SysWorkflowVar();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("sys:workflow:sysWorkflowVar:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(SysWorkflowVar sysWorkflowVar, HttpServletRequest request, HttpServletResponse response, Model model) {
+		Page<SysWorkflowVar> page = sysWorkflowVarService.findPage(new Page<SysWorkflowVar>(request, response), sysWorkflowVar); 
+		model.addAttribute("page", page);
+		return "modules/sys/workflow/sysWorkflowVarList";
+	}
+
+	@RequiresPermissions("sys:workflow:sysWorkflowVar:view")
+	@RequestMapping(value = "form")
+	public String form(SysWorkflowVar sysWorkflowVar, Model model) {
+		if(sysWorkflowVar.getAddMore()){
+			SysWorkflowVar temp = new SysWorkflowVar();
+			temp.setWorkflowName(sysWorkflowVar.getWorkflowName());
+			temp.setWorkflowIdentification(sysWorkflowVar.getWorkflowIdentification());
+			temp.setVarType(sysWorkflowVar.getVarType());
+			sysWorkflowVar=temp;
+		}
+		model.addAttribute("sysWorkflowVar", sysWorkflowVar);
+		
+		return "modules/sys/workflow/sysWorkflowVarForm";
+	}
+
+	@RequiresPermissions("sys:workflow:sysWorkflowVar:edit")
+	@RequestMapping(value = "save")
+	public String save(SysWorkflowVar sysWorkflowVar, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, sysWorkflowVar)){
+			addMessage(redirectAttributes, "保存工作流变量失败");
+		}
+		sysWorkflowVarService.save(sysWorkflowVar);
+		addMessage(redirectAttributes, "保存工作流变量成功");
+		return "redirect:"+Global.getAdminPath()+"/sys/workflow/sysWorkflowVar/?workflowIdentification="+sysWorkflowVar.getWorkflowIdentification();
+	}
+	
+	@RequiresPermissions("sys:workflow:sysWorkflowVar:edit")
+	@RequestMapping(value = "delete")
+	public String delete(SysWorkflowVar sysWorkflowVar, RedirectAttributes redirectAttributes) {
+		sysWorkflowVarService.delete(sysWorkflowVar);
+		addMessage(redirectAttributes, "删除工作流变量成功");
+		return "redirect:"+Global.getAdminPath()+"/sys/workflow/sysWorkflowVar/?repage";
+	}
+	/**
+	 * 批量删除工作流变量
+	 */
+	@RequiresPermissions("sys:workflow:sysWorkflowVar:edit")
+	@RequestMapping(value = "deleteAll")
+	public String deleteAll(String ids, RedirectAttributes redirectAttributes) {
+		String idArray[] =ids.split(",");
+		for(String id : idArray){
+			SysWorkflowVar sysWorkflowVar = sysWorkflowVarService.get(id);
+			if(Global.isDemoMode()){
+				addMessage(redirectAttributes, "演示模式，不允许操作！");
+				return "redirect:" + adminPath + "/sys/user/list?repage";
+			}		
+			sysWorkflowVarService.delete(sysWorkflowVar);
+				addMessage(redirectAttributes, "删除工作流变量成功");			
+		}
+		return "redirect:"+Global.getAdminPath()+"/sys/workflow/sysWorkflowVar/?repage";
+	}	
+
+}

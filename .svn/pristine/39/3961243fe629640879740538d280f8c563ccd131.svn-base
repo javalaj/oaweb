@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.shortcutkey.ShortcutKeyDao">
+    
+	<sql id="shortcutKeyColumns">
+		a.id AS "id",
+		a.menu_id AS "menu.id",
+		b.name as "menu.name",
+		b.href as "menu.href",
+		a.icon AS "icon",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="shortcutKeyJoins">
+		LEFT JOIN sys_menu b ON b.id = a.menu_id
+	</sql>
+    
+	<select id="get" resultType="ShortcutKey">
+		SELECT 
+			<include refid="shortcutKeyColumns"/>
+		FROM shortcut_key a
+		<include refid="shortcutKeyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="ShortcutKey">
+		SELECT 
+			<include refid="shortcutKeyColumns"/>
+		FROM shortcut_key a
+		<include refid="shortcutKeyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="menu != null and menu.name != null and menu.name != ''">
+				AND b.name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{menu.name}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{menu.name}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{menu.name},'%')</if>
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ShortcutKey">
+		SELECT 
+			<include refid="shortcutKeyColumns"/>
+		FROM shortcut_key a
+		<include refid="shortcutKeyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO shortcut_key(
+			id,
+			menu_id,
+			icon,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{menu.id},
+			#{icon},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE shortcut_key SET 	
+			menu_id = #{menu.id},
+			icon = #{icon},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE shortcut_key SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

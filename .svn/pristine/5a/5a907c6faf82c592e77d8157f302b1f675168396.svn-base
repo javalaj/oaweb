@@ -1,0 +1,329 @@
+img {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+}
+
+.findgroup, .buildgroup {
+	width: 900px;
+	height: 390px;
+	margin: 0 auto;
+	box-sizing: border-box;
+	background-color: #fff;
+	border-radius: 3px;
+	/* border-top: 3px solid #ccc; */
+	padding: 30px;
+	color: #333;
+}
+
+.search {
+	width: 100%;
+	padding: 0 30px;
+	box-sizing: border-box;
+	text-align: left;
+}
+
+.search input {
+	width: 680px;
+	height: 38px;
+	line-height: 36px;
+	border: 1px solid #33df83;
+	padding: 0 10px;
+	box-sizing: border-box;
+}
+
+.search input.search-submit {
+	width: 90px !important;
+	line-height: 34px;
+	background-color: #33df83;
+	margin-left: -1px;
+	padding: 0;
+	color: #fff;
+}
+
+.search-cont {
+	margin-top: 20px;
+}
+
+.search-top {
+	width: 100%;
+	height: 32px;
+	line-height: 32px;
+	padding: 0 10px;
+	box-sizing: border-box;
+	background-color: #f8f8f8;
+}
+
+.search-return {
+	color: #33df83;
+}
+
+.search-word {
+	margin-left: 20px;
+}
+
+#search-column {
+	height: 240px;
+	overflow-y: auto;
+}
+
+.group-column {
+	width: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
+	zoom: 1;
+}
+
+.group-column li {
+	position: relative;
+	width: 33%;
+	float: left;
+	box-sizing: border-box;
+	min-height: 118px;
+	margin: 1px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+}
+
+.group-img, .group-info {
+	float: left;
+}
+
+.group-img {
+	width: 52px;
+	margin-top: 6px;
+	margin-right: 20px;
+}
+
+.group-img img {
+	width: 52px;
+	height: 52px;
+	border-radius: 50%;
+}
+
+.group-info p {
+	width: 180px;
+	line-height: 24px;
+	color: #666;
+	text-align: left;
+	word-break: keep-all;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.group-name {
+	font-size: 16px;
+	color: #333;
+}
+
+.group-sign {
+	position: absolute;
+	top: 48px;
+}
+
+.apply-in {
+	display: block;
+	position: absolute;
+	top: 72px;
+	width: 80px;
+	height: 26px;
+	line-height: 26px;
+	text-align: center;
+	background-color: #33df83;
+	color: #fff;
+	border-radius: 3px;
+}
+
+.apply-in:hover {
+	color: #fff;
+	background-color: #61da9a;
+}
+
+/* ~~~~ 创建群 ~~~~*/
+.buildgroup .btn-build {
+	background-color: #33df83;
+	margin-right: 10px;
+	width: 102px;
+}
+
+.build-img {
+	float: left;
+	width: 80px;
+	margin-left: 110px;
+	margin-bottom: 40px;
+}
+
+.build-img img {
+	width: 68px;
+	height: 68px;
+	border-radius: 50%;
+}
+
+.group-addimg {
+	float: left;
+	margin-top: 20px;
+	margin-left: 50px;
+}
+
+.group-addimg:hover {
+	cursor: pointer;
+	border-color: #33df83;
+}
+
+.group-input {
+	width: 94%;
+}
+
+.group-size, .group-submit {
+	text-align: left !important;
+}
+
+.group-submit button {
+	padding: 0 36px;
+}
+
+/* ~~~~ 管理群 ~~~~*/
+.mygroup {
+	padding-top: 0;
+	padding-bottom: 16px;
+	text-align: left;
+	width: 900px;
+	height: 390px;
+	margin: 0 auto;
+	box-sizing: border-box;
+	background-color: #fff;
+	border-radius: 3px;
+	/* border-top: 3px solid #ccc; */
+	padding: 0 10px;
+	color: #333;
+	overflow-y: auto;
+}
+
+.myown-top {
+	width: 100%;
+	height: 32px;
+	line-height: 32px;
+	padding: 0 10px;
+	box-sizing: border-box;
+	margin-top: 10px;
+	background-color: #f8f8f8;
+	color: #666;
+}
+
+.group-list-img {
+	display: inline-block;
+	width: 42px;
+	height: 42px;
+}
+
+.group-list-img img {
+	width: 42px;
+	height: 42px;
+	border-radius: 50%;
+}
+
+.group-list-name {
+	margin-left: 14px;
+	margin-right: 100px;
+}
+
+.group-list li {
+	padding: 6px 12px;
+	border-bottom: 1px dotted #eee;
+	box-sizing: border-box;
+	overflow: hidden;
+	zoom: 1;
+}
+
+.group-list li .btn-build {
+	background-color: #33df83;
+}
+
+.group-list-btn {
+	float: right;
+	margin-top: 2px;
+}
+
+.groupmember-top {
+	height: 40px;
+	line-height: 40px;
+	color: #33df83;
+	font-size: 16px;
+}
+
+.group-myadd02 .group-list li {
+	width: 33.3%;
+	float: left;
+	margin-top: 10px;
+	border-bottom: none;
+}
+
+/* ~~~~  群成员 ~~~~*/
+.group-myown {
+	position: relative;
+	width: 100%;
+	overflow: hidden;
+}
+
+.group-myown-info {
+	position: fixed;
+	width: 180px;
+	float: left;
+	margin-top: 30px;
+	text-align: center;
+}
+
+.group-myown-img {
+	width: 120px;
+	height: 120px;
+	border-radius: 50%;
+	margin: 20px auto;
+}
+
+.group-own-table {
+	width: 650px;
+	float: right;
+}
+
+.group-myown-name {
+	color: #33df83;
+	font-size: 16px;
+}
+
+.group-role {
+	display: inline-block;
+	width: 24px;
+	height: 24px;
+	margin-right: -24px;
+}
+
+.group-own-table .group-list-img {
+	margin-left: 34px;
+}
+
+.name {
+	margin-left: 10px;
+}
+
+.group-state {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-left: 12px;
+}
+
+.mygroup1 {
+	padding-top: 0;
+	padding-bottom: 16px;
+	text-align: left;
+	width: 900px;
+	height: 390px;
+	margin: 0 auto;
+	box-sizing: border-box;
+	background-color: #fff;
+	border-radius: 3px;
+	/* border-top: 3px solid #ccc; */
+	padding: 30px;
+	color: #333;
+}

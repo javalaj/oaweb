@@ -1,0 +1,240 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>周计划管理</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document)
+			.ready(
+					function() {
+						$("#date1").val($("#date2").val());
+						$("#btnSubmit1").click(function() {
+							$(this).next().val("0");
+							var judge1 = notnull();
+							var judge3 = notnull3();
+							var judge2 =judgeInt();
+							var judge4 =judgeInt1();
+							if(judge1&&judge3 &&judge2&&judge4){
+								var judge5 =judgeInt3();
+							}
+							return judge1  && judge3 &&judge2&&judge4&&judge5;
+						});
+						$("#inputFormcz").validate({
+							submitHandler : function(form) {
+								oaLoading('操作正在进行中，请耐心等待');
+								form.submit();
+							},
+						});
+					});
+	function del1line(item) {
+		$(item).next().val("1");
+		$(item).parent().parent().hide();
+		return false;
+	}
+	function notnull() {
+		var judge = true;
+		$("input[name='important']").each(function() {
+			var str = "";
+			if ($(this).val().trim() == "" && !$(this).is(":hidden")) {
+				judge = false;
+				str = "必填信息 * ";
+			}else{
+				judge = true;
+				str = "*";
+			}
+			$(this).next().children().text(str);
+		});
+		return judge;
+	}
+	
+	
+	function notnull3() {
+		var judge = true;
+		$("input[name='schedule']").each(function() {
+			var str = "";
+			if ($(this).val().trim() == "" && !$(this).is(":hidden")) {
+				judge = false;
+				str = "必填信息";
+			}
+			
+			
+			$(this).next().children().text(str + "*");
+		});
+		return judge;
+	}
+	function judgeInt() {
+		var judge = true;
+		var str = "";
+		var str1 = "*"
+		var str2 = "输入正整数 *";
+		$("input[name='schedule']").each(function() {
+			if (!$(this).is(":hidden") && $(this).val() != "") {
+				if (!(/^\d+$/.test($(this).val()))) {
+					judge = false;
+					str = str2;
+				} else {
+					str = str1;
+				}
+				$(this).next().children().text(str);
+			}
+		});
+		return judge;
+	}
+	function judgeInt1() {
+		var judge = true;
+		var str = "";
+		var str1 = "*"
+		var str2 = "输入大于0小于1的数 *";
+		$("input[name='important']").each(function() {
+			if (!$(this).is(":hidden") && $(this).val() != "") {
+				var valArr = new Array;
+				$("input[name='important']").each(function(i){
+					 valArr[i] = $(this).val();
+					});
+				if(valArr.length>1){
+				if (!(/^(0\.(0[1-9]{1}|[1-9]\d?)?)$/.test($(this).val()))) {
+					judge = false;
+					str = str2;
+				} else {
+					str = str1;
+				}
+				}else{
+					if(!(/^(1?)$/.test($(this).val()))) {
+						judge = false;
+						str = "请输入'1'";
+					} else {
+						str = str1;
+					}
+				}
+				$(this).next().children().text(str);
+			}
+		});
+		return judge;
+	}
+	function judgeInt3() {
+		var	judge = false;
+		var valArr = new Array;
+		$("input[name='important']").each(function(i){
+			 valArr[i] = $(this).val();
+			});
+		  var priv=eval(valArr.join("+"));
+		  if(priv>1){
+				top.layer.msg('本周个人权重合计为1');
+		  }else if(priv<1){
+				top.layer.msg('本周个人权重合计为1');
+		  }else{
+			  judge = true;
+		  }
+		  return judge;
+	}
+	
+	
+	
+	
+	
+	
+	
+</script>
+<style type="text/css">
+select {
+	width: 70px;
+}
+
+a {
+	cursor: pointer;
+}
+
+.add-del-png {
+	width: 15px;
+	height: 15px;
+}
+</style>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+<div class="ibox">
+<div class="ibox-title">
+		<h5>周计划流程 </h5>
+		<div class="ibox-tools">
+		</div>
+	</div>
+   <div class="ibox-content">
+   	<sys:message content="${message}"/>
+   	<div class="row">
+	<div class="col-sm-12">
+	<br/>
+	</div>
+	</div>
+			<div class="modal-body">
+					<div class="control-group">
+						<label class="control-group"><h1>${officeName }     ${name }（<fmt:formatDate
+								value="${userWeekplan.firstdate}" pattern="yyyy-MM" />）月，第（${userWeekplan.weeksign }）周，周计划</h1></label>
+					</div>
+				</div>
+			<form:form  id="inputFormcz"  action="${ctx}/user/userWeekplan/supSave" method="post" cssClass="form-inline">
+			<table id="contentTable"
+				class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+				<thead id="box">
+				
+					<tr>
+						<td style="text-align: center;" width="100px">序号</td>
+						<td style="text-align: center;" width="100px">开始时间</td>
+						<td style="text-align: center;" width="100px">结束时间</td>
+						<td style="text-align: center;" width="300px">工作计划</td>
+						<td style="text-align: center;" width="300px">交付物</td>
+						<td style="text-align: center;" width="200px">工作权重<span style="color: red;">(一周合计为1)</span></td>
+						<td style="text-align: center;" width="100px">进度分<span style="color: red;">(60%)</span></td>
+					</tr>
+				</thead>
+				<tbody>
+					<c:forEach items="${userWeekrecord }" var="now2" varStatus="ii" >
+						<tr>
+							<td style="text-align: center;">${ii.index+1 }</td>
+							<td style="text-align: center;"><c:choose>
+									<c:when test="${now2.beginday=='1' }">周一</c:when>
+									<c:when test="${now2.beginday=='2' }">周二</c:when>
+									<c:when test="${now2.beginday=='3' }">周三</c:when>
+									<c:when test="${now2.beginday=='4' }">周四</c:when>
+									<c:when test="${now2.beginday=='5' }">周五</c:when>
+									<c:when test="${now2.beginday=='6' }">周六</c:when>
+									<c:otherwise>周日</c:otherwise>
+								</c:choose></td>
+
+							<td style="text-align: center;"><c:choose>
+									<c:when test="${now2.endday=='1' }">周一</c:when>
+									<c:when test="${now2.endday=='2' }">周二</c:when>
+									<c:when test="${now2.endday=='3' }">周三</c:when>
+									<c:when test="${now2.endday=='4' }">周四</c:when>
+									<c:when test="${now2.endday=='5' }">周五</c:when>
+									<c:when test="${now2.endday=='6' }">周六</c:when>
+									<c:otherwise>周日</c:otherwise>
+								</c:choose></td>
+							<td style="text-align: center;">${now2.content }</td>
+							<td style="text-align: center;">${now2.deliverables }</td>
+							<td style="text-align: center;" ><input type="text" class="form-control"   id="important"  name="important" maxlength="25" style="width: 55px;"><span class="help-inline"><font color="red">*</font></span></td>
+							<td style="text-align: center;" colspan="3"><input type="text"  class="form-control"    name="schedule"  style="width: 50px"   maxlength="50"><span class="help-inline"><font color="red">*</font></span></td>
+						</tr>
+						<input name="wekid" value="${now2.id}" style="display: none;">
+					</c:forEach>
+					<tr>
+					<td colspan="5"></td>
+					<td style="text-align: center;"><input id="btnSubmit1"
+								class="btn btn-myoa-sec btn-myoa-large" type="submit" value="提 交"  /> </td>
+					<td colspan="4" style="text-align: center;">
+						<input id="btnCancel" class="btn btn-myoa" type="button" value="返 回"
+				onclick="history.go(-1)" />
+						</td>
+					</tr>
+				</tbody>
+					
+			</table>
+		</form:form>
+		
+	<br/>
+	<br/>
+	</div>
+	</div>
+	</div>
+</body>
+</html>

@@ -1,0 +1,124 @@
+/**
+ * Copyright &copy; 2012-2025 <a href="https://www.chuyutech.com">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.flowback;
+
+import java.util.List;
+
+import org.activiti.engine.task.Task;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.dao.flowback.OaFlowBackDao;
+import com.thinkgem.jeesite.modules.oa.entity.flowback.OaFlowBack;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 流程撤回操作Service
+ * 
+ * @author liuxin
+ * @version 2017-05-04
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaFlowBackService extends CrudService<OaFlowBackDao, OaFlowBack> {
+
+	public OaFlowBack get(String id) {
+		return super.get(id);
+	}
+
+	public List<OaFlowBack> findList(OaFlowBack oaFlowBack) {
+		return super.findList(oaFlowBack);
+	}
+
+	public Page<OaFlowBack> findPage(Page<OaFlowBack> page, OaFlowBack oaFlowBack) {
+		return super.findPage(page, oaFlowBack);
+	}
+
+	@Transactional(readOnly = false)
+	public void save(OaFlowBack oaFlowBack) {
+		super.save(oaFlowBack);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OaFlowBack oaFlowBack) {
+		super.delete(oaFlowBack);
+	}
+
+	/**
+	 * 初始化 当前处理人为具有退回权的人； （即：流程开始调用）
+	 *
+	 * @param procInsId
+	 *            : 流程关联id
+	 * @param task
+	 *            : 当前流程的工作台对象
+	 * @param resultURL
+	 *            : 撤回后跳转链接
+	 */
+	@Transactional(readOnly = false)
+	public void saveINIT(String procInsId, Task task, String resultURL) {
+		OaFlowBack oaFlowBack = new OaFlowBack();
+		oaFlowBack.setProcInsId(procInsId);
+		oaFlowBack.setCanBackId(UserUtils.getUser().getId());
+		oaFlowBack.setCanBackNode(task.getTaskDefinitionKey());
+		oaFlowBack.setResultURL(resultURL);
+		oaFlowBack.preInsert();
+		dao.insert(oaFlowBack);
+	}
+
+	/**
+	 * 设置当前用户为具有流程撤回权的人，设置当前的流程节点为，可退回节点 (即：流程运行中调用)
+	 * 
+	 * @param procInsId
+	 *            : 流程关联id
+	 * @param task
+	 *            ：当前流程的工作台对象
+	 */
+	@Transactional(readOnly = false)
+	public void saveNOW(String procInsId, Task task) {
+		OaFlowBack oaFlowBack = new OaFlowBack();
+		oaFlowBack.setProcInsId(procInsId);
+		oaFlowBack.setCanBackId(UserUtils.getUser().getId());
+		oaFlowBack.setCanBackNode(task.getTaskDefinitionKey());
+		oaFlowBack.setResultURL(null);// 此处为不修改的意思
+		oaFlowBack.preUpdate();
+		dao.update(oaFlowBack);
+	}
+
+	/**
+	 * 置空 当前处理人 以及可退会节点 （即：流程结束/流程撤回权限交接 调用）
+	 * 
+	 * @param procInsId
+	 *            : 流程关联id
+	 */
+	@Transactional(readOnly = false)
+	public void saveNULL(String procInsId) {
+		// 过滤创建页面的为 procInsId null的情况
+		if (StringUtils.isNotBlank(procInsId)) {
+			OaFlowBack oaFlowBack = new OaFlowBack();
+			oaFlowBack.setProcInsId(procInsId);
+			oaFlowBack.setCanBackId(null);
+			oaFlowBack.setCanBackNode(null);
+			oaFlowBack.setResultURL(null);// 此处为不修改的意思
+			oaFlowBack.preUpdate();
+			dao.update(oaFlowBack);
+		}
+	}
+
+	/**
+	 * 去view页面前判断当前人是够具有撤回权，有权就返回procInsId ，没有就返回null
+	 * 
+	 * @param procInsId
+	 *            : 流程关联id
+	 */
+	public String isCanBack(String procInsId) {
+		OaFlowBack oaFlowBack = get(procInsId);
+		if (oaFlowBack != null && UserUtils.getUser().getId().equals(oaFlowBack.getCanBackId())) {
+			return procInsId;
+		}
+		return null;
+	}
+}

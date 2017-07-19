@@ -1,0 +1,145 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>新闻中心管理</title>
+	<meta name="decorator" content="default"/>
+	 <link href="${ctxStatic}/summernote/summernote.css" rel="stylesheet">
+	 <link href="${ctxStatic}/summernote/summernote-bs3.css" rel="stylesheet">
+	 <script src="${ctxStatic}/summernote/summernote.min.js"></script>
+	 <script src="${ctxStatic}/summernote/summernote-zh-CN.js"></script>
+	<script type="text/javascript">
+		var validateForm;
+		function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+		  if(validateForm.form()){
+			  $("#content").val($("#rich_content").next().find(".note-editable").html());//取富文本的值
+			  $("#inputForm").submit();
+			  return true;
+		  }
+	
+		  return false;
+		}
+		$(document).ready(function() {
+			validateForm = $("#inputForm").validate({
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			
+			$("#status1").iCheck('check');
+			
+			/* 	//富文本初始化
+			$('#rich_content').summernote({
+                lang: 'zh-CN'
+            });
+
+			$("#rich_content").next().find(".note-editable").html(  $("#content").val());
+
+			$("#rich_content").next().find(".note-editable").html(  $("#rich_content").next().find(".note-editable").text()); */
+		});
+	</script>
+	<style>
+		.table.myoa-table-noborder > tbody > tr > td:nth-child(2n+1) {
+			width: 10%;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+
+<div class="wrapper wrapper-content">
+	<div class="ibox" style="width:800px; margin:0 auto;">
+		<div class="ibox-title">
+		<h5>新增文章</h5>
+		<%-- <ibox:tools/> --%>
+		</div>
+	
+	<div class="ibox-content">
+
+	<form:form id="inputForm" modelAttribute="oaNews" action="${ctx}/oa/newscenter/oaNews/save" method="post" class="form-horizontal">
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>
+		<table class="table table-condensed dataTables-example dataTable no-footer myoa-newstable-noborder myoa-table-noborder">
+		   <tbody>
+				<tr>
+					<td class="width-15"><label class="pull-right"><font color="red">*</font>新闻标题：</label></td>
+					<td class="width-35">
+						<form:input path="title" htmlEscape="false" maxlength="30" class="form-control required" style="width:60%"/>
+					</td>
+					
+				</tr>
+				<tr>
+					<td class="width-15"><label class="pull-right">栏目类型：</label></td>
+					<td class="width-35">
+						<%-- <form:input path="type" htmlEscape="false" maxlength="255" class="form-control "/> --%>
+						<form:select path="type"  class="selectpicker" data-style="btn-inverse"  data-live-search="true">
+
+					<form:options items="${fns:getNewsColumnList()}" itemLabel="columnName" itemValue="id" htmlEscape="false"/>
+					</form:select>
+
+					</td>
+				</tr>
+				<tr>
+					<td class="width-15"><label class="pull-right">新闻图片：</label></td>
+					<td class="width-35">
+						<form:hidden id="photo" path="photo" htmlEscape="false" maxlength="255" class="form-control"/>
+						<sys:ckfinder input="photo" type="images" uploadPath="/oa/newscenter/oaNews" selectMultiple="false"
+						buttonLabel="上传图片"/>
+					</td>										
+				</tr>
+				<tr>										
+					<td class="width-15"><label class="pull-right">新闻内容：</label></td>
+					<td class="width-35" colspan="3">
+						<%-- <form:hidden path="content"/>
+						<div id="rich_content">
+                           
+
+                        </div> --%>
+                        
+                        <form:textarea path="content" htmlEscape="false" rows="6"  style="display: none;"
+						maxlength="20000"  class="form-control "/> 
+						<sys:ckeditor replace="content" uploadPath="/oa/notify" />
+					</td>
+					<%-- <td class="width-15 active"><label class="pull-right">浏览量：</label></td>
+					<td class="width-35">
+						<form:input path="pageView" htmlEscape="false" maxlength="255" class="form-control "/>
+					</td> --%>
+				</tr>
+				<tr>
+					<td class="width-15"><label class="pull-right">状态：</label></td>
+					<td class="width-35">
+						<form:radiobuttons path="status"
+						items="${fns:getDictList('oa_news_status')}" itemLabel="label"
+						itemValue="value" htmlEscape="false" class="i-checks required" id="status"/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+			<div style="text-align: center;">
+			<%-- <c:if test="${oaNotify.status ne '1'}"> --%>
+				<shiro:hasPermission name="oa:newscenter:oaNews:edit">
+					<input id="btnSubmit" class="btn btn-primary" type="submit" 
+						value="保 存"  />&nbsp;</shiro:hasPermission>
+			<%-- </c:if> --%>
+			<input id="btnCancel" class="btn" type="button" value="返 回"
+				onclick="window.location.replace('${ctx}/oa/newscenter/oaNews/list');" />
+
+			</div>
+	</form:form>
+
+				<br>
+			<br>
+		</div>
+	</div>
+</div>
+</body>
+</html>

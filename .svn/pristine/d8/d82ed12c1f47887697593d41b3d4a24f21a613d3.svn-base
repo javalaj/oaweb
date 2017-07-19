@@ -1,0 +1,143 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity;
+
+import java.util.Date;
+
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.Length;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.thinkgem.jeesite.common.persistence.ActEntity;
+
+/**
+ * 加班流程业务工作流Entity
+ * 
+ * @author liuxin
+ * @version 2016-11-17
+ */
+public class OaOvertime extends ActEntity<OaOvertime> {
+
+	private static final long serialVersionUID = 1L;
+	private String procInsId; // 流程关联id
+	private String fileid; // 文件编号
+	private String time; // 加班时长
+	private Date starttime; // 加班开始时间
+	private Date endtime; // 加班结束时间
+	private String reason; // 加班理由
+	private String examname; // 审批人签名
+	private String examtext; // 审批人意见
+	private String officename; // 部门名称
+	private String toSendMessageUserid;// 抄送id
+	private String toSendMessageUsername;// 抄送name
+
+	public OaOvertime() {
+		super();
+	}
+
+	public String getToSendMessageUserid() {
+		return toSendMessageUserid;
+	}
+
+	public void setToSendMessageUserid(String toSendMessageUserid) {
+		this.toSendMessageUserid = toSendMessageUserid;
+	}
+
+	public String getToSendMessageUsername() {
+		return toSendMessageUsername;
+	}
+
+	public void setToSendMessageUsername(String toSendMessageUsername) {
+		this.toSendMessageUsername = toSendMessageUsername;
+	}
+
+	public OaOvertime(String id) {
+		super(id);
+	}
+
+	@Length(min = 0, max = 64, message = "流程关联id长度必须介于 0 和 64 之间")
+	public String getProcInsId() {
+		return procInsId;
+	}
+
+	public void setProcInsId(String procInsId) {
+		this.procInsId = procInsId;
+	}
+
+	@Length(min = 0, max = 100, message = "文件编号长度必须介于 0 和 100 之间")
+	public String getFileid() {
+		return fileid;
+	}
+
+	public void setFileid(String fileid) {
+		this.fileid = fileid;
+	}
+
+	@Length(min = 1, max = 64, message = "加班时长长度必须介于 1 和 64 之间")
+	public String getTime() {
+		return time;
+	}
+
+	public void setTime(String time) {
+		this.time = time;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@NotNull(message = "加班开始时间不能为空")
+	public Date getStarttime() {
+		return starttime;
+	}
+
+	public void setStarttime(Date starttime) {
+		this.starttime = starttime;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	@NotNull(message = "加班结束时间不能为空")
+	public Date getEndtime() {
+		return endtime;
+	}
+
+	public void setEndtime(Date endtime) {
+		this.endtime = endtime;
+	}
+
+	@Length(min = 0, max = 255, message = "加班理由长度必须介于 0 和 255 之间")
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
+	}
+
+	@Length(min = 0, max = 100, message = "审批人签名长度必须介于 0 和 100 之间")
+	public String getExamname() {
+		return examname;
+	}
+
+	public void setExamname(String examname) {
+		this.examname = examname;
+	}
+
+	@Length(min = 0, max = 255, message = "审批人意见长度必须介于 0 和 255 之间")
+	public String getExamtext() {
+		return examtext;
+	}
+
+	public void setExamtext(String examtext) {
+		this.examtext = examtext;
+	}
+
+	@Length(min = 0, max = 100, message = "部门名称长度必须介于 0 和 100 之间")
+	public String getOfficename() {
+		return officename;
+	}
+
+	public void setOfficename(String officename) {
+		this.officename = officename;
+	}
+
+}

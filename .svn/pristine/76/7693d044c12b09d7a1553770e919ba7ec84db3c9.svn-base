@@ -1,0 +1,191 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>供应商管理</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+		$(document).ready(function() {
+			//全选
+			$("#allChk").click(function(){
+				$("input[name='subChk']").prop("checked",this.checked); //如果点击全选按钮就全选
+			});
+
+			//单选
+			var subChk=$("input[name='subChk']");
+			subChk.click(function(){
+				$("#allChk").prop("checked",subChk.length == subChk.filter("checked").length?true:false);
+			});
+
+			/*批量删除*/
+			$("#del_model").click(function(){
+				//判断是否至少选择一项
+				var checkedNum = $("input[name='subChk']:checked").length;
+				if(checkedNum == 0){
+					alert("请至少选择一项！！！");
+					return;
+				}
+
+				//批量选择
+				if(confirm("确定要删除所选项目吗？")){
+						var checkedList = new Array();
+						$("input[name='subChk']:checked").each(function(){
+							checkedList.push($(this).val());
+						});
+						$.ajax({
+							type:"POST",
+							url:"${ctx}/oa/supmanagement/deletemore",  //传入后台地址
+							data:{'delitems':checkedList.toString()},  //获取选择的集合
+							success:function(result){                  //请求成功返回的信息
+								$("[name='subChk']:checkbox").attr("checked",false);
+								window.location.reload();              //刷新当前的页面
+							}
+						});					
+				};
+			});
+
+			/*编辑*/
+			$("#edit_model").click(function(){
+				var checkLength = $("input[name='subChk']:checked").length;
+				if(checkLength>1 || checkLength==0){
+					alert('请选择一条数据进行编辑!!!');
+					return;
+				}
+				var che=[];
+				$("input[name='subChk']:checked").each(function(){
+					che.push($(this).val());
+				});
+				
+				window.location="${ctx}/oa/supmanagement/detail?id="+che;				
+			});
+			
+		});
+		
+		function page(n,s){
+			$("#pageNo").val(n);
+			$("#pageSize").val(s);
+			$("#searchForm").submit();
+        	return false;
+        }
+		
+	</script>
+</head>
+<!-- <body> -->
+<!-- 	<ul class="nav nav-tabs"> -->
+<%-- 		<li class="active"><a href="${ctx}/oa/supmanagement/">供应商列表</a></li> --%>
+<%-- 		<%-- 		<shiro:hasPermission name="oa:supmanagement:edit"><li><a href="${ctx}/oa/supmanagement/form">供应商添加</a></li></shiro:hasPermission> --%> --%>
+<!-- 	</ul> -->
+
+<body class="gray-bg">
+<div class="wrapper wrapper-content">
+<div class="ibox">
+	<div class="ibox-title">
+		<h5>供应商列表 </h5>		
+	</div>
+    
+    <div class="ibox-content">
+	<sys:message content="${message}"/>
+	
+	<!-- 查询条件 -->
+	<div class="row">
+	<div class="col-sm-12">
+	
+	<form:form id="searchForm" modelAttribute="supmanagement"
+		action="${ctx}/oa/supmanagement/" method="post"
+		  class="form-inline">
+		<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}" />
+		<input id="pageSize" name="pageSize" type="hidden"
+			value="${page.pageSize}" />
+			
+			<!-- 支持排序 -->
+<%-- 			<table:sortColumn id="orderBy" name="orderBy" --%>
+<%-- 						value="${page.orderBy}" callback="sortOrRefresh();" /> --%>
+		<div class="form-group">
+			<span>供应商名称：</span><form:input path="supName"
+					htmlEscape="false" maxlength="64" class="form-control m-b" />
+			<span>单位号码：</span><form:input path="telephone"
+					htmlEscape="false" maxlength="100" class="form-control m-b" />
+			<span>机构代码：</span><form:input path="orgCode"
+					htmlEscape="false" maxlength="64" class="form-control m-b" />
+
+<!-- 			<li class="clearfix"> -->
+<!-- 				<input class="btn btn-primary" -->
+<!-- 				type="button" value="清空" -->
+<%-- 				onclick="window.location.href='${ctx}/oa/supmanagement/list'" />&nbsp;</li> --%>
+<!-- 			<li style="padding-left: 15px"><input class="btn btn-primary" -->
+<!-- 				type="button" value="新增" -->
+<%-- 				onclick="window.location.href='${ctx}/oa/supmanagement/form'" />&nbsp;</li> --%>
+<!-- 			<li style="padding-left: 15px"><a id="del_model"><input -->
+<!-- 					class="btn btn-primary" type="button" value="批量删除" /></a></li> -->
+		</div>	
+	</form:form>
+	<br/>
+	</div>
+	</div>
+	
+	<div class="row">
+	<div class="col-sm-12">
+		<div class="pull-left">
+			<table:addRow url="${ctx}/oa/supmanagement/form" title="供应商"></table:addRow>
+<%-- 			<table:delRow url="${ctx}/oa/supmanagement/deleteAll" id="contentTable"></table:delRow> --%>
+<!-- 			 <button class="btn btn-white btn-sm " data-toggle="tooltip" data-placement="left" onclick="sortOrRefresh()" title="刷新"><i class="glyphicon glyphicon-repeat"></i> 刷新</button> -->
+			</div>
+		<div class="pull-right">
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="search()" ><i class="fa fa-search"></i> 查询</button>
+			<button  class="btn btn-primary btn-rounded btn-outline btn-sm " onclick="window.location.href='${ctx}/oa/supmanagement/list'"><i class="fa fa-trash"></i> 清空</button>
+		</div>
+	</div>
+	</div>
+	
+	<table id="contentTable"
+			class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+			<thead>
+				<tr>					
+				<th class="sort-column orgCode">组织机构代码</th>
+				<th class="sort-column supName">供应商名称</th>
+				<th class="sort-column telephone">单位号码</th>
+				<th class="sort-column taxNumber">税务登记号</th>
+				<th class="sort-column address" style="width:30%;">单位联系地址</th>
+				<th class="sort-column updateDate">更新时间</th>
+				<shiro:hasPermission name="oa:supmanagement:edit">
+					<th>操作</th>
+				</shiro:hasPermission>
+			</tr>
+		</thead>
+		<tbody> 
+			<c:forEach items="${page.list}" var="supmanagement">
+				<tr>
+					<td><a
+						href="#" onclick="openDialogView('查看供应商', '${ctx}/oa/supmanagement/detail?id=${supmanagement.id}','800px', '600px')">
+							${supmanagement.orgCode} </a></td>
+					<td>${supmanagement.supName}</td>
+					<td>${supmanagement.telephone}</td>
+					<td>${supmanagement.taxNumber}</td>
+					<td>${supmanagement.address}</td>
+					<td><fmt:formatDate value="${supmanagement.updateDate}"
+							pattern="yyyy-MM-dd HH:mm:ss" /></td>
+					<td>
+					<shiro:hasPermission name="oa:supmanagement:edit">
+						
+							<a href="#"
+									onclick="openDialog('修改供应商', '${ctx}/oa/supmanagement/detail?id=${supmanagement.id}','800px', '600px')"
+									class="btn btn-success btn-xs"><i class="fa fa-edit"></i>
+									修改</a>
+							<a href="${ctx}/oa/supmanagement/delete?id=${supmanagement.id}"
+									onclick="return confirmx('确认要删除该供应商吗？', this.href)"
+									class="btn btn-danger btn-xs"><i class="fa fa-trash"></i>
+									删除</a>
+					</shiro:hasPermission></td>
+				</tr>
+			</c:forEach>
+		</tbody>
+	</table>
+	<!-- 分页代码 -->
+	<table:page page="${page}"></table:page>
+	<br/>
+	<br/>
+	</div>
+	</div>
+</div>
+</body>
+</html>

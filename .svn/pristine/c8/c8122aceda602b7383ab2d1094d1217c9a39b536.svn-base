@@ -1,0 +1,224 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+
+<title>${fns:getConfig('productName')}</title>
+ <meta name="decorator" content="default"/> 
+<!-- 引入layer插件 -->
+<%-- <script src="${ctxStatic}/layui-v1.0.9_rls/layui/layui.js"></script>
+<link rel="stylesheet" href="${ctxStatic}/layui-v1.0.9_rls/layui/css/layui.css"  media="all"></link>
+<script src="${ctxStatic}/common/layuiindex.js"></script>  --%>
+
+<!-- 即时聊天插件  开始-->
+<script type="text/javascript">
+   	var currentLoginName = '${fns:getUser().loginName}';
+    var currentId = '${fns:getUser().id}';
+    var currentName = '${fns:getUser().name}';
+    var currentFace = '${fns:getUser().photo}';
+    var url = "${ctx}";
+    var webSockertPort = "${fns:getWebSockertPort()}";
+    var wsServer = 'ws://'+window.document.domain+':' + webSockertPort; 
+</script>
+<script type="text/javascript" src="${ctxStatic}/common/iim.js"></script>
+<script>
+    layui.use('layim', function(layim) {
+        init();
+        //基础配置
+        layim.config({
+            //获取主面板列表信息
+            init : {
+                url : '${ctx}/iim/contact/friend' //接口地址（返回的数据格式见下文）
+                ,
+                type : 'post' //默认get，一般可不填
+                ,
+                data : {}
+            //额外参数
+            }
+
+            //获取群员接口（返回的数据格式见下文）
+             ,
+            members : {
+                url : '${ctx}/iim/contact/group' //接口地址（返回的数据格式见下文）
+                ,
+                type : 'get' //默认get，一般可不填
+                ,
+                data : {}
+            //额外参数
+            } 
+
+            //上传图片接口（返回的数据格式见下文），若不开启图片上传，剔除该项即可
+            ,
+            uploadImage : {
+                url : '${ctx}/iim/contact/image' //接口地址
+                ,
+                type : 'post' //默认post
+            }
+
+            //上传文件接口（返回的数据格式见下文），若不开启文件上传，剔除该项即可
+            ,
+            uploadFile : {
+                url : '${ctx}/iim/contact/file' //接口地址
+                ,
+                type : 'post' //默认post
+            }
+            //扩展工具栏，下文会做进一步介绍（如果无需扩展，剔除该项即可）
+            //,tool: [{
+            //  alias: 'code' //工具别名
+            //  ,title: '代码' //工具名称
+            //  ,icon: '&#xe64e;' //工具图标，参考图标文档
+            //}]
+            ,
+            title :'在线沟通'
+            ,
+            voice : 'iPhone.mp3'
+            ,
+            copyright:true
+            ,
+            //,
+            //msgbox : layui.cache.dir + 'css/modules/layim/html/msgbox.html' //消息盒子页面地址，若不开启，剔除该项即可
+            find: '${ctx}/iim/contact/findGroup'
+            //find : layui.cache.dir + 'css/modules/layim/html/find.html' //发现页面地址，若不开启，剔除该项即可
+            ,
+            chatLog : '${ctx}/iim/chatHistory' //聊天记录页面地址，若不开启，剔除该项即可
+        });
+
+        layim.on('setSkin', function(filename, src) {
+            console.log(filename); //获得文件名，如：1.jpg
+            console.log(src); //获得背景路径，如：http://res.layui.com/layui/src/css/modules/layim/skin/1.jpg
+        });
+
+        layim.on('sign', function(value) {
+            console.log(value); //获得新的签名
+            //此时，你就可以通过Ajax将新的签名同步到数据库中了。
+            $.ajax({
+                type : "POST",
+                url : "${ctx}/iim/contact/updateSign",
+                data : {
+                    'sign' : value,
+                    'username' : currentLoginName
+                },
+                success : function(date) {
+                    $("#layim-friend"+currentId+" p").html(value);
+                }
+
+            })
+        });
+
+        layim.on('sendMessage', function(res) {
+            console.info(res);
+            //var mine = res.mine; //包含我发送的消息及我的信息
+            var to = res.to; //对方的信息
+            //监听到上述消息后，就可以轻松地发送socket了，如：
+            if(to.type=='friend')
+              {
+                waitForConnection(function() {// 连接建立才能发送消息
+                    webSocket.send("_msg_" + JSON.stringify(res));
+                }, 0);
+              }else if(to.type=='group'){
+                  waitForConnection(function() {// 连接建立才能发送消息
+                        webSocket.send("_groupmsg_" + JSON.stringify(res));
+                    }, 0);
+              }
+        
+        });
+
+        webSocket.onmessage = function(event) {
+            var data = event.data;
+            if (data.indexOf('_online_user_') >= 0) {//通知好友上线
+                layim.setFriendStatus(data.replace('_online_user_', ''),
+                        'online'); //设置指定好友在线，即头像取消置灰
+            } else if (data.indexOf('_leave_user_') >= 0) {//通知好友离线
+                layim.setFriendStatus(data.replace('_leave_user_', ''),
+                        'offline'); //设置指定好友在线，即头像置灰
+            } else {
+                var event2 = eval("(" + data + ")");
+                console.info(event2);
+                if (event2.emit === 'chatMessage') {
+                    layim.getMessage(event2.data);
+                } else if (event2.emit === 'sysMessage') {
+                    layim.getMessage(event2.data);
+                }
+            }
+        }
+
+        //监听在线状态的切换事件
+        layim.on('online', function(status) {
+            //console.log(status); //获得online或者hide
+            waitForConnection(function() {// 连接建立才能发送消息
+                if (status === 'online') {
+                    webSocket.send("_online_user_" + currentLoginName);
+                } else if (status === 'hide') {
+                    webSocket.send("_leave_user_" + currentLoginName);
+                }
+            }, 0);
+        });
+
+        layim.on('chatChange', function(obj) {
+            
+        });
+
+    });
+    
+     window.onbeforeunload = function(e)
+    {
+    	$.ajax({ 
+			type: "POST", 
+			url: "${ctx}/iim/contact/close",
+			data:	{},
+			dataType : 'json',
+			success: function(b) 
+			{
+				
+			}
+		});
+    } 
+    
+    
+</script> 
+<!--即时通讯结束  --> 
+
+
+    
+    <link type="text/css" href="${ctxStatic}/rest/rest.css" rel="stylesheet">
+
+    
+</head>
+
+<body class="fixed-sidebar full-height-layout  rest-index" >
+    <div id="wrapper" style="background-color: #fff;">
+        <div class="" style="margin-top: 15%;text-align: center;color: #888;">
+        	<span style="display:inline-block;width: 160px;"><img src="${ctxStatic}/images/chat.png" alt="在线沟通" width="100%"/></span>
+        	<br>
+        	<br>
+        	<span style="font-size: 16px;">请从右下角选择人员，开始在线沟通</span>
+        </div>
+       
+       
+    </div>
+</body>
+
+
+<style>
+/*签名样式*/
+.layim-sign-box {
+    width:95%
+}
+.layim-sign-hide{
+  border:none;background-color:#F5F5F5;
+}
+
+.nav .dropdown:hover ul.dropdown-menu{
+    display:block;
+}
+#myinfo:hover{
+    backgroud:rgb(239,244,248);
+}
+
+.btn.btn-white.btn-sm{
+    padding:4px 10px;
+    margin-top:2px;
+}
+
+</style>
+</html>

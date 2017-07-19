@@ -1,0 +1,268 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>通知中心</title>
+	<meta name="decorator" content="default"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/mui.min.css" />
+	<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/oa/css/oaDoc.css" />
+	<script>
+		mui.init({
+			swipeBack:true //启用右滑关闭功能
+		});
+	</script>
+	<style>
+		
+		#topPopover {
+			position: fixed;
+			top: 16px;
+			right: 6px;
+			width:130px;
+		}
+		#topPopover .mui-popover-arrow {
+			left: auto;
+			right: 6px;
+		}
+		.mui-popover {
+			height: 200px;
+		}
+ 
+		.mui-content {
+			padding: 0px;
+			background-color: #f7f7f7;
+		}
+		
+		.fa-search{
+			 margin-right: 4px;
+   			 font-size: 14px;
+		}
+		
+		#search_a{
+			font-size: 14px;
+		}
+		
+		.mui-table-view-cell p span{
+			font-size:16px;
+		}
+		
+		.mui-table-view-cell p{
+			font-size:16px;
+		}
+		
+		.mui-table-view-cell font{
+			font-size:14px;
+			padding-left: 16px;
+		}
+		
+		.mui-table-view-cell .mui-ellipsis{
+			font-size:12px;
+			padding-left: 16px;
+		}
+		
+		.mui-table-view-cell .mui-pull-right{
+			font-size:14px;
+		}
+		
+		.mui-table-view-cell a{
+			font-size:14px;
+		}
+		
+		.mui-table-view-cell a i{
+			font-size:20px;
+			margin-right:2px;
+		}
+		
+		.mui-table-view-cell a span{
+			font-size:14px;
+		}
+
+		.mui-content {
+			padding: 0px;
+		}
+
+		
+		.mui-table-view-cell .mui-ellipsis:nth-child(2){
+			float:left;
+		}
+		.mui-table-view-cell .mui-ellipsis:last-child{
+			float:right;
+		}
+		.mui-bar-nav.mui-bar .mui-icon{
+			color:#12b5f7;
+		}
+		
+		/* tab切换 */
+		.team-header {
+		    padding: 8px 15px;
+		    background-color: #f9f9f9;
+		}
+		.mui-segmented-control {
+			border-color: #12b7f5;	
+		}
+		.mui-segmented-control .mui-control-item.mui-active {
+		    color: #fff;
+		    background-color: #12b7f5;
+		    height:30px;
+		}
+		.mui-segmented-control .mui-control-item{
+			line-height:30px;
+		}
+
+	</style>
+</head>
+<body class="mui-ios mui-ios-9 mui-ios-9-1" style="background-color: #f7f7f7;">
+ 	<header class="mui-bar mui-bar-nav" style="position: fixed; top: 0px; left: 0; z-index: 997;">
+ 		<a class="mui-icon mui-icon-left-nav mui-pull-left" onclick="location.href='${ctx}'"></a>
+		<h1 class="mui-title">通告发布列表</h1>
+		  <shiro:hasPermission name="oa:oaNotify:edit">
+            <a class="mui-icon mui-icon-plus mui-pull-right" onclick="window.location.href='${ctx}/m/oa/oaNotify/form'" id="addNotice"></a>
+            </shiro:hasPermission>
+	</header>
+	<div class="mui-content" style="background-color: #fff;">
+	<div class="team-header" style="background-color:#fff">
+			<div id="segmentedControl"
+				class="mui-segmented-control mui-segmented-control-primary" style="border-color: #12b7f5;">
+				<a class="mui-control-item mui-active" 
+					id="myself">我发布的通知</a> 
+					<a class="mui-control-item"
+					 id="others">我收到的通知</a>
+			</div>
+		</div>
+			<oam:searchWidget paddingTop="91px" cancelSelector="#cancelSearchButton"> 
+				<form:form id="searchForm" modelAttribute="oaNotify" action="${ctx}/m/oa/oaNotify/allList" method="post" class="mui-input-group " >
+					<input id="pageNo" name="pageNo" type="hidden" value="${page.pageNo}"/>
+					<input id="pageSize" name="pageSize" type="hidden" value="${page.pageSize}"/>
+					<div class="mui-input-row">
+						<label class="oaDocFormLabel">标题</label>
+						<form:input id="title" path="title" htmlEscape="false" maxlength="64" placeholder="输入标题"/>
+					</div>
+				
+					<div class="mui-input-row">
+						<label class="oaDocFormLabel">类型</label>
+						<form:select path="type" id="type" >
+							<form:option value="" label="全部"/>
+							<form:options items="${fns:getDictList('my_notify_type')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+						</form:select>
+					</div>
+					<div class="mui-input-row">
+						<label class="oaDocFormLabel">状态</label>
+						<form:select path="status" id="status">
+							<form:option value="" label="全部"/>
+							<form:options items="${fns:getDictList('oa_notify_status')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+						</form:select>
+					</div>
+					
+					<div class="mui-button-row">
+						<button type="button" class="mui-btn mui-btn-primary" onclick="search()"><i class="fa fa-search"></i>查询</button>&nbsp;&nbsp;
+						<button type="button" class="mui-btn mui-btn-primary" onclick="resetCondition()"><i class="fa fa-refresh"></i>重置</button>&nbsp;&nbsp;
+						<script type="text/javascript">function resetCondition(){
+							$("#title").val("");
+							$("#type,#status").val("")
+							/* window.href.location="${ctx}/m/oa/oaNotify/allList"; */
+						}</script>
+						<button type="button" class="mui-btn mui-btn-danger" id="cancelSearchButton">取消搜索</button>
+					</div>
+				</form:form>
+			</oam:searchWidget>
+		<sys:message content="${message}"/>
+		<!-- <div class="team-header">
+			<div id="segmentedControl"
+				class="mui-segmented-control mui-segmented-control-primary" style="border-color: #12b7f5;">
+				<a class="mui-control-item mui-active" 
+					id="myself"  >我发布的通知</a> 
+					<a class="mui-control-item"
+					 id="others"    >我收到的通知</a>
+			</div>
+		</div> -->
+		<ul class="mui-table-view">
+			<c:choose>
+				<c:when test="${page.list.size()>0}">
+					<c:forEach items="${page.list}" var="oaNotify" varStatus="status">
+						<li class="mui-table-view-cell" >
+						<%-- 	<p>
+						onclick="location.href='${mctx}/oa/oaNotify/form?id=${oaNotify.id}&prePage=/oa/oaNotify/allList'"
+								<i class="fa ${oaDoc.isPublic eq '0'?'fa-home':'fa-share-square-o'}" style="font-size:14px;color:${oaDoc.isPublic eq '0'?'rgb(26, 179, 148);':''}"></i>
+								<span style="color:${oaDoc.isPublic eq '0'?'#1ab394':'#1a81d1'}">
+									${oaDoc.isPublic eq '0'?oaDoc.office.name:fns:getDictLabel(oaDoc.docType, 'oaDoc_docType', '')}
+								</span>
+								<span class="mui-pull-right">
+									<fmt:formatDate value="${oaDoc.createDate}" pattern="yyyy.MM.dd"/>
+								</span>
+							</p>
+							<c:if test="${oaDoc.isPublic eq '0'}">
+								<p><font color="#1a81d1">
+									${fns:getDictLabel(oaDoc.docType, 'oaDoc_docType', '')}1</font>
+								</p>
+							</c:if>
+							<p class="mui-ellipsis">${oaDoc.title}</p> --%>
+                        <%-- <span class="tongzhi_p">${fns:getDictLabel(oaNotify.type, 'oa_notify_type', '')}</span> --%>
+                    <p><span>
+					<c:choose>
+                        <c:when test="${oaNotify.files=='2'}">
+                            <a href="${ctx}/m/oa/cyTspOaMonthlyPlan/personal?commid=${oaNotify.content}&id=${oaNotify.id}">
+                                ${fns:abbr(oaNotify.title,30)}
+                            </a>
+                        </c:when>
+                        <c:otherwise>
+                              <a href="${ctx}/m/oa/oaNotify/view?id=${oaNotify.id}">
+                                ${fns:abbr(oaNotify.title,30)}
+                            </a>
+                        </c:otherwise>
+                    </c:choose>
+					</span>
+					<span class="mui-pull-right">
+					<fmt:formatDate value="${oaNotify.updateDate}" pattern="yyyy-MM-dd"/>
+					</span></p>
+					<p class="mui-ellipsis">${fns:getDictLabel(oaNotify.type, 'oa_notify_type', '')}</p>
+					<p class="mui-ellipsis">${fns:getDictLabel(oaNotify.status, 'oa_notify_status', '')}</p>
+               
+						</li>
+					</c:forEach>				
+				</c:when>
+				<c:otherwise>
+					<li class="mui-table-view-cell">
+						<p class="mui-ellipsis">暂无数据</p>
+					</li>
+				</c:otherwise>
+			</c:choose>
+		</ul>
+		<table:pageMobile page="${page}" showPageOne="false"></table:pageMobile>
+	</div>
+	<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+	<script src="${ctxStatic}/mobile/js/mobile.js"></script>
+	<script type="text/javascript">
+
+$(document).ready(function() {
+	   mui.init();
+   document.getElementById('myself').addEventListener('tap', function(){
+	   myself();
+	    return true;
+    }); 
+   
+   document.getElementById('others').addEventListener('tap', function(){  
+
+	   others();
+       return true;
+   }); 
+   
+ 
+   
+  
+
+  
+    
+    function myself() {
+    	 window.location.href='${ctx}/m/oa/oaNotify/allList'
+    }
+    function others() {
+    	window.location.href='${ctx}/m/oa/oaNotify/myNoticeList'
+    }
+  
+});
+
+</script>
+		
+</body>
+</html>

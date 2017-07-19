@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaFileQueryDao">
+
+	<sql id="tableName">
+		<choose>
+			<when test="type == '0'.toString()">oa_archives</when>
+			<when test="type == '1'.toString()">oa_receive_file</when>
+			<when test="type == '2'.toString()">oa_sign</when>
+		</choose>
+	</sql>
+
+	<sql id="state0">
+		<include refid="state1"></include>
+		UNION ALL
+		<include refid="state2"></include>
+	</sql>
+
+
+
+	<sql id="state1">
+		SELECT a.id AS "id",a.type AS "type",a.title AS "title",a.code AS
+		"code",a.date AS
+		"createDate",lx2.name_
+		AS "nowNode",lx3.name As
+		"nowName",a.isdraft AS
+		"state",lx1.name
+		AS "createName",a.officeName AS
+		"officeName"
+		FROM
+		<include refid="tableName"></include>
+		a LEFT
+		JOIN sys_user lx1 ON
+		lx1.id=a.create_by
+		LEFT JOIN
+		act_hi_taskinst
+		lx2
+		ON lx2.proc_inst_id_ =
+		a.proc_ins_id
+		LEFT JOIN
+		sys_user lx3
+		ON
+		lx3.`login_name` = lx2.`ASSIGNEE_`
+		<where>
+			a.del_flag = 0
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+
+			<if test="code != null and code != ''">
+				AND a.code LIKE
+				<if test="dbName == 'oracle'">'%'||#{code}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{code}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{code},'%')</if>
+			</if>
+
+			<if
+				test="beginDate != null">
+				AND a.date >= #{beginDate} 
+			</if>
+			<if
+				test="endDate != null">
+				AND a.date <![CDATA[<=]]> #{endDate}
+			</if>
+
+			<if test="createName != null and createName != ''">
+				AND a.create_by IN (SELECT lx.id FROM sys_user lx WHERE lx.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{createName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createName},'%')</if>
+				)
+			</if>
+
+			<if test="officeName != null and officeName != ''">
+				AND a.officeName LIKE
+				<if test="dbName == 'oracle'">'%'||#{officeName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{officeName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{officeName},'%')</if>
+			</if>
+			AND a.proc_ins_id != ''
+			AND lx2.end_time_ IS NULL
+		</where>
+	</sql>
+
+
+
+	<sql id="state2">
+		SELECT a.id AS "id",a.type AS "type",a.title AS "title",a.code AS
+		"code",a.date AS
+		"createDate",lx2.name_
+		AS "nowNode",lx3.name As
+		"nowName",a.isdraft AS
+		"state",lx1.name
+		AS "createName",a.officeName AS
+		"officeName"
+		FROM
+		<include refid="tableName"></include>
+		a LEFT
+		JOIN sys_user lx1 ON
+		lx1.id=a.create_by
+		LEFT JOIN
+		act_hi_taskinst
+		lx2
+		ON lx2.proc_inst_id_ =
+		a.proc_ins_id AND
+		lx2.end_time_ IS NULL
+		LEFT
+		JOIN
+		sys_user lx3
+		ON
+		lx3.`login_name` =
+		lx2.`ASSIGNEE_`
+		<where>
+			a.del_flag = 0
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+
+			<if test="code != null and code != ''">
+				AND a.code LIKE
+				<if test="dbName == 'oracle'">'%'||#{code}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{code}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{code},'%')</if>
+			</if>
+
+			<if
+				test="beginDate != null">
+				AND a.date >= #{beginDate} 
+			</if>
+			<if
+				test="endDate != null">
+				AND a.date <![CDATA[<=]]> #{endDate}
+			</if>
+			
+			<if test="createName != null and createName != ''">
+				AND a.create_by IN (SELECT lx.id FROM sys_user lx WHERE lx.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{createName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createName},'%')</if>
+				)
+			</if>
+
+			<if test="officeName != null and officeName != ''">
+				AND a.officeName LIKE
+				<if test="dbName == 'oracle'">'%'||#{officeName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{officeName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{officeName},'%')</if>
+			</if>
+			AND a.isdraft = '2'
+		</where>
+	</sql>
+
+
+
+
+	<select id="findList" resultType="OaFileQuery">
+		<choose>
+			<when test="type != null and type != ''">
+				<choose>
+					<when test="state != null and state != '' and state == '1'.toString()">
+						<include refid="state1"></include>
+					</when>
+					<when test="state != null and state != '' and state == '2'.toString()">
+						<include refid="state2"></include>
+					</when>
+					<otherwise>
+						<include refid="state0"></include>
+					</otherwise>
+				</choose>
+			</when>
+
+			<!-- 三表合查 -->
+			<otherwise>
+				<if test="type=0"></if>
+				<choose>
+					<when test="state != null and state != '' and state == '1'.toString()">
+						<include refid="state1"></include>
+					</when>
+					<when test="state != null and state != '' and state == '2'.toString()">
+						<include refid="state2"></include>
+					</when>
+					<otherwise>
+						<include refid="state0"></include>
+					</otherwise>
+				</choose>
+				UNION ALL
+				<if test="type=1"></if>
+				<choose>
+					<when test="state != null and state != '' and state == '1'.toString()">
+						<include refid="state1"></include>
+					</when>
+					<when test="state != null and state != '' and state == '2'.toString()">
+						<include refid="state2"></include>
+					</when>
+					<otherwise>
+						<include refid="state0"></include>
+					</otherwise>
+				</choose>
+				UNION ALL
+				<if test="type=2"></if>
+				<choose>
+					<when test="state != null and state != '' and state == '1'.toString()">
+						<include refid="state1"></include>
+					</when>
+					<when test="state != null and state != '' and state == '2'.toString()">
+						<include refid="state2"></include>
+					</when>
+					<otherwise>
+						<include refid="state0"></include>
+					</otherwise>
+				</choose>
+
+			</otherwise>
+		</choose>
+		<!-- 分页查询 -->
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY createDate DESC
+			</otherwise>
+		</choose>
+	</select>
+</mapper>

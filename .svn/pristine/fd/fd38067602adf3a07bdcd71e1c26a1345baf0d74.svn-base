@@ -1,0 +1,130 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>资质借用管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			$("#btnCancle2").click(function(){
+					$("#flag").val("1");
+					
+				})
+			
+			
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="wrapper wrapper-content">
+<div class="ibox" style="width: 800px;margin: 0 auto;">
+<div class="ibox-title">
+		<span style="font-size: 18px;font-weight: bold;">编辑-资质借用流程</span>
+	</div>
+	
+	<form:form id="inputForm" modelAttribute="oaQualificationb" action="${ctx}/oa/qualificationb/oaQualificationb/save" method="post" class="form-horizontal">
+		<legend style="height:43px;line-height:43px;">${title }</legend>
+		<input type="hidden" name="token" value="${token }">
+		
+		<input type="hidden" name="flag" value="0" id="flag">
+		<form:hidden path="id" />
+		<form:hidden path="procInsId" />		
+		<sys:message content="${message}"/>	
+		
+		<div class="control-group">
+			<label class="control-label">文件编号：</label>
+			<div class="controls">
+				<form:input path="fileId" htmlEscape="false" maxlength="100"
+					 class="form-control" disabled="true" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">借&nbsp;&nbsp;用&nbsp;&nbsp;人：</label>
+			<div class="controls">
+				<input type="text" value="${oaQualificationb.createBy.name}" disabled class="form-control" readonly="readonly" style="width:40%;">
+			</div>
+		</div>	
+		<div class="control-group">
+			<label class="control-label">所在部门：</label>
+			<div class="controls">
+				<input type="text" value="${oaQualificationb.officename}" disabled class="form-control" readonly="readonly" style="width:40%;">
+			</div>
+		</div>		
+		<div class="control-group">
+			<label class="control-label">申请日期：</label>
+			<div class="controls">
+			<input name="createDate" type="text" readonly="readonly" maxlength="20" id="uset"
+					 class="laydate-icon form-control layer-date input-sm required" style="background-color: #FFFFFF;"
+					value="<fmt:formatDate value="${oaUsecar.createDate}" pattern="yyyy-MM-dd HH:mm:ss"/>"
+					onclick="WdatePicker({dateFmt:'yyyy-MM-dd HH:mm:ss',isShowClear:false});" />
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">证照名称：</label>
+			<div class="controls">
+				<form:input path="licensename" htmlEscape="false" maxlength="50" class="form-control required" style="width:40%;" />
+				<span class="help-inline"><font color="red">*</font> </span>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">证照类别：</label>
+			<div class="controls">
+				<form:radiobuttons path="type" items="${fns:getDictList('licenseType')}" itemLabel="label" itemValue="value" htmlEscape="false" class="input-xlarge required"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">使用事由：</label>
+			<div class="controls">
+				<form:input path="reason" htmlEscape="false" maxlength="200" class="form-control" style="width:40%;" required="required"/>
+				<span class="help-inline"><font color="red">*</font> </span>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注：</label>
+			<div class="controls">
+				<form:textarea path="remarks" htmlEscape="false" rows="4" maxlength="100" class="input-xxlarge "/>
+			</div>
+		</div>
+		<div class="form-actions" style="text-align:left; margin-top:15px;margin-bottom: 15px;">
+			<shiro:hasPermission name="oa:qualificationb:oaQualificationb:edit">
+				<input id="btnSubmit" class="btn btn-primary" type="submit"
+					value="提交" />&nbsp;
+			</shiro:hasPermission>
+			<c:if test="${not empty oaQualificationb.id}">
+				<input id="btnCancle2" class="btn btn-primary" type="submit"
+					value="取消申请" />&nbsp;
+			</c:if>
+			<input id="btnCancel" class="btn" type="button" value="返 回"
+				onclick="history.go(-1)" />
+			<c:if test="${task != null}">
+				&nbsp;<input
+				onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+				class="btn" type="button" value="流程跟踪" />
+		</c:if>
+		</div>
+		
+	</form:form>
+	<c:if test="${not empty oaQualificationb.id}">
+		<act:histoicFlow procInsId="${oaQualificationb.procInsId}" />
+	</c:if>
+	</div>
+	</div>
+</body>
+</html>

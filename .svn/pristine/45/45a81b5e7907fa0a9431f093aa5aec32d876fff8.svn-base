@@ -1,0 +1,41 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/Base.css" />
+<link rel="stylesheet" type="text/css" href="${ctxStatic}/liuxin/css/mobile2.css" />
+		<ul class="xinfoot" style="margin-bottom: 0px !important;">
+			<c:forEach var="now" items="${histoicFlowList}">
+				<li class="contents_title2">
+					<br>
+					<table style="width:100%">
+						<tr>
+							<td style="width:30px">
+								<img src="${ctxStatic}/mobile/images/${not empty now.histIns.endTime?'wancheng.png':'shenpizhong.png'}" />
+							</td>
+							<td>
+								<h2 style="color:#18a689">${now.assigneeName}</h2>
+							</td>
+							<td>
+								<div style='text-align:right'>
+									<h2 style="color:#18a689"><fmt:formatDate value="${now.histIns.startTime}" pattern="yyyy.MM.dd HH:mm" /></h2>
+								</div>
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td colspan="2">
+								<p style="color:${not empty now.histIns.endTime?'#18a689':'#f7a54a'}">${now.histIns.activityName}</p>
+							</td>
+						</tr>
+						<tr>
+							<td>
+							</td>
+							<td colspan="2">
+								<p style="color:#18a689">${now.comment}</p>
+							</td>
+						</tr>
+					</table>
+					<br>
+				</li>
+			</c:forEach>
+		</ul>

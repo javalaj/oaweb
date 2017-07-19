@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaEmployeeFormalDao">
+
+	<sql id="oaEmployeeFormalColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.name AS "name",
+		a.age AS "age",
+		a.sex AS
+		"sex",
+		a.office_name AS "officeName",
+		a.phone AS "phone",
+		a.tryout_date
+		AS "tryoutDate",
+		a.tryout_salary AS "tryoutSalary",
+		a.formal_date AS
+		"formalDate",
+		a.formal_salary AS "formalSalary",
+		a.reason AS "reason",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname2 AS
+		"examname2",
+		a.examtext2 AS "examtext2",
+		a.examname3 AS "examname3",
+		a.examtext3 AS "examtext3",
+		a.examname4 AS "examname4",
+		a.examtext4 AS
+		"examtext4"
+	</sql>
+
+	<sql id="oaEmployeeFormalJoins">
+	</sql>
+
+
+	<select id="getByProcInsId" resultType="OaEmployeeFormal">
+		SELECT
+		<include refid="oaEmployeeFormalColumns" />
+		FROM oa_employee_formal a
+		<include refid="oaEmployeeFormalJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+
+	<select id="get" resultType="OaEmployeeFormal">
+		SELECT
+		<include refid="oaEmployeeFormalColumns" />
+		FROM oa_employee_formal a
+		<include refid="oaEmployeeFormalJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaEmployeeFormal">
+		SELECT
+		<include refid="oaEmployeeFormalColumns" />
+		FROM oa_employee_formal a
+		<include refid="oaEmployeeFormalJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="name != null and name != ''">
+				AND a.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{name}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{name}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{name},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaEmployeeFormal">
+		SELECT
+		<include refid="oaEmployeeFormalColumns" />
+		FROM oa_employee_formal a
+		<include refid="oaEmployeeFormalJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_employee_formal(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		name,
+		age,
+		sex,
+		office_name,
+		phone,
+		tryout_date,
+		tryout_salary,
+		formal_date,
+		formal_salary,
+		reason,
+		examname,
+		examtext,
+		examname2,
+		examtext2,
+		examname3,
+		examtext3,
+		examname4,
+		examtext4
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{name},
+		#{age},
+		#{sex},
+		#{officeName},
+		#{phone},
+		#{tryoutDate},
+		#{tryoutSalary},
+		#{formalDate},
+		#{formalSalary},
+		#{reason},
+		#{examname},
+		#{examtext},
+		#{examname2},
+		#{examtext2},
+		#{examname3},
+		#{examtext3},
+		#{examname4},
+		#{examtext4}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_employee_formal SET
+		proc_ins_id =
+		#{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		name = #{name},
+		age = #{age},
+		sex = #{sex},
+		office_name = #{officeName},
+		phone = #{phone},
+		tryout_date =
+		#{tryoutDate},
+		tryout_salary = #{tryoutSalary},
+		formal_date =
+		#{formalDate},
+		formal_salary = #{formalSalary},
+		reason = #{reason},
+		examname = #{examname},
+		examtext = #{examtext},
+		examname2 =
+		#{examname2},
+		examtext2 = #{examtext2},
+		examname3 = #{examname3},
+		examtext3 = #{examtext3},
+		examname4 = #{examname4},
+		examtext4 = #{examtext4}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_employee_formal SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

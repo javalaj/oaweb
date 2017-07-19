@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaLoanDao">
+    
+	<sql id="oaLoanColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.user_id AS "user.id",
+		a.office_id AS "office.id",
+		a.money AS "money",
+		a.record_id AS "recordId",
+		a.reason AS "reason",
+		a.isbuy AS "isbuy",
+		a.files AS "files",
+		a.uppertext AS "uppertext",
+		a.protext AS "protext",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.fincinaltext AS "fincinaltext",
+		a.update_by AS "updateBy.id",
+		a.managertext AS "managertext",
+		a.accounttext AS "accounttext",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.paytext AS "paytext",
+		a.del_flag AS "delFlag",
+		u3.name AS "user.name",
+		o4.name AS "office.name"
+	</sql>
+	
+	<sql id="oaLoanJoins">
+		LEFT JOIN sys_user u3 ON u3.id = a.user_id
+		LEFT JOIN sys_office o4 ON o4.id = a.office_id
+	</sql>
+    
+	<select id="get" resultType="OaLoan">
+		SELECT 
+			<include refid="oaLoanColumns"/>
+		FROM oa_loan a
+		<include refid="oaLoanJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<!-- 通过实例id获取借支信息 -->
+	 <select id="getByProcInsId" resultType="OaLoan">
+		SELECT 
+			<include refid="oaLoanColumns"/>
+		FROM oa_loan a
+		<include refid="oaLoanJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="findList" resultType="OaLoan">
+		SELECT 
+			<include refid="oaLoanColumns"/>
+		FROM oa_loan a
+		<include refid="oaLoanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaLoan">
+		SELECT 
+			<include refid="oaLoanColumns"/>
+		FROM oa_loan a
+		<include refid="oaLoanJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_loan(
+			id,
+			proc_ins_id,
+			user_id,
+			office_id,
+			money,
+			record_id,
+			reason,
+			isbuy,
+			files,
+			uppertext,
+			protext,
+			create_by,
+			create_date,
+			fincinaltext,
+			update_by,
+			managertext,
+			accounttext,
+			update_date,
+			remarks,
+			paytext,
+			del_flag
+		) VALUES (
+			#{id},
+			#{procInsId},
+			#{user.id},
+			#{office.id},
+			#{money},
+			#{recordId},
+			#{reason},
+			#{isbuy},
+			#{files},
+			#{uppertext},
+			#{protext},
+			#{createBy.id},
+			#{createDate},
+			#{fincinaltext},
+			#{updateBy.id},
+			#{managertext},
+			#{accounttext},
+			#{updateDate},
+			#{remarks},
+			#{paytext},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_loan SET 	
+			user_id = #{user.id},
+			office_id = #{office.id},
+			money = #{money},
+			reason = #{reason},
+			isbuy = #{isbuy},
+			files = #{files},
+			uppertext = #{uppertext},
+			protext = #{protext},
+			fincinaltext = #{fincinaltext},
+			update_by = #{updateBy.id},
+			managertext = #{managertext},
+			accounttext = #{accounttext},
+			update_date = #{updateDate},
+			paytext = #{paytext}
+		WHERE id = #{id}
+	</update>
+	<!--上级领导审批  -->
+<update id="updateUpperText">
+		UPDATE oa_loan SET 
+			uppertext = #{uppertext},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!-- 项目经理审批 -->
+	<update id="updateProText">
+		UPDATE oa_loan SET 
+			protext = #{protext},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!-- 财务副总审批  -->
+	<update id="updateFincinalText">
+		UPDATE oa_loan SET 
+			fincinaltext = #{fincinaltext},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!--总经理审核  -->
+	<update id="updatemanagertext">
+		UPDATE oa_loan SET 
+			managertext = #{managertext},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!-- 会计审核 -->
+	<update id="updateAccountText">
+		UPDATE oa_loan SET 
+			accounttext = #{accounttext},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<!-- 出纳确认 -->
+	<update id="updatePayText">
+		UPDATE oa_loan SET 
+			updatePayText= #{updatePayText},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>	
+	
+	
+	<update id="updateInsId">
+		UPDATE oa_loan  SET 
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id}, 
+			update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="delete">
+		UPDATE oa_loan SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

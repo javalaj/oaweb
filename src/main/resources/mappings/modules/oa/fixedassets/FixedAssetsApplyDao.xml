@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.FixedAssetsApplyDao">
+    
+	<sql id="fixedAssetsApplyColumns">
+		a.id AS "id",
+		a.fixed_id AS "fixedId",
+		a.account AS "account",
+		a.apply_condition AS "applyCondition",
+		a.serial_number AS "serialNumber",
+		a.equ_id as "equId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.update_date AS "updateDate",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="fixedAssetsApplyJoins">
+	</sql>
+    
+	<select id="get" resultType="FixedAssetsApply">
+		SELECT 
+			<include refid="fixedAssetsApplyColumns"/>
+		FROM fixed_assets_apply a
+		<include refid="fixedAssetsApplyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="FixedAssetsApply">
+		SELECT 
+			<include refid="fixedAssetsApplyColumns"/>
+		FROM fixed_assets_apply a
+		<include refid="fixedAssetsApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="FixedAssetsApply">
+		SELECT 
+			<include refid="fixedAssetsApplyColumns"/>
+		FROM fixed_assets_apply a
+		<include refid="fixedAssetsApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO fixed_assets_apply(
+			id,
+			fixed_id,
+			account,
+			apply_condition,
+			serial_number,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			update_date,
+			del_flag,
+			equ_id
+		) VALUES (
+			#{id},
+			#{fixedId},
+			#{account},
+			#{applyCondition},
+			#{serialNumber},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{remarks},
+			#{updateDate},
+			#{delFlag},
+			#{equId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE fixed_assets_apply SET 	
+			fixed_id = #{fixedId},
+			account = #{account},
+			apply_condition = #{applyCondition},
+			serial_number = #{serialNumber},
+			update_by = #{updateBy.id},
+			remarks = #{remarks},
+			update_date = #{updateDate},
+			equ_id = #{equId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE fixed_assets_apply SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

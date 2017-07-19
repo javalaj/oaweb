@@ -1,0 +1,195 @@
+@CHARSET "UTF-8";
+
+.divMargin {
+	margin-top: 60px;
+	margin-bottom: 60px;
+}
+
+.div1 {
+	height: 50px;
+}
+
+.div1 img {
+	height: 50px;
+}
+
+#spanname {
+	vertical-align: middle;
+}
+
+#userimg {
+	vertical-align: middle;
+	padding: 5px 10px;
+	box-sizing: border-box;
+}
+
+#userimg3 {
+	vertical-align: middle;
+	float: right;
+	padding: 16px 10px;
+	margin: 0 auto;
+	/*去掉转发按钮*/
+	display: none;
+}
+
+#userimg41 {
+	vertical-align: middle;
+	float: right;
+	padding: 15px 10px;
+	margin: 0 auto;
+}
+
+#userimg42 {
+	vertical-align: middle;
+	float: right;
+	padding: 15px 10px;
+	margin: 0 auto;
+}
+
+.divcontent {
+	width: 100%;
+	background-color: #fff;
+	font-size: 14px;
+}
+.divcontent li span {
+	display: inline-block;
+}
+.divcontent li span:first-child {
+	width: 30%;
+	font-weight: 700;
+}
+
+.divcontent input, textarea {
+	width: 67%;
+	margin-bottom: 0px;
+	padding: 2px 6px !important;
+}
+
+.xin_select {
+	width: 67% !important;
+	margin-bottom: 0px;
+	padding: 0 6px !important;
+	height: 32px;
+}
+
+.exam {
+	text-align: left;
+	width: 20px !important;
+}
+.exam:nth-child(2) {
+	margin-left: 5% !important;	
+}
+
+.divtitle {
+	width: 100%;
+	text-align: center;
+	height: 36px;
+	line-height: 36px;
+	background-color: #f6f6f6;
+}
+
+.xinfoot {
+	background-color: #f8f8f8;
+	padding: 10px 0;
+	/* margin-bottom: 50px !important; */
+}
+
+.xinfoot li {
+	padding: 0 15px;
+}
+
+.contents_title2 {
+	margin-top: 10px;
+	width: 100%;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	min-height: 50px;
+	background-color: #fff;
+	overflow: hidden;
+}
+
+.content_img {
+	width: 10%;
+	float: left;
+	text-align: center;
+	padding: 10px 0px;
+	box-sizing: border-box;
+}
+
+.content_img img {
+	margin: 5px auto;
+}
+
+.content_title {
+	padding: 10px 0px;
+	box-sizing: border-box;
+	width: 47%;
+	height: 50px;
+	float: left;
+}
+
+.content_title h3 {
+	font-size: 1.6rem;
+	line-height: 15px;
+	color: #333333;
+}
+
+.content_title span {
+	font-size: 1.4rem;
+	line-height: 26px;
+	color: #666;
+}
+
+.content_time {
+	padding: 5px 0px;
+	box-sizing: border-box;
+	float: right;
+    margin-right: 6px;
+}
+
+.content_time span {
+	font-size: 1.4rem;
+	color: #666;
+}
+
+.bottom_button {
+	width: 100%;
+}
+
+
+.bottom_button .form-button {
+	text-align: center;
+	margin: 10px 0;
+	margin-left: 25%;
+	width: 50%;
+}
+
+.bottom_button .form-button2 {
+	float:left;
+	text-align: center;
+	margin: 10px 10%;
+	width: 29%;
+}
+
+.spcon {
+	margin-left: 5px;
+}
+
+.bottoms span {
+	color: #fff;
+}
+
+.xinmsg {
+	width: 100%;
+	padding-left: 10%;
+	padding-right: 5px;
+	font-size: 1.4rem;
+	float: left;
+}
+
+.textgp {
+	vertical-align: top;
+}
+.mui-content-formview{
+	margin-bottom: 120px;
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <title>添加项目成员</title>
+    <meta name="decorator" content="default"/>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="../awesome/4.4/css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="../css/myoa.css"/>
+
+</head>
+<body style="padding: 0;">
+<div class="wrapper wrapper-content">
+    <div class="ibox">
+        <div class="myoa-project-add">
+            <div class="myoa-add-tit">添加项目成员</div>
+            <div class="myoa-project-form">
+                <form  style="text-align: center;">
+                    <div class="myoa-personimg-area" style="margin-top: 20px;">
+                        <img src="../images/personimg_small1.png" alt="头像1"/>
+                        <img src="../images/personimg_large.png" alt="头像2"/>
+                        <img src="../images/personimg_small2.png" alt="头像3"/>
+                    </div>
+                    <div class="form-inline forminline-addperson">
+                        <label class="control-label">输入成员姓名</label>
+                        <input type="text" class="form-control myoa-form-searchinput"><span class="btn"><i class="fa fa-search"></i></span>
+                        <button type="submit" class="btn btn-myoa-sec">添加</button>
+                        <button type="reset" class="btn btn-myoa">取消</button>
+                    </div>
+                    <p class="myoa-addperson-data">总共有&nbsp;<span>3</span>&nbsp;名成员</p>
+                    <table class="table myoa-project-table" style="border-bottom: 1px solid #ddd;">
+                        <tr>
+                            <td class="myoa-person-img"><img src="../images/personimg.png" alt="td"/>张三</td>
+                            <td>XXXXXX职位</td>
+                            <td class="myoa-person-role"><img src="../images/builderimg.png" alt=""/>创建者</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="myoa-person-img"><img src="../images/personimg2.png" alt="td"/>张三</td>
+                            <td>XXXXXX职位</td>
+                            <td class="myoa-person-role"><img src="../images/managerimg.png" alt=""/>管理员</td>
+                            <td><i class="fa fa-ellipsis-h"></i>
+                                <ul class="myoa-project-oprate-cont">
+                                    <li><a href="#">撤销管理员</a></li>
+                                </ul></td>
+                        </tr>
+                        <tr>
+                            <td class="myoa-person-img"><img src="../images/personimg2.png" alt="td"/>李四</td>
+                            <td>XXXXXX职位</td>
+                            <td class="myoa-person-role"></td>
+                            <td><i class="fa fa-ellipsis-h"></i>
+                                <ul class="myoa-project-oprate-cont">
+                                    <li><a href="#">设置管理员</a></li>
+                                    <li><a href="#">移除项目组</a></li>
+                                </ul></td>
+                        </tr>
+                    </table>
+                    <div style="padding: 60px 0 20px 0;text-align: center;">
+                        <button type="submit" class="btn btn-myoa-sec btn-myoa-large">保存</button>
+                        <button type="reset" class="btn btn-myoa btn-myoa-large" style="margin-left: 40px;">取消</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="../bootstrap/js/jquery.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+</body>
+</html>

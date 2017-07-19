@@ -1,0 +1,661 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>项目管理</title>
+	<meta name="decorator" content="default"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+		<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/mui.min.css" />
+	<script src="${ctxStatic}/mui-master/dist/js/mui.min.js"></script>
+	<script type="text/javascript">
+		var validateForm;
+		function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+		  if(validateForm.form()){
+			$("#inputForm").submit();
+			 return true;
+		  }
+		  return false;
+		}
+		$(document).ready(function() {
+			$("html").removeAttr("style");
+			if($("#isBid").val()=="1"){
+				$("#tr_expectedBidTime").show();
+			}else{
+				$("#tr_expectedBidTime").hide();
+			}
+			var tabIndex="${param.tabIndex}";
+			if(tabIndex=="4"){
+				$('#myTab a:eq(4)').tab('show');
+			}
+			validateForm=$("#inputForm").validate({
+				rules: {
+					"accountManager.name": {
+				        required: true
+				     },
+					"businessManager.name": {
+				        required: true
+				     },
+					"technicalManager.name": {
+				        required: true
+				     },
+					"projectManager.name": {
+				        required: true
+				     },
+				     "expectedMoney":{
+				    	 number:true,
+				    	 min:0,
+				    	 max:9999999
+				     },
+				     "projectMoney":{
+				    	 number:true,
+				    	 min:0,
+				    	 max:9999999
+				     },
+				     "contractMoney":{
+				    	 number:true,
+				    	 min:0,
+				    	 max:9999999
+				     },
+				     "projectBgDescription": {
+				    	 extMaxLength:499
+					 },
+				     "planDay":{
+				    	 number:true,
+				    	 min:1,
+				    	 max:99999
+				     }
+				},
+			    messages: {
+			    	"accountManager.name": {
+			          required: "必填信息",
+			        },
+			        "businessManager.name": {
+				      required: "必填信息",
+				    },
+				    "technicalManager.name": {
+					  required: "必填信息",
+					},
+			        "projectManager.name": {
+			          required: "必填信息",
+			        },
+			        "projectBgDescription": {
+			    		extMaxLength: "长度不得超过499个字符",
+				    }
+			    },
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍候...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					/*if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						element.parent("div.input-append").parent("td").find("span font").html(error);
+					} else {
+						element.parent("td").find("span font").html(error);
+					}*/
+					
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			$("#btnSubmit").click(function(){
+				$('#myTab a:eq(2)').tab('show');
+				var tag=$("#inputForm").valid();
+				if(tag){
+					$('#myTab a:eq(1)').tab('show');
+					tag=$("#inputForm").valid();
+					if(tag){
+						$('#myTab a:eq(0)').tab('show');
+						tag=$("#inputForm").valid();
+						if(tag){
+							$("#inputForm").submit();
+						}
+					}
+				}
+			});
+			$("#ownedIndustry").change(function(){  
+				$(this).valid();  
+			});
+			$("#contractType").change(function(){  
+				$(this).valid();  
+			});
+			$("#isBid").change(function(){  
+				$(this).valid();
+				if($(this).val()=="1"){
+					$("#tr_expectedBidTime").show();
+				}else{
+					$("#tr_expectedBidTime").hide();
+				}
+			});
+			$("#projectStage").change(function(){  
+				$(this).valid();
+			});
+			$("#accountManagerName").change(function(){  
+				$(this).valid();  
+			});
+			$("#businessManagerName").change(function(){  
+				$(this).valid();  
+			});
+			$("#technicalManagerName").change(function(){  
+				$(this).valid();  
+			});
+			$("#projectManagerName").change(function(){  
+				$(this).valid();  
+			});
+			$("#projectFile").change(function(){  
+				$(this).valid();  
+			});
+		});
+		
+		
+		
+		
+		function addRow(list, idx, tpl, row){
+			$(list).append(Mustache.render(tpl, {
+				idx: idx, delBtn: true, row: row
+			}));
+			$(list+idx).find("select").each(function(){
+				$(this).val($(this).attr("data-value"));
+			});
+			$(list+idx).find("input[type='checkbox'], input[type='radio']").each(function(){
+				var ss = $(this).attr("data-value").split(',');
+				for (var i=0; i<ss.length; i++){
+					if($(this).val() == ss[i]){
+						$(this).attr("checked","checked");
+					}
+				}
+			});
+		}
+		function delRow(obj, prefix){
+			var id = $(prefix+"_id");
+			var delFlag = $(prefix+"_delFlag");
+			if (id.val() == ""){
+				$(obj).parent().parent().remove();
+			}else if(delFlag.val() == "0"){
+				delFlag.val("1");
+				$(obj).html("&divide;").attr("title", "撤销删除");
+				$(obj).parent().parent().addClass("error");
+			}else if(delFlag.val() == "1"){
+				delFlag.val("0");
+				$(obj).html("&times;").attr("title", "删除");
+				$(obj).parent().parent().removeClass("error");
+			}
+		}
+		
+		function getOrders(){
+			$("#btnGetOrders").attr("disabled",true);
+			$("#btnGetOrders").val("正在获取编号中...");
+			$.ajax({
+				type: "POST",
+				url: "${ctx}/orders/getGenerateOrderNo12",
+				data: {orderNamePre:"PJ"},
+				dataType: 'json',
+				success: function(data){
+					$("#projectNo").val(data.orders);
+					$("#projectNo").valid();
+					$("#btnGetOrders").attr("disabled",false);
+					$("#btnGetOrders").val("自动获取编号");
+				}
+			});
+		}
+		function funAddMember(projectId){
+			window.location.href = "${ctx}/oa/project/oaProjectMember/form?project.id="+projectId;
+		}
+	</script>
+	<style type="text/css">
+		.mui-table-view-cell.mui-active{
+			background-color: #ffffff;
+		}
+	</style>
+</head>
+<body class="mui-ios mui-ios-9 mui-ios-9-1" >
+ 	<oam:header>
+ 		<a class="mui-icon mui-icon-left-nav mui-pull-left" onclick="location.href='${mctx}/oa/project/oaProject/myList'"></a>
+		<h1 class="mui-title">项目详情</h1>
+	</oam:header>
+	<oam:message content="${message}"/>
+		<nav class="mui-bar mui-bar-tab">
+			<a class="mui-tab-item mui-active" href="#base">
+				<span class="mui-tab-label">主信息</span>
+			</a>
+			<a class="mui-tab-item" href="#report">
+				<span class="mui-tab-label">周报</span>
+			</a>
+			<a class="mui-tab-item" href="#document">
+				<span class="mui-tab-label">文档</span>
+			</a>
+			<a class="mui-tab-item" href="#contract">
+				<span class="mui-tab-label">合同</span>
+			</a>
+			<a class="mui-tab-item" href="#member">
+				<span class="mui-tab-label">成员</span>
+			</a>
+		</nav>	
+	<div class="mui-content " >
+	<form:form id="inputForm" modelAttribute="oaProject" action="${ctx}/oa/project/oaProject/save" method="post" >
+	<input type="hidden" name="token" value="${token }">
+<%-- 	<ul class="nav nav-tabs myoa-tabs" id="myTab">
+		<!--<li><a href="javascript:void(0)" onclick="history.go(-1)">返 回</a></li>-->
+		<li class="active"><a href="#base" data-toggle="tab">项目基本信息</a></li>
+		<li><a href="#report" data-toggle="tab">周报(${oaProject.oaProjectWeekreportList.size()})</a></li>
+		<li><a href="#document" data-toggle="tab">文档(${oaProject.oaProjectDocumentList.size()})</a></li>
+		<c:if test="${not empty oaProject.id}">
+			<c:set var="contractCount" value="0"></c:set>
+			<c:set var="contractCount" value="${contractCount+oaContractSaless.size()+oaContractPurchases.size()+oaContractSubs.size()+oaContractProtocols.size() }"></c:set>
+			<li><a href="#contract" data-toggle="tab">合同(${contractCount})</a></li>
+			<li><a href="#member" data-toggle="tab">成员(${oaProject.oaProjectMemberList.size()})</a></li>
+		</c:if>
+	</ul><br/> --%>
+	
+        <div class="mui-control-content mui-active" id="base">
+        	<div class="mui-card">
+				<div class="mui-card-header">基础信息</div>
+				<div class="mui-card-content">
+					<div class="mui-card-content-inner" style="padding: 10px;">
+				        <oam:listView>
+				        	<oam:listViewCell title="项目名称:" cellType="input" >
+								${oaProject.projectName}
+							</oam:listViewCell>
+							<oam:listViewCell title="项目编号:" cellType="input" >
+								${oaProject.projectNo}
+							</oam:listViewCell>
+							<oam:listViewCell title="项目开始日期:" cellType="input" >
+								<fmt:formatDate value="${oaProject.startDate}" pattern="yyyy-MM-dd"/>
+							</oam:listViewCell>
+							<oam:listViewCell title="计划工期 (工作天):" cellType="input" >
+								${oaProject.planDay}
+							</oam:listViewCell>
+							<oam:listViewCell title="项目阶段:" cellType="input" >
+								${fns:getDictLabel(oaProject.projectStage, 'oa_project_projectStage', '')}
+							</oam:listViewCell>
+							<oam:listViewCell title="客户经理:" cellType="input" >
+								${oaProject.accountManager.name}
+							</oam:listViewCell>
+							<oam:listViewCell title="客户名称 :" cellType="input" >
+								${oaProject.accountName}
+							</oam:listViewCell>
+							<oam:listViewCell title="所属行业 :" cellType="input" >
+								${fns:getDictLabel(oaProject.ownedIndustry, 'oa_project_ownedIndustry', '')}
+							</oam:listViewCell>
+							<oam:listViewCell title="服务类别 :" cellType="input" >
+								${fns:getDictLabel(oaProject.contractType, 'oa_project_contractType', '')}
+							</oam:listViewCell>
+							<oam:listViewCell title="立项日期 :" cellType="input" >
+								<fmt:formatDate value="${oaProject.establishmentTime}" pattern="yyyy-MM-dd"/>
+							</oam:listViewCell>
+							<oam:listViewCell title="是否投标:" cellType="input" >
+								${fns:getDictLabel(oaProject.isBid, 'yes_no', '')}
+							</oam:listViewCell>
+							<oam:listViewCell title="预计投标日期 :" cellType="input" id="tr_expectedBidTime">
+								<fmt:formatDate value="${oaProject.expectedBidTime}" pattern="yyyy-MM-dd"/>
+							</oam:listViewCell>
+				        </oam:listView>	 
+					</div>
+				</div>
+			</div>
+        	<div class="mui-card">
+				<div class="mui-card-header">其他信息</div>
+				<div class="mui-card-content">
+					<div class="mui-card-content-inner">
+				        <oam:listView>
+				        	<oam:listViewCell title="项目背景描述:" cellType="input" >
+								${oaProject.projectBgDescription}
+							</oam:listViewCell>
+							<oam:listViewCell title="预计金额:" cellType="input" >
+								${oaProject.expectedMoney}
+							</oam:listViewCell>
+							<oam:listViewCell title="项目金额:" cellType="input" >
+								${oaProject.projectMoney}
+							</oam:listViewCell>
+							<oam:listViewCell title="实际投标日期 :" cellType="input" >
+								<fmt:formatDate value="${oaProject.actualBidTime}" pattern="yyyy-MM-dd"/>
+							</oam:listViewCell>
+							<oam:listViewCell title="预计签约时间:" cellType="input" >
+								<fmt:formatDate value="${oaProject.bookContractTime}" pattern="yyyy-MM-dd"/>
+							</oam:listViewCell>
+				        </oam:listView>	 
+					</div>
+				</div>
+			</div>
+			<c:if test="${oaProject.oaProjectOperationList.size()>0}">
+				<div class="mui-card">
+					<div class="mui-card-header">项目数据变更情况</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+							
+					        <oam:listView>
+					        	<c:forEach items="${oaProject.oaProjectOperationList}" var="oaProjectOperation">
+				        			<li id="${id}" class="mui-table-view-cell oa-cell-input" style="padding:1px 15px" >
+						        		<table class="oa-cell-input-table" style="width:100%">
+											<tbody>
+												<tr>
+													<td class="oa-cell-input-title" colspan="2">
+														<label>${oaProjectOperation.operationDescription}</label>
+													</td>
+												</tr>
+												<tr>
+													<td>
+														${oaProjectOperation.operationPerson.name}
+													</td>
+													<td  style="font-size: 13px">
+														<fmt:formatDate value="${oaProjectOperation.operationTime}" pattern="yyyy-MM-dd HH:mm:ss"/>
+													</td>
+												</tr>
+											</tbody>
+										</table>	
+									</li>
+								</c:forEach>	 
+					        </oam:listView>
+					        
+						</div>
+					</div>
+				</div>
+ 			</c:if>
+				
+				<%-- <br>
+				<c:if test="${oaProject.oaProjectOperationList.size()>0}">
+				<table id="contentTable" class="table table-striped table-bordered table-hover table-condensed dataTables-example dataTable">
+					<thead>
+						<tr>
+							<th colspan="3"><div style='text-align:left'><fieldset><legend>项目数据变更情况</legend></fieldset></div></th>
+						</tr>
+						<tr>
+							<th>变更描述</th>
+							<th>变更时间</th>
+							<th>变更人</th>
+						</tr>
+					</thead>
+					<tbody>
+					<c:forEach items="${oaProject.oaProjectOperationList}" var="oaProjectOperation">
+						<tr>
+							<td title="${oaProjectOperation.operationDescription}">
+								${fns:abbr2(oaProjectOperation.operationDescription,64)}
+							</td>
+							<td>
+								<fmt:formatDate value="${oaProjectOperation.operationTime}" pattern="yyyy-MM-dd HH:mm:ss"/>
+							</td>
+							<td>
+								${oaProjectOperation.operationPerson.name}
+							</td>
+						</tr>
+					</c:forEach>
+					</tbody>
+				</table>
+				</c:if>	 --%>			
+        </div>  
+        <div class="mui-control-content" id="report" >
+        	<c:if test="${oaProject.oaProjectWeekreportList.size()<1}">
+				<div class="mui-card"><div class="mui-card-header">目前没有相关的周报信息</div></div>
+			</c:if>
+	        <c:forEach items="${oaProject.oaProjectWeekreportList}" var="oaProjectWeekreport">
+	           	<div class="mui-card">
+					<div class="mui-card-header">${oaProjectWeekreport.title}</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<oam:listViewCell title="编号:" cellType="input" >
+									${oaProjectWeekreport.reportNo}
+								</oam:listViewCell>
+								<oam:listViewCell title="填写人:" cellType="input" >
+									${oaProjectWeekreport.writeUser.name}
+								</oam:listViewCell>
+								<oam:listViewCell title="完成任务:" cellType="input" >
+									${oaProjectWeekreport.completedTask}
+								</oam:listViewCell>
+								<oam:listViewCell title="新增任务 :" cellType="input" >
+									${oaProjectWeekreport.addedTask}
+								</oam:listViewCell>
+								<oam:listViewCell title="更新人:" cellType="input" >
+									${oaProjectWeekreport.updateUser.name}
+								</oam:listViewCell>
+								<oam:listViewCell title="附件:" cellType="input" >
+									<oam:download files="${oaProjectWeekreport.projectReportFile}" id="${oaProjectWeekreport.id}"></oam:download>
+								</oam:listViewCell>
+					        </oam:listView>	 
+						</div>
+					</div>
+				</div>
+			</c:forEach>	
+        </div>
+        <div class="mui-control-content" id="document" >
+   			<c:if test="${oaProject.oaProjectDocumentList.size()<1}">
+				<div class="mui-card"><div class="mui-card-header">目前没有相关的文档信息</div></div>
+			</c:if>
+			<c:if test="${oaProject.oaProjectDocumentList.size()>0}">
+				<oam:listView id="dataTable">
+				<c:forEach items="${oaProject.oaProjectDocumentList}" var="oaProjectDocument" varStatus="status">
+					<oam:listViewCell>
+						<p><font color="#1a81d1">
+							<oam:download files="${oaProjectDocument.projectFile}" id="${oaProjectDocument.id}"></oam:download>
+							</font>
+						</p>
+						<p>
+							<span style="color:#1ab394">
+								${oaProjectDocument.uploadUser.name}
+							</span>
+							<span class="mui-pull-right">
+								<fmt:formatDate value="${oaProjectDocument.createDate}" pattern="yyyy.MM.dd"/>
+							</span>
+						</p>
+					</oam:listViewCell>
+				</c:forEach>
+				</oam:listView>
+			</c:if>
+		</div>
+		
+		<div class="mui-control-content" id="contract" >
+			<c:set var="counts" value="0"></c:set>
+			<c:set var="counts" value="${counts+oaContractSaless.size() }"></c:set>
+			<c:set var="counts" value="${counts+oaContractPurchases.size() }"></c:set>
+			<c:set var="counts" value="${counts+oaContractSubs.size() }"></c:set>
+			<c:set var="counts" value="${counts+oaContractProtocols.size() }"></c:set>
+			<c:if test="${counts<1}">
+				<div class="mui-card"><div class="mui-card-header">目前没有相关的合同信息</div></div>
+			</c:if>
+			<c:if test="${oaContractSaless.size()>0}">
+				<div class="mui-card">
+					<div class="mui-card-header">销售合同</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<c:set var="count" value="0"></c:set>
+					        	<c:forEach items="${oaContractSaless}" var="oaContractSales" varStatus="status">
+						        	<oam:listViewCell >
+						        		<table class="oa-cell-input-table" style="width:100%">
+							        		<tbody>
+							        		<tr>
+												<td colspan="2">
+													${oaContractSales.contractName}
+												</td>
+											</tr>
+											<tr>
+												<td colspan="2">
+													${oaContractSales.contractNo}
+												</td>
+											</tr>
+											<tr>
+												<td>
+													${oaContractSales.contractMoney}
+												</td>
+												<td style="text-align: right">
+													<fmt:formatDate value="${oaContractSales.contractTime}" pattern="yyyy-MM-dd"/>
+												</td>
+											</tr>
+							        		</tbody>
+						        		</table>
+						        	</oam:listViewCell>
+									<c:set var="count" value="${count+oaContractSales.contractMoney }"></c:set>
+								</c:forEach>
+					        </oam:listView>	 
+						</div>
+					</div>
+					<div class="mui-card-footer">
+						合计:${count}
+					</div>
+				</div>
+			</c:if>
+			
+			<c:if test="${oaContractPurchases.size()>0}">
+				<div class="mui-card">
+					<div class="mui-card-header">采购合同</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<c:set var="count" value="0"></c:set>
+					        	<c:forEach items="${oaContractPurchases}" var="oaContractPurchase" varStatus="status">
+						        	<oam:listViewCell >
+						        		<table class="oa-cell-input-table" style="width:100%">
+							        		<tbody>
+							        		<tr>
+												<td colspan="2">
+													${oaContractPurchase.contractName}
+												</td>
+											</tr>
+											<tr>
+												<td colspan="2">
+													${oaContractPurchase.contractNo}
+												</td>
+											</tr>
+											<tr>
+												<td>
+													${oaContractPurchase.contractMoney}
+												</td>
+												<td style="text-align: right">
+													<fmt:formatDate value="${oaContractPurchase.contractTime}" pattern="yyyy-MM-dd"/>
+												</td>
+											</tr>
+							        		</tbody>
+						        		</table>
+						        	</oam:listViewCell>
+									<c:set var="count" value="${count+oaContractPurchase.contractMoney }"></c:set>
+								</c:forEach>
+					        </oam:listView>	 
+						</div>
+					</div>
+					<div class="mui-card-footer">
+						合计:${count}
+					</div>
+				</div>
+			</c:if>
+			
+			<c:if test="${oaContractSubs.size()>0}">
+				<div class="mui-card">
+					<div class="mui-card-header">分包合同</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<c:set var="count" value="0"></c:set>
+					        	<c:forEach items="${oaContractSubs}" var="oaContractSub" varStatus="status">
+						        	<oam:listViewCell >
+						        		<table class="oa-cell-input-table" style="width:100%">
+							        		<tbody>
+							        		<tr>
+												<td colspan="2">
+													${oaContractSub.contractName}
+												</td>
+											</tr>
+											<tr>
+												<td colspan="2">
+													${oaContractSub.contractNo}
+												</td>
+											</tr>
+											<tr>
+												<td>
+													${oaContractSub.contractMoney}
+												</td>
+												<td style="text-align: right">
+													<fmt:formatDate value="${oaContractSub.contractTime}" pattern="yyyy-MM-dd"/>
+												</td>
+											</tr>
+							        		</tbody>
+						        		</table>
+						        	</oam:listViewCell>
+									<c:set var="count" value="${count+oaContractSub.contractMoney }"></c:set>
+								</c:forEach>
+					        </oam:listView>	 
+						</div>
+					</div>
+					<div class="mui-card-footer">
+						合计:${count}
+					</div>
+				</div>
+			</c:if>	
+
+			<c:if test="${oaContractProtocols.size()>0}">
+				<div class="mui-card">
+					<div class="mui-card-header">分包合同</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<c:set var="count" value="0"></c:set>
+					        	<c:forEach items="${oaContractProtocols}" var="oaContractProtocol" varStatus="status">
+						        	<oam:listViewCell >
+						        		<table class="oa-cell-input-table" style="width:100%">
+							        		<tbody>
+							        		<tr>
+												<td colspan="2">
+													${oaContractProtocol.contractName}
+												</td>
+											</tr>
+											<tr>
+												<td colspan="2">
+													${oaContractProtocol.contractNo}
+												</td>
+											</tr>
+											<tr>
+												<td>
+													${oaContractProtocol.contractMoney}
+												</td>
+												<td style="text-align: right">
+													<fmt:formatDate value="${oaContractProtocol.contractTime}" pattern="yyyy-MM-dd"/>
+												</td>
+											</tr>
+							        		</tbody>
+						        		</table>
+						        	</oam:listViewCell>
+									<c:set var="count" value="${count+oaContractProtocol.contractMoney }"></c:set>
+								</c:forEach>
+					        </oam:listView>	 
+						</div>
+					</div>
+					<div class="mui-card-footer">
+						合计:${count}
+					</div>
+				</div>
+			</c:if>						
+		</div>
+		
+		<div class="mui-control-content" id="member" >
+        	<c:if test="${oaProject.oaProjectMemberList.size()<1}">
+				<div class="mui-card"><div class="mui-card-header">目前没有相关的周报信息</div></div>
+			</c:if>
+	        <c:forEach items="${oaProject.oaProjectMemberList}" var="oaProjectMember">
+	           	<div class="mui-card">
+					<div class="mui-card-header">${oaProjectMember.user.name}</div>
+					<div class="mui-card-content">
+						<div class="mui-card-content-inner">
+					        <oam:listView>
+					        	<oam:listViewCell title="成员类别:" cellType="input" >
+									${fns:getDictLabel(oaProjectMember.type, 'OaProjectMember_type', '')}
+								</oam:listViewCell>
+								<oam:listViewCell title="职责:" cellType="input" >
+									${oaProjectMember.duty}
+								</oam:listViewCell>
+								<oam:listViewCell title="创建时间:" cellType="input" >
+									<fmt:formatDate value="${oaProjectMember.createDate}" pattern="yyyy-MM-dd"/>
+								</oam:listViewCell>
+					        </oam:listView>	 
+						</div>
+					</div>
+				</div>
+			</c:forEach>		
+		
+		</div>		
+    </form:form>
+    </div>		
+</body>
+</html>

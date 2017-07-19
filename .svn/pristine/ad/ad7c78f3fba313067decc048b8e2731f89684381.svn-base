@@ -1,0 +1,298 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.entity.contract;
+
+import org.hibernate.validator.constraints.Length;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.google.common.collect.Lists;
+import com.thinkgem.jeesite.common.persistence.DataEntity;
+import com.thinkgem.jeesite.modules.oa.entity.Supmanagement;
+import com.thinkgem.jeesite.modules.oa.entity.project.OaProject;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+
+/**
+ * 采购合同管理Entity
+ * @author 李廷龙
+ * @version 2016-12-12
+ */
+public class OaContractPurchase extends DataEntity<OaContractPurchase> {
+	
+	private static final long serialVersionUID = 1L;
+	private String contractNo;		// 合同编号
+	private String contractName;		// 合同名称
+	private String contractStatus;		// 合同状态
+	private OaProject project;		// 关联的项目
+	private String projectOldName;		// 项目名称（旧）
+	private String contractType;		// 合同类别
+	private Double contractMoney;		// 合同金额
+	private Date contractTime;		// 合同签订日期
+	private OaContractSales contractSales;		// 关联的销售合同
+	private Supmanagement supplier;		// 供应商
+	private Date supplierWarrantyStartTime;		// 供应商质保期开始日期
+	private Date supplierWarrantyEndTime;		// 供应商质保期结束日期
+	private String filingStatus;		// 合同归档情况
+	private Date beginContractTime;		// 开始 合同签订日期
+	private Date endContractTime;		// 结束 合同签订日期
+	
+	private String isInspected;		// 是否已验货（0：否；1：是）
+	private String inspectionFiles;		// 验货单文件
+	private Date inspectionTime;		// 验货时间
+	private User inspectionUser;		// 验货人
+	private String isAddStageAbled;		// 是否可以新增阶段（0：否；1：是）
+	private List<OaContractPurchaseStage> oaContractPurchaseStageList = Lists.newArrayList();		// 子表列表
+	private String isOverdue;		// 是否已过期（0：未过期；1：已过期）
+	private Integer supplierWarrantyMonth;		// 供应商质保期
+	private Date currentTime;		// 当前时间
+	private Double sumPayMoney;		// 付款金额
+	private List<OaContractPurchaseProduct> oaContractPurchaseProductList = Lists.newArrayList();		// 子表列表
+	
+	public Double calculatorProductsTotalMoney() {
+		Double productsTotalMoney=0d;
+		for (OaContractPurchaseProduct oaContractPurchaseProduct : oaContractPurchaseProductList) {
+			productsTotalMoney=productsTotalMoney+oaContractPurchaseProduct.getTotalPrice();
+		}
+		return productsTotalMoney;
+	}
+	
+
+
+	public OaContractPurchase() {
+		super();
+	}
+
+	public OaContractPurchase(String id){
+		super(id);
+	}
+
+	@Length(min=0, max=64, message="合同编号长度必须介于 0 和 64 之间")
+	public String getContractNo() {
+		return contractNo;
+	}
+
+	public void setContractNo(String contractNo) {
+		this.contractNo = contractNo;
+	}
+	
+	@Length(min=0, max=64, message="合同名称长度必须介于 0 和 64 之间")
+	public String getContractName() {
+		return contractName;
+	}
+
+	public void setContractName(String contractName) {
+		this.contractName = contractName;
+	}
+	
+	@Length(min=0, max=1, message="合同状态长度必须介于 0 和 1 之间")
+	public String getContractStatus() {
+		return contractStatus;
+	}
+
+	public void setContractStatus(String contractStatus) {
+		this.contractStatus = contractStatus;
+	}
+	
+	public OaProject getProject() {
+		return project;
+	}
+
+	public void setProject(OaProject project) {
+		this.project = project;
+	}
+
+	@Length(min=0, max=64, message="项目名称（旧）长度必须介于 0 和 64 之间")
+	public String getProjectOldName() {
+		return projectOldName;
+	}
+
+	public void setProjectOldName(String projectOldName) {
+		this.projectOldName = projectOldName;
+	}
+	
+	@Length(min=0, max=1, message="合同类别长度必须介于 0 和 1 之间")
+	public String getContractType() {
+		return contractType;
+	}
+
+	public void setContractType(String contractType) {
+		this.contractType = contractType;
+	}
+	
+	public Double getContractMoney() {
+		return contractMoney;
+	}
+
+	public void setContractMoney(Double contractMoney) {
+		this.contractMoney = contractMoney;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getContractTime() {
+		return contractTime;
+	}
+
+	public void setContractTime(Date contractTime) {
+		this.contractTime = contractTime;
+	}
+	
+	
+	public OaContractSales getContractSales() {
+		return contractSales;
+	}
+
+	public void setContractSales(OaContractSales contractSales) {
+		this.contractSales = contractSales;
+	}
+
+	public Supmanagement getSupplier() {
+		return supplier;
+	}
+
+	public void setSupplier(Supmanagement supplier) {
+		this.supplier = supplier;
+	}
+
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getSupplierWarrantyStartTime() {
+		return supplierWarrantyStartTime;
+	}
+
+	public void setSupplierWarrantyStartTime(Date supplierWarrantyStartTime) {
+		this.supplierWarrantyStartTime = supplierWarrantyStartTime;
+	}
+	
+	@JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+	public Date getSupplierWarrantyEndTime() {
+		return supplierWarrantyEndTime;
+	}
+
+	public void setSupplierWarrantyEndTime(Date supplierWarrantyEndTime) {
+		this.supplierWarrantyEndTime = supplierWarrantyEndTime;
+	}
+	
+	@Length(min=0, max=100, message="合同归档情况长度必须介于 0 和 100 之间")
+	public String getFilingStatus() {
+		return filingStatus;
+	}
+
+	public void setFilingStatus(String filingStatus) {
+		this.filingStatus = filingStatus;
+	}
+	
+	public Date getBeginContractTime() {
+		return beginContractTime;
+	}
+
+	public void setBeginContractTime(Date beginContractTime) {
+		this.beginContractTime = beginContractTime;
+	}
+	
+	public Date getEndContractTime() {
+		return endContractTime;
+	}
+
+	public void setEndContractTime(Date endContractTime) {
+		this.endContractTime = endContractTime;
+	}
+
+	public List<OaContractPurchaseStage> getOaContractPurchaseStageList() {
+		return oaContractPurchaseStageList;
+	}
+
+	public void setOaContractPurchaseStageList(List<OaContractPurchaseStage> oaContractPurchaseStageList) {
+		this.oaContractPurchaseStageList = oaContractPurchaseStageList;
+	}
+
+	public String getIsInspected() {
+		return isInspected;
+	}
+
+	public void setIsInspected(String isInspected) {
+		this.isInspected = isInspected;
+	}
+
+	public String getInspectionFiles() {
+		return inspectionFiles;
+	}
+
+	public void setInspectionFiles(String inspectionFiles) {
+		this.inspectionFiles = inspectionFiles;
+	}
+
+	public Date getInspectionTime() {
+		return inspectionTime;
+	}
+
+	public void setInspectionTime(Date inspectionTime) {
+		this.inspectionTime = inspectionTime;
+	}
+
+	public User getInspectionUser() {
+		return inspectionUser;
+	}
+
+	public void setInspectionUser(User inspectionUser) {
+		this.inspectionUser = inspectionUser;
+	}
+
+	public String getIsAddStageAbled() {
+		return isAddStageAbled;
+	}
+
+	public void setIsAddStageAbled(String isAddStageAbled) {
+		this.isAddStageAbled = isAddStageAbled;
+	}
+
+	public String getIsOverdue() {
+		return isOverdue;
+	}
+
+	public void setIsOverdue(String isOverdue) {
+		this.isOverdue = isOverdue;
+	}
+
+	@SuppressWarnings("deprecation")
+	public Date getCurrentTime() {
+		currentTime=new Date();
+		currentTime=new Date(currentTime.getYear(), currentTime.getMonth(), currentTime.getDate());
+		return currentTime;
+	}
+
+	public void setCurrentTime(Date currentTime) {
+		this.currentTime = currentTime;
+	}
+
+	public Double getSumPayMoney() {
+		return sumPayMoney;
+	}
+
+	public void setSumPayMoney(Double sumPayMoney) {
+		this.sumPayMoney = sumPayMoney;
+	}
+
+	public List<OaContractPurchaseProduct> getOaContractPurchaseProductList() {
+		return oaContractPurchaseProductList;
+	}
+
+	public void setOaContractPurchaseProductList(List<OaContractPurchaseProduct> oaContractPurchaseProductList) {
+		this.oaContractPurchaseProductList = oaContractPurchaseProductList;
+	}
+
+
+
+	public Integer getSupplierWarrantyMonth() {
+		return supplierWarrantyMonth;
+	}
+
+
+
+	public void setSupplierWarrantyMonth(Integer supplierWarrantyMonth) {
+		this.supplierWarrantyMonth = supplierWarrantyMonth;
+	}
+	
+}

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.salarybillsend.OaSalaryDetailsDao">
+    
+	<sql id="oaSalaryDetailsColumns">
+		a.id AS "id",
+		a.user_id AS "user",
+		a.bill_id AS "billId",
+		a.send_flag AS "sendFlag",
+		a.create_by AS "createBy.id",
+		a.update_by AS "updateBy.id",
+		a.create_date AS "createDate",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="oaSalaryDetailsJoins">
+	</sql>
+    	
+	
+	<select id="get" resultType="OaSalaryDetails">
+		SELECT 
+			<include refid="oaSalaryDetailsColumns"/>
+		FROM oa_salary_details a
+		<include refid="oaSalaryDetailsJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaSalaryDetails">
+		SELECT 
+			<include refid="oaSalaryDetailsColumns"/>
+		FROM oa_salary_details a
+		<include refid="oaSalaryDetailsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="billId != null and billId != ''">
+				AND a.bill_id = #{billId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaSalaryDetails">
+		SELECT 
+			<include refid="oaSalaryDetailsColumns"/>
+		FROM oa_salary_details a
+		<include refid="oaSalaryDetailsJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_salary_details(
+			id,
+			user_id,
+			bill_id,
+			send_flag,
+			create_by,
+			update_by,
+			create_date,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{user},
+			#{billId},
+			#{sendFlag},
+			#{createBy.id},
+			#{updateBy.id},
+			#{createDate},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_salary_details SET 	
+			user_id = #{user},
+			bill_id = #{billId},
+			send_flag = #{sendFlag},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<!--物理删除-->
+	<update id="delete">
+		DELETE FROM oa_salary_details
+		WHERE id = #{id}
+	</update>
+	
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+
+		UPDATE oa_salary_details SET 
+			del_flag = #{DEL_FLAG_DELETE}
+
+
+
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

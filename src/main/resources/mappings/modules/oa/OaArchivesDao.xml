@@ -1,0 +1,421 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaArchivesDao">
+
+	<sql id="oaArchivesColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.user_id AS
+		"user.id",
+		a.office_id AS "office.id",
+		a.title AS "title",
+		a.code AS
+		"code",
+		a.content AS "content",
+		a.keyword AS "keyword",
+		a.secrets AS
+		"secrets",
+		a.urgency AS "urgency",
+		a.status AS "status",
+		a.files AS
+		"files",
+		a.date AS "exeDate",
+		a.lead_text AS "leadText",
+		a.sign_yf_opinion AS "signYfOpinion",
+		a.sign_js_opinion AS "signJsOpinion",
+		a.sign_sw_opinion AS "signSwOpinion",
+		a.sign_sc_opinion AS "signScOpinion",
+		a.sign_rs_opinion AS "signRsOpinion",
+		a.sign_cw_opinion AS "signCwOpinion",
+		a.manager_text AS "managerText",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS
+		"delFlag",
+		u3.name AS "user.name",
+		o4.name AS "office.name",
+		a.type AS "type",
+		a.isdraft as "isdraft",
+		a.departmentSign as "departmentsign",
+		a.officeName as "officeName",
+		a.completeDate as "completeDate",
+		a.oaArchivesNames as "oaArchivesNames",
+		a.oaIds as "oaIds",
+		a.ccunit as "ccunit",
+		a.issuingtime as "issuingtime",
+		a.issuedNum as "issuedNum",
+		a.issuedate as "issuedate",
+		a.draftdate as "draftdate",
+		a.qianfadate as "qianfadate",
+		a.leadName as "leadName"
+	</sql>
+
+	<sql id="oaArchivesJoins">
+		LEFT JOIN sys_user u3 ON u3.id = a.user_id
+		LEFT JOIN
+		sys_office o4 ON
+		o4.id = a.office_id
+	</sql>
+
+	<select id="get" resultType="OaArchives">
+		SELECT
+		<include refid="oaArchivesColumns" />
+		FROM oa_archives a
+		<include refid="oaArchivesJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaArchives">
+		SELECT
+		<include refid="oaArchivesColumns" />
+		FROM oa_archives a
+		<include refid="oaArchivesJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND 
+			a.create_by = #{createBy.id}<!--   AND a.create_by=#{createBy.id} -->
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="code != null and code != ''">
+				AND a.code = #{code}
+			</if>
+			<if
+				test="beginExeDate != null and endExeDate != null and beginExeDate != '' and endExeDate != ''">
+				AND a.date BETWEEN #{beginExeDate} AND #{endExeDate}
+			</if>
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+
+
+
+
+
+
+	<select id="findList2" resultType="OaArchives">
+		SELECT lx5.*,lx6.name AS "act.assigneeName" FROM(
+		SELECT
+		<include refid="oaArchivesColumns" />
+		,lx4.name_ AS "act.taskName",lx4.ASSIGNEE_ AS "act_assigneeName"
+
+		FROM
+		oa_archives a
+
+		LEFT JOIN sys_user u3 ON u3.id = a.create_by
+		LEFT JOIN
+		sys_office o4 ON
+		o4.id = a.office_id
+
+		<if test="queryState != null and  queryState == '1'.toString()">
+			LEFT JOIN act_hi_actinst lx3 ON
+			lx3.proc_inst_id_=a.proc_ins_id
+		</if>
+		LEFT JOIN act_hi_taskinst lx4 ON
+		lx4.proc_inst_id_=a.proc_ins_id
+		<where>
+
+			a.del_flag = #{DEL_FLAG_NORMAL}
+
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+
+			<if test="code != null and code != ''">
+				AND a.code LIKE
+				<if test="dbName == 'oracle'">'%'||#{code}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{code}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{code},'%')</if>
+			</if>
+
+			<if
+				test="beginExeDate2 != null and endExeDate2 != null and beginExeDate2 != '' and endExeDate2 != ''">
+				AND a.create_date BETWEEN #{beginExeDate2} AND #{endExeDate2}
+			</if>
+
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			AND a.status = #{status}
+			<if test="createName != null and createName != ''">
+				AND a.create_by IN (SELECT lx.id FROM sys_user lx WHERE lx.name LIKE
+				<if test="dbName == 'oracle'">'%'||#{createName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createName},'%')</if>
+				)
+			</if>
+
+			<if test="createOfficeName != null and createOfficeName != ''">
+				AND a.office_id IN (SELECT lx2.id FROM sys_office lx2 WHERE lx2.name
+				LIKE
+				<if test="dbName == 'oracle'">'%'||#{createOfficeName}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{createOfficeName}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{createOfficeName},'%')</if>
+				)
+			</if>
+
+			<if test="queryState != null  and queryState == '1'.toString()">
+				AND lx3.act_type_='endEvent'
+			</if>
+			AND lx4.end_time_ IS NULL
+		</where>
+		)lx5 LEFT JOIN sys_user lx6 ON lx6.login_name=lx5.act_assigneeName
+		ORDER BY lx5.updateDate DESC
+	</select>
+
+
+
+
+
+	<select id="findAllList" resultType="OaArchives">
+		SELECT
+		<include refid="oaArchivesColumns" />
+		FROM oa_archives a
+		<include refid="oaArchivesJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	<!-- 通过实例id获取公文信息 -->
+	<select id="getByProcInsId" resultType="OaArchives">
+		SELECT
+		<include refid="oaArchivesColumns" />
+		FROM oa_archives a
+		<include refid="oaArchivesJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<insert id="insert">
+		INSERT INTO oa_archives(
+		id,
+		proc_ins_id, 
+		user_id,
+		office_id,
+		title,
+		code,
+		content,
+		keyword,
+		secrets,
+		urgency,
+		status,
+		files,
+		date,
+		lead_text,
+		sign_yf_opinion,
+		sign_js_opinion,
+		sign_sw_opinion,
+		sign_sc_opinion,
+		sign_rs_opinion,
+		sign_cw_opinion,
+		manager_text,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		type,
+		isdraft,
+		departmentSign,
+		officeName,
+		completeDate,
+		oaArchivesNames,
+		oaIds,
+		ccunit,
+		issuingtime,
+		issuedNum,
+		issuedate,
+		draftdate,
+		qianfadate,
+		leadName
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{user.id},
+		#{office.id},
+		#{title},
+		#{code},
+		#{content},
+		#{keyword},
+		#{secrets},
+		#{urgency},
+		#{status},
+		#{files},
+		#{exeDate},
+		#{leadText},
+		#{signYfOpinion},
+		#{signJsOpinion},
+		#{signSwOpinion},
+		#{signScOpinion},
+		#{signRsOpinion},
+		#{signCwOpinion},
+		#{managerText},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{type},
+		#{isdraft},
+		#{departmentsign},
+		#{officeName},
+		#{completeDate},
+		#{oaArchivesNames},
+		#{oaIds},
+		#{ccunit},
+		#{issuingtime},
+		#{issuedNum},
+		#{issuedate},
+		#{draftdate},
+		#{qianfadate},
+		#{leadName}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_archives SET
+		proc_ins_id = #{procInsId},
+		user_id = #{user.id},
+		office_id = #{office.id},
+		title = #{title},
+		code =
+		#{code},
+		content = #{content},
+		keyword = #{keyword},
+		secrets =
+		#{secrets},
+		urgency = #{urgency},
+		status = #{status},
+		files = #{files},
+		date = #{exeDate},
+		lead_text = #{leadText},
+		sign_yf_opinion = #{signYfOpinion},
+		sign_js_opinion = #{signJsOpinion},
+		sign_sw_opinion = #{signSwOpinion},
+		sign_sc_opinion = #{signScOpinion},
+		sign_rs_opinion = #{signRsOpinion},
+		sign_cw_opinion = #{signCwOpinion},
+		manager_text = #{managerText},
+		update_by =
+		#{updateBy.id},
+		update_date = #{updateDate},
+		remarks = #{remarks},
+		type=#{type},
+		isdraft=#{isdraft},
+		departmentSign =#{departmentsign},
+		officeName = #{officeName},
+		completeDate = #{completeDate},
+		oaArchivesNames = #{oaArchivesNames},
+		oaIds = #{oaIds},
+		ccunit = #{ccunit},
+		issuingtime = #{issuingtime},
+		issuedNum = #{issuedNum},
+		issuedate = #{issuedate},
+		draftdate = #{draftdate},
+		qianfadate = #{qianfadate},
+		leadName = #{leadName}
+		WHERE id = #{id}
+	</update>
+
+	<update id="updateInsId">
+		UPDATE oa_archives SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updateLeadText">
+		UPDATE oa_archives SET
+		lead_text = #{leadText},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<update id="updateThText">
+		UPDATE oa_archives SET
+		check_text = #{checkText},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+	<update id="updateDevelopText">
+		UPDATE oa_archives SET
+		check_text1 = #{checkText1},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updateCommerceText">
+		UPDATE oa_archives SET
+		check_text2 = #{checkText2},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updateMarketText">
+		UPDATE oa_archives SET
+		check_text3 = #{checkText3},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updatePersonalText">
+		UPDATE oa_archives SET
+		check_text4 = #{checkText4},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updateFinanceText">
+		UPDATE oa_archives SET
+		check_text5 = #{checkText5},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+	<update id="updateManagerText">
+		UPDATE oa_archives SET
+		manager_text = #{managerText},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate}
+		WHERE id = #{id}
+	</update>
+
+
+	<!--逻辑删除 -->
+	<update id="delete">
+		UPDATE oa_archives SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

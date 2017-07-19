@@ -1,0 +1,793 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service.staffturnover;
+
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.google.common.collect.Maps;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.dao.staffturnover.StaffTurnoverDao;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.assetsturnover.AssetsTurnOver;
+import com.thinkgem.jeesite.modules.oa.entity.assetsturnover.AssetsTurnOverMap;
+import com.thinkgem.jeesite.modules.oa.entity.staffturnover.StaffTurnover;
+import com.thinkgem.jeesite.modules.oa.entity.staffturnover.UserRoles;
+import com.thinkgem.jeesite.modules.oa.entity.workturnover.WorkTurnOver;
+import com.thinkgem.jeesite.modules.oa.entity.workturnover.WorkTurnOverMap;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.assetsturnover.AssetsTurnOverService;
+import com.thinkgem.jeesite.modules.oa.service.workturnover.WorkTurnOverService;
+import com.thinkgem.jeesite.modules.sys.entity.Office;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.OfficeService;
+import com.thinkgem.jeesite.modules.sys.utils.DictUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 人员异动Service
+ * @author zf
+ * @version 2017-01-12
+ */
+@Service
+@Transactional(readOnly = true)
+public class StaffTurnoverService extends CrudService<StaffTurnoverDao, StaffTurnover> {
+
+	@Autowired
+	private ActTaskService actTaskService;
+	
+	@Autowired
+	private OfficeService officeService;
+	
+	@Autowired
+	private WorkTurnOverService workTurnOverService;
+	
+	@Autowired
+	private AssetsTurnOverService assetsTurnOverService;
+	
+	@Autowired
+	private OaNotifyService oanotifyservice;// 通告service
+	
+	/**自定义流程id*/
+	public static final String PROC_DEF_KEY = "staff_turnover";
+	
+	/**物业表名*/
+	public static final String BUSINESS_TABLE = "staff_turnover";
+	
+	/**副总经理角色id*/
+	public static final String VICEMANAGER_ID = "db6f1ea523354118a81b678228a00093";
+	
+	/**部门主管角色id*/
+	public static final String DEPTDIRECTOR_ID = "4";
+	
+	public static final String WORKFLOW_URL = "@@proNotify@@/oa/a/oa/staffturnover/staffTurnover/form?id=";
+	
+	public static final String WORKFLOW_NAME = "人员异动申请";
+	
+	public StaffTurnover get(String id) 
+	{
+		StaffTurnover staffTurnover = super.get(id);
+		
+		WorkTurnOver workTurnOver = new WorkTurnOver();
+		
+		workTurnOver.setStaffTurnoverId(id);
+		
+		List<WorkTurnOver> workList = workTurnOverService.findList(workTurnOver);
+		
+		staffTurnover.setWorkList(workList);
+		
+		AssetsTurnOver assetsTurnOver = new AssetsTurnOver();
+		
+		assetsTurnOver.setStaffTurnoverId(id);
+		
+		List<AssetsTurnOver> assetsList = assetsTurnOverService.findList(assetsTurnOver);
+		
+		staffTurnover.setAssetsList(assetsList);
+		
+		return staffTurnover;
+	}
+	
+	public List<StaffTurnover> findList(StaffTurnover staffTurnover) {
+		return super.findList(staffTurnover);
+	}
+	
+	public Page<StaffTurnover> findPage(Page<StaffTurnover> page, StaffTurnover staffTurnover) {
+		return super.findPage(page, staffTurnover);
+	}
+	
+	@Transactional(readOnly = false)
+	public void save(StaffTurnover staffTurnover) {
+		super.save(staffTurnover);
+	}
+	
+	@Transactional(readOnly = false)
+	public void delete(StaffTurnover staffTurnover) 
+	{
+		workTurnOverService.deletes(staffTurnover.getId());
+		
+		assetsTurnOverService.deletes(staffTurnover.getId());
+		
+		super.delete(staffTurnover);
+	}
+	
+	@Transactional(readOnly = false)
+	public String saveTurnover(StaffTurnover staffTurnover, WorkTurnOverMap workTurnOvers,
+			AssetsTurnOverMap assetsTurnOvers) 
+	{
+		if (StringUtils.equals("save", staffTurnover.getAct().getFlag())) 
+		{
+			if (!StringUtils.equals("1", staffTurnover.getIsStart())) 
+			{
+				staffTurnover.setStatus("0");
+				
+				staffTurnover.setIsStart("0");
+			}
+			//保存
+			super.save(staffTurnover);
+			
+			return "【人员异动申请】【信息保存】操作已完成";
+		}
+		else
+		{
+			if (StringUtils.isBlank(staffTurnover.getId())||StringUtils.equals("0", staffTurnover.getIsStart())) 
+			{
+				String officeDeputyPersonLoginNameOfUser=WorkflowUtils.getOfficeDeputyPersonLoginNameOfUser();
+				
+				String officePrimaryPersonLoginNameOfUser=WorkflowUtils.getOfficePrimaryPersonLoginNameOfUser();
+				
+				if (StringUtils.isBlank(officePrimaryPersonLoginNameOfUser)) 
+				{
+					try 
+					{
+						throw new Exception("<找不到您所属的部门主负责人>");
+					} 
+					catch (Exception e) 
+					{
+						e.printStackTrace();
+					}
+				}
+				
+				if (StringUtils.isBlank(officeDeputyPersonLoginNameOfUser)) 
+				{
+					try 
+					{
+						throw new Exception("<找不到您所属的部门主管>");
+					} 
+					catch (Exception e) 
+					{
+						e.printStackTrace();
+					}
+				}
+				
+				staffTurnover.setIsStart("1");
+				
+				staffTurnover.setUser(UserUtils.getUser());
+				
+				staffTurnover.setDeptBefore(UserUtils.getUser().getOffice().getId());
+				
+				super.save(staffTurnover);
+				
+				String procDefKey = PROC_DEF_KEY;
+				
+				String businessTable = BUSINESS_TABLE;
+				
+				String businessId = staffTurnover.getId();
+				
+				String title = titleHandle(WORKFLOW_NAME);
+				
+				String procInsId = actTaskService.startProcess(procDefKey, businessTable, businessId, title);
+				
+				String comment = "【人员异动申请】";
+				
+				List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+						.processInstanceId(procInsId).list();
+				try
+				{
+					Thread.sleep(1000);
+				} 
+				catch (InterruptedException e)
+				{
+					
+					e.printStackTrace();
+				}
+				
+				if (list.size() > 0) 
+				{
+					String taskId = list.get(0).getId();
+					
+					Map<String, Object> vars = Maps.newHashMap();
+					
+					User user = UserUtils.getUser();
+					
+					String userName = user.getLoginName();
+					
+					vars.put("apply", userName);
+					
+					//离职员工
+					if ("离职".equals(DictUtils.getDictLabel(staffTurnover.getType(), "turnover_type", "")))
+					{
+						 vars.put("flag", "4");
+					}
+					else//调职
+					{
+						boolean isViceManager = false;
+						
+						boolean isDeptDirector = false;
+						
+						List<UserRoles> roleslist = findUserRoles(UserUtils.getUser().getId());
+						
+						for (UserRoles userRole : roleslist) 
+						{
+							//副总经理
+							if (VICEMANAGER_ID.equals(userRole.getRoleId()))
+							{
+								vars.put("flag", "3");
+								
+								vars.put("generalManager", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "generalManager", ""));
+								
+								staffTurnover.setStatus("5");	
+								
+								isViceManager = true;
+							}
+							
+							//部门主管
+							if (DEPTDIRECTOR_ID.equals(userRole.getRoleId()))
+							{	
+								vars.put("flag", "2");
+								
+								vars.put("deptManagerBefore",officePrimaryPersonLoginNameOfUser);
+								
+								staffTurnover.setStatus("2");
+								
+								isDeptDirector = true;
+							}
+						
+						}
+						
+						if (!isViceManager && !isDeptDirector)
+						{
+							vars.put("flag", "1");
+							
+							vars.put("deptDirectorBefore", officeDeputyPersonLoginNameOfUser);
+							
+							staffTurnover.setStatus("1");
+						}
+						
+						if (isViceManager && isDeptDirector)
+							staffTurnover.setStatus("5");
+					}
+					
+					super.save(staffTurnover);
+					
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+				}
+				return "【人员异动申请】【提交】操作已完成";
+			} 
+			else 
+			{
+				if (!staffTurnover.getAct().isFinishTask()) 
+				{
+					
+					Map<String, Object> vars = Maps.newHashMap();
+					
+					vars.put("flag", staffTurnover.getAct().getFlag());
+					
+					String taskId = staffTurnover.getAct().getTaskId();
+					
+					String procInsId = staffTurnover.getAct().getProcInsId();
+					
+					String comment = "default comment";
+					
+//					String deptName = WorkflowUtils.getOfficeName(staffTurnover.getUser().getOffice().getId());
+					
+					String title = "【" + staffTurnover.getUser().getName() + "】" + "【人员异动申请】";
+					
+					String taskDefKey = staffTurnover.getAct().getTaskDefKey();
+					
+					if ("exam1".equals(taskDefKey)) 
+					{
+						String officeDeputyPersonLoginNameOfUser=WorkflowUtils.getOfficeDeputyPersonLoginNameOfUser();
+						
+						if (StringUtils.isBlank(officeDeputyPersonLoginNameOfUser)) 
+						{
+							try 
+							{
+								throw new Exception("<找不到您所属的部门主管>");
+							} 
+							catch (Exception e) 
+							{
+								e.printStackTrace();
+							}
+						}
+						
+						comment = resultComment(staffTurnover,"重新申请", "销毁申请", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							User user = UserUtils.getUser();
+							
+							String userName = user.getLoginName();
+							
+							vars.put("apply", userName);
+							
+							//离职员工
+							if ("离职".equals(DictUtils.getDictLabel(staffTurnover.getType(), "turnover_type", "")))
+							{
+								 vars.put("flag", "4");
+							}
+							else//调职
+							{
+								boolean isViceManager = false;
+								
+								boolean isDeptDirector = false;
+								
+								List<UserRoles> roleslist = findUserRoles(UserUtils.getUser().getId());
+						
+								
+								for (UserRoles userRole : roleslist) 
+								{
+									//副总经理
+									if (VICEMANAGER_ID.equals(userRole.getRoleId()))
+									{
+										vars.put("flag", "3");
+										
+										vars.put("generalManager", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "generalManager",""));
+										staffTurnover.setStatus("5");										
+										
+										isViceManager = true;
+									}
+									
+									//部门主管
+									if (DEPTDIRECTOR_ID.equals(userRole.getRoleId()))
+									{	
+										vars.put("flag", "2");
+										
+										vars.put("deptManagerBefore",WorkflowUtils
+												.getWorkflowVarValue(PROC_DEF_KEY, "deptManagerBefore", ""));
+										staffTurnover.setStatus("2");
+										
+										isDeptDirector = true;
+									}
+								
+								}
+								
+								if (!isViceManager && !isDeptDirector)
+								{
+									vars.put("flag", "1");
+									
+									vars.put("deptDirectorBefore", officeDeputyPersonLoginNameOfUser);
+									
+									staffTurnover.setStatus("1");
+								}
+								
+								if (isViceManager && isDeptDirector)
+									staffTurnover.setStatus("5");
+							}
+							
+							vars.put("deptDirector", officeDeputyPersonLoginNameOfUser);
+						}
+						else
+						{
+							vars.put("flag", "4");
+							
+							staffTurnover.setStatus("x");
+						}
+					} 
+					else if ("exam2".equals(taskDefKey)) 
+					{
+						String officePrimaryPersonLoginNameOfUser=WorkflowUtils.getOfficePrimaryPersonLoginNameOfUser();
+						
+						if (StringUtils.isBlank(officePrimaryPersonLoginNameOfUser)) 
+						{
+							try 
+							{
+								throw new Exception("<找不到您所属的部门主负责人>");
+							} 
+							catch (Exception e) 
+							{
+								e.printStackTrace();
+							}
+						}
+						
+						String deptDirectorSuggestion = staffTurnover.getDeptDirectorSuggestionBefore();
+						
+						comment = resultComment(staffTurnover,"通过", "驳回", deptDirectorSuggestion);
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("2");
+							
+							vars.put("deptManagerBefore", officePrimaryPersonLoginNameOfUser);
+						}
+						else
+						{
+							boolean isViceManager = false;
+							
+							boolean isDeptDirector = false;
+							
+							List<UserRoles> roleslist = findUserRoles(staffTurnover.getUser().getId());
+							
+							officePrimaryPersonLoginNameOfUser=WorkflowUtils
+									.getOfficePrimaryPersonLoginNameOfUser(staffTurnover.getCreateBy().getId());
+							
+							String officeDeputyPersonLoginNameOfUser=WorkflowUtils
+									.getOfficeDeputyPersonLoginNameOfUser(staffTurnover.getCreateBy().getId());
+							
+							for (UserRoles userRole : roleslist) 
+							{
+								//副总经理
+								if (VICEMANAGER_ID.equals(userRole.getRoleId()))
+								{
+									vars.put("flag", "3");
+									
+									vars.put("generalManager", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "generalManager", ""));
+									
+									isViceManager = true;
+								}
+								
+								//部门主管
+								if (DEPTDIRECTOR_ID.equals(userRole.getRoleId()))
+								{	
+									vars.put("flag", "2");
+									
+									vars.put("deptManagerBefore",officePrimaryPersonLoginNameOfUser);
+									
+									isDeptDirector = true;
+									
+								}
+							
+							}
+							
+							if (!isViceManager && !isDeptDirector)
+							{
+								vars.put("flag", "1");
+								
+								vars.put("deptDirectorBefore", officeDeputyPersonLoginNameOfUser);
+							}							
+							
+							staffTurnover.setStatus("z");
+							
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);
+						}
+					} 
+					else if ("exam3".equals(taskDefKey)) 
+					{
+						String deptManagerSuggestionBefore = staffTurnover.getDeptManagerSuggestionBefore();
+						
+						comment = resultComment(staffTurnover, "通过", "驳回", deptManagerSuggestionBefore);
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("3");
+							
+							Office office = officeService.get(staffTurnover
+									.getDeptAfter());
+							
+							vars.put("deptDirectorAfter", WorkflowUtils.getReletiveOfficeDeputyPersonLoginNameOfUser(office));
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							staffTurnover.setStatus("1");
+						}
+					} 
+					else if ("exam4".equals(taskDefKey)) 
+					{
+						String deptDirectorSuggestionAfter = staffTurnover.getDeptDirectorSuggestionAfter();
+						
+						comment = resultComment(staffTurnover, "通过", "驳回", deptDirectorSuggestionAfter);
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("4");
+							
+							Office office = officeService.get(staffTurnover
+									.getDeptAfter());
+							
+							vars.put("deptManagerAfter", WorkflowUtils.getReletiveOfficePrimaryPersonLoginNameOfUser(office));
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);					
+							
+							staffTurnover.setStatus("2");
+						}
+					} 
+					else if ("exam5".equals(taskDefKey)) 
+					{
+						String deptManagerSuggestionAfter = staffTurnover.getDeptManagerSuggestionAfter();
+						
+						comment = resultComment(staffTurnover, "通过", "驳回", deptManagerSuggestionAfter);
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("6");
+							
+							vars.put("apply", staffTurnover.getUser().getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);						
+							
+							staffTurnover.setStatus("3");
+						}
+					} 
+					else if ("exam6".equals(taskDefKey)) 
+					{
+						String generalManagerSuggestion = staffTurnover.getGeneralManagerSuggestion();
+						
+						comment = resultComment(staffTurnover, "通过", "驳回", generalManagerSuggestion);
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("5");
+							
+							vars.put("apply", staffTurnover.getUser().getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);							
+							
+							staffTurnover.setStatus("z");
+						}
+					}
+					else if ("exam7".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							//保存工作交接
+							for (Map.Entry<String, WorkTurnOver> entry : workTurnOvers.getWorkTurnOvers().entrySet())
+							{
+								WorkTurnOver workTurnOver = entry.getValue();
+								
+								workTurnOver.setStaffTurnoverId(staffTurnover.getId());
+								
+								workTurnOverService.save(workTurnOver);
+							}
+							
+							staffTurnover.setStatus("7");
+							
+							vars.put("workTurnoverReceiver", UserUtils.get(staffTurnover
+									.getWorkTurnoverReceiver().getId()).getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);					
+							
+							staffTurnover.setStatus("5");
+						}
+					}
+					else if ("exam8".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							
+							staffTurnover.setStatus("8");
+							
+							vars.put("workTakeoverAcceptor", staffTurnover.getWorkTakeoverAcceptor().getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);						
+							
+							workTurnOverService.deletes(staffTurnover.getId());
+							
+							staffTurnover.setStatus("6");
+						}
+					}
+					else if ("exam9".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							
+							staffTurnover.setStatus("9");
+							
+							vars.put("apply", staffTurnover.getUser().getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);					
+							
+							staffTurnover.setStatus("7");
+						}
+					}
+					else if ("exam10".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							//保存资产交接
+							for (Map.Entry<String, AssetsTurnOver> entry : assetsTurnOvers.getAssetsTurnOvers().entrySet())
+							{
+								AssetsTurnOver assetsTurnOver = entry.getValue();
+								
+								assetsTurnOver.setStaffTurnoverId(staffTurnover.getId());
+								
+								assetsTurnOverService.save(assetsTurnOver);
+							}
+							
+							staffTurnover.setStatus("10");
+							
+							vars.put("assetsTurnoverReceiver",UserUtils.get(staffTurnover
+									.getAssetsTurnoverReceiver().getId()).getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);					
+							
+							staffTurnover.setStatus("8");
+						}
+					}
+					else if ("exam11".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							
+							staffTurnover.setStatus("11");
+							
+							vars.put("assetsTakeoverAcceptor", staffTurnover.getAssetsTakeoverAcceptor().getLoginName());
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);							
+							
+							assetsTurnOverService.deletes(staffTurnover.getId());
+							
+							staffTurnover.setStatus("9");
+						}
+					}
+					else if ("exam12".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "通过", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							
+							staffTurnover.setStatus("12");
+							
+							vars.put("financialStaff", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "financialStaff", ""));
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);						
+							
+							staffTurnover.setStatus("10");
+						}
+					}
+					else if ("exam13".equals(taskDefKey)) 
+					{
+						comment = resultComment(staffTurnover, "结案", "驳回", "");
+						
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							staffTurnover.setStatus("y");
+							
+							if (!StringUtils.isBlank(WorkflowUtils.getRoleId()))
+							{
+								String content = "@@proNotify@@/oa/a/oa/staffturnover/staffTurnover/form?id="
+										+ staffTurnover.getId();
+								
+								String notifyTitle = "人员异动流程" + "【" + DateUtils.getDate() + "】" + "已办结";
+								
+								sendOaNotify(notifyTitle,content,WorkflowUtils.getRoleId());
+							}
+							
+						}
+						else
+						{
+							title = retreatHandle(staffTurnover, WORKFLOW_NAME, WORKFLOW_URL);
+							
+							staffTurnover.setStatus("11");
+						}
+					}
+					staffTurnover.preUpdate();
+					
+					dao.update(staffTurnover);
+					
+					actTaskService.complete(taskId, procInsId, comment, title, vars);
+					
+					if ("exam1".equals(taskDefKey)) 
+					{
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")
+								|| StringUtils.equals(staffTurnover.getAct().getFlag(), "false")) 
+						{
+							return "【人员异动申请】【重新申请】操作已完成";
+						}
+						else
+						{
+							return "【人员异动申请】【销毁申请】操作已完成";
+						}
+					}
+					else
+					{
+						if (StringUtils.equals(staffTurnover.getAct().getFlag(), "true")) 
+						{
+							return "【人员异动申请】【通过申请】操作已完成";
+						}
+						else
+						{
+							return "【人员异动申请】【驳回申请】操作已完成";
+						}
+					}
+				}
+			}
+		}
+		return "default message";
+	}
+
+	/**
+	 * 通知人事部
+	 * @param content
+	 */
+	public void sendOaNotify(String title, String content, String ids)
+	{
+		//通知公告
+		OaNotify oanotify=new OaNotify();
+		
+		oanotify.setTitle(title);// 标题
+		
+		oanotify.setType("4");// 设置成流程通告
+		
+		oanotify.setStatus("1");
+		
+		oanotify.setOaNotifyRecordIds(ids);// 通知人员
+		
+		oanotify.setContent(content);
+		
+		oanotifyservice.save(oanotify);
+	}
+
+	/**
+	 * 查询用户角色id
+	 * @param userId
+	 * @return
+	 */
+	public List<UserRoles> findUserRoles(String userId)
+	{
+		return dao.findUserRoles(userId);
+	}
+	
+	public StaffTurnover getByProcInsId(String procInsId)
+	{
+		StaffTurnover staffTurnover = dao.getByProcInsId(procInsId);
+		
+		WorkTurnOver workTurnOver = new WorkTurnOver();
+		
+		workTurnOver.setStaffTurnoverId(staffTurnover.getId());
+		
+		List<WorkTurnOver> workList = workTurnOverService.findList(workTurnOver);
+		
+		staffTurnover.setWorkList(workList);
+		
+		AssetsTurnOver assetsTurnOver = new AssetsTurnOver();
+		
+		assetsTurnOver.setStaffTurnoverId(staffTurnover.getId());
+		
+		List<AssetsTurnOver> assetsList = assetsTurnOverService.findList(assetsTurnOver);
+		
+		staffTurnover.setAssetsList(assetsList);
+		
+		return staffTurnover;
+	}
+}

@@ -1,0 +1,296 @@
+/*鏃ュ織*/
+
+.log-title>div>span {
+	text-align: center;
+	font-size: 16px;
+}
+
+* {
+	margin: 0;
+	padding: 0;
+}
+
+.log-title {
+	width: 100%;
+	height: 52px;
+	background: #F6F6F6;
+	position: fixed;
+	top: 0;
+	left: 0;
+}
+
+.log-title div {
+	float: left;
+	height: 48px;
+	width: 25%;
+	margin: 0px;
+	padding: 0px;
+	/*鏂囧瓧瑁呴グ  涓嬪垝绾�*/
+	text-decoration: none;
+}
+
+#serach {
+	font-size: 9pt;
+	background: url(../images/sousuo.png) no-repeat;
+	background-size: 24px;
+	border-style: none;
+	background-position: 14px;
+	vertical-align: middle;
+	cursor: hand;
+	color: #000000;
+	text-align: center;
+	width: 100%;
+	height: 52px;
+}
+
+#add {
+	font-size: 9pt;
+	background: url(../images/tianjia.png) no-repeat;
+	background-size: 24px;
+	border-style: none;
+	background-position-x: right;
+	background-position-y: center;
+	cursor: hand;
+	color: #333;
+	text-align: center;
+	width: 100%;
+	height: 52px;
+} 
+
+#leftspan span {
+	line-height: 48px;
+	color: #57B2E9;
+}
+
+#rightspan span {
+	line-height: 48px;
+	color: #858585;
+}
+
+ul {
+	list-style: none;
+	overflow: hidden;
+}
+
+.oa-loglist li {
+	display: list-item;
+	float: left;
+	width: 100%;
+	border-bottom: 1px solid #F6F6F6;
+}
+
+.log-item {
+	width: 100%;
+	margin: 0 auto;
+	min-width: 320px;
+	max-width: 640px;
+	overflow: hidden;
+}
+
+.log-item> .log-date>.date-span {
+	display: inline-block;
+	padding-left: 10px;
+	padding-top: 10px;
+	line-height: 20px;
+	font-size: 14px;
+	color: #666;
+}
+
+.div_datas{
+	margin-top: 10px;
+	width: 100%;
+	
+}
+
+.div_datas_bumen,.div_datas_fenbu,.div_datas_xiaozu{
+	width: 50%;
+	height: 30px;
+}
+
+.div_datas span{
+	width: 30%;
+	font-size: 1.4rem;
+	color: #666;
+	line-height: 30px;
+}
+.div_datas select{
+	margin-left: 7px;
+	padding-left: 5px;
+	width: 70%;
+	font-size: 1.2rem;
+	color: #666;
+	height: 24px;
+	line-height: 30px;
+	text-align: center;
+}
+.main {
+	float: left;
+	display: inline-block;
+	width: 100%;
+	height: 48px;
+}
+
+.divtime {
+	position: absolute;
+	margin-left: 10px;
+	width: 30%;
+	height: 48px;
+	font-size: 14px;
+	color: #858585;
+}
+
+   
+.divtime input{	
+	margin-bottom: 0px;
+    padding: 0px 0px;
+}
+
+.divcon {
+	margin-left: 30%;
+	padding-left: 10px;
+	padding-right: 10px;
+	height: 48px;
+	height: 48px;
+	font-size: 14px;
+	color: #858585;
+}
+
+
+/*鏃ュ織璇︽儏*/
+
+.divtable {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	overflow: hidden;
+}
+
+.divtable>table {
+	border: solid #DDDDDD;
+	border-width: 1px 0px 0px 1px;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	/* Firefox */
+	-webkit-box-sizing: border-box;
+	/* Safari */
+	width: 100%;
+}
+
+.logDeTable {
+	margin-top: 10px;
+}
+
+.header {
+	background: #F6F6F6;
+	width: 25%;
+}
+
+#spanDate {
+	color: #31a6e6;
+}
+
+.header>span {
+	font-size: 14px;
+	color: #666;
+	margin-left: 10px;
+	line-height: 26px;
+	display: block;
+}
+
+.contentlog {
+	font-size: 14px;
+	color: #666;
+	margin-left: 10px;
+	margin-right: 10px;
+	line-height: 26px;
+	display: block;
+}
+
+td {
+	border: solid #ddd;
+	border-width: 0px 1px 1px 0px;
+}
+
+
+/*鏃ュ織鏌ヨ*/
+
+.divTime {
+	width: 100%;
+	box-sizing: border-box;
+	padding: 10px;
+	overflow: hidden;
+}
+
+.divlable {
+	width: 100%;
+	box-sizing: border-box;
+	overflow: hidden;
+}
+
+.divTime div {
+	float: left;
+}
+
+label {
+	font-size: 14px;
+	color: #666;
+}
+
+#spanlable {
+	font-size: 14px;
+	color: #666;
+	margin-left: 10px;
+}
+
+#lable2 {
+	margin: 0 10px 0 10px;
+}
+
+#div2 {
+	margin-top: 20px;
+	margin-bottom: 10px;
+	width: 100%;
+}
+
+.btn-login {
+	outline: none;
+	width: 100%;
+	font-size: 14px;
+	color: #fff;
+	background: #0367FF;
+	padding: 10px;
+	border: 1px solid #0367FF;
+	border-top-left-radius: 6px;
+	border-top-right-radius: 6px;
+	border-bottom-right-radius: 6px;
+	border-bottom-left-radius: 6px;
+}
+
+#li1 {
+	border: solid #ddd;
+	border-width: 1px 0px 1px 0px;
+	background: #F6F6F6;
+	padding: 10px;
+}
+
+#lispanl {
+	font-size: 14px;
+	color: #666;
+}
+
+.state {
+	font-size: 14px;
+	float: right;
+	padding-right: 15px;
+	padding-top: 10px;
+	line-height: 20px;		
+}
+.state-draft {
+	color: #12b7f5 !important;
+}
+.state-auditing {
+	color: #ff9f00 !important;
+}
+.state-done {
+	color: #1ab394 !important;
+}

@@ -1,0 +1,227 @@
+/**
+ * Copyright &copy; 2012-2025 <a href="https://www.chuyutech.com">JeeCY</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.mobile.modules.oa.web.mail;
+
+import java.util.Date;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.mail.OaMail;
+import com.thinkgem.jeesite.modules.oa.entity.mail.OaMailRecord;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.mail.OaMailRecordService;
+import com.thinkgem.jeesite.modules.oa.service.mail.OaMailService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 站内邮件（主表）Controller___Mobile
+ * 
+ * @author liuxin
+ * @version 2017-04-27
+ */
+@Controller
+@RequestMapping(value = "${adminPath}${mobilePath}/oa/mail/oaMail")
+public class OaMailControllerMobile extends BaseController {
+
+	/**
+	 * 获取站内邮件对象
+	 */
+	@ModelAttribute
+	public OaMail get(@RequestParam(required = false) String id) {
+		OaMail entity = null;
+		if (StringUtils.isNotBlank(id)) {
+			entity = oaMailService.get(id);
+		}
+		if (entity == null) {
+			entity = new OaMail();
+		}
+		return entity;
+	}
+
+	/**
+	 * 站内邮件列表页面
+	 */
+	@RequiresPermissions("oa:mail:oaMail:view")
+	@RequestMapping(value = { "list", "" })
+	public String list(OaMail oaMail, HttpServletRequest request, HttpServletResponse response, Model model) {
+		oaMail.setCreateBy(UserUtils.getUser());
+		Page<OaMail> page = oaMailService.findPage(new Page<OaMail>(request, response), oaMail);
+		model.addAttribute("page", page);
+		return "mobile/modules/oa/mail/oaMailList";
+	}
+
+	/**
+	 * 增加，编辑站内邮件表单页面
+	 */
+	@RequiresPermissions("oa:mail:oaMail:view")
+	@RequestMapping(value = "form")
+	public String form(OaMail oaMail, Model model) {
+		model.addAttribute("oaMail", oaMail);
+		return "mobile/modules/oa/mail/oaMailForm";
+	}
+
+	/**
+	 * 查看,查看审批 站内邮件表单页面
+	 */
+	@RequiresPermissions("oa:mail:oaMail:view")
+	@RequestMapping(value = "view")
+	public String view(OaMail oaMail, Model model, OaMailRecord oaMailRecord, String noback) {
+		model.addAttribute("oaMail", oaMail);
+		oaMailRecord.setMailId(oaMail.getId());
+		model.addAttribute("list", oaMailRecordService.findList(oaMailRecord));
+		model.addAttribute("isdeal", false);
+		model.addAttribute("back", noback);
+		return "mobile/modules/oa/mail/oaMailView";
+	}
+
+	/**
+	 * 站内邮件表单页面
+	 */
+
+	@RequiresPermissions("oa:mail:oaMail:view")
+
+	@RequestMapping(value = "exam")
+	public String exam(OaMail oaMail, Model model, OaMailRecord oaMailRecord) {
+		model.addAttribute("oaMail", oaMail);
+		oaMailRecord.setMailId(oaMail.getId());
+		model.addAttribute("list", oaMailRecordService.findList(oaMailRecord));
+		// 主送人员中包含当前用户，并且意见为空
+		// oaMail.getMainId().contains(UserUtils.getUser().getId())(zs废话)
+		if (oaMailService.isdeal(UserUtils.getUser().getId(), oaMail.getId()) == 0) {
+			model.addAttribute("isdeal", true);
+		} else {
+			model.addAttribute("isdeal", false);
+		}
+		return "mobile/modules/oa/mail/oaMailView";
+	}
+
+	/**
+	 * 提交审批 站内邮件表单页面
+	 */
+	@RequiresPermissions("oa:mail:oaMail:edit")
+	@RequestMapping(value = "dealExam")
+	public String dealExam(OaMailRecord oaMailRecord, Model model, OaMail oaMail,
+			RedirectAttributes redirectAttributes) {
+		oaMailRecordService.save(oaMailRecord);
+		oaMail = oaMailService.get(oaMailRecord.getMailId());
+		// System.out.println((oaMailService.isdeal(null, oaMail.getId())
+		// +"_________"+ (oaMail.getMainId().split(",").length)));
+		if (((int) (oaMailService.isdeal(null, oaMail.getId())) >= ((int) (oaMail.getMainId().split(",").length)))) {
+			oaMail.setIsdraft("3");
+			oaMailService.save(oaMail);
+		}
+		addMessage(redirectAttributes, "保存成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/oaNotify/self?repage";
+	}
+
+	/**
+	 * 保存站内邮件
+	 */
+	@RequiresPermissions("oa:mail:oaMail:edit")
+	@RequestMapping(value = "save")
+	public String save(OaMail oaMail, Model model, RedirectAttributes redirectAttributes) throws Exception {
+		if (!beanValidator(model, oaMail)) {
+			return form(oaMail, model);
+		}
+		if ("1".equals(oaMail.getIsdraft())) {
+			if (StringUtils.isBlank(oaMail.getId())) {
+				oaMailService.save(oaMail);// 保存
+			}
+			sendMain(oaMail);
+			sendOther(oaMail);
+			oaMail.setIsdraft("2");
+		}
+		oaMailService.save(oaMail);// 保存
+		if ("2".equals(oaMail.getIsdraft())) {
+			addMessage(redirectAttributes, "发送成功");
+		} else {
+			addMessage(redirectAttributes, "保存成功");
+		}
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/mail/oaMail/?repage";
+	}
+
+	/**
+	 * 删除站内邮件
+	 */
+	@RequiresPermissions("oa:mail:oaMail:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaMail oaMail, RedirectAttributes redirectAttributes) {
+		oaMailService.delete(oaMail);
+		addMessage(redirectAttributes, "删除站内邮件成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/mail/oaMail/?repage";
+	}
+
+	/**
+	 * 批量删除站内邮件
+	 */
+	@RequiresPermissions("oa:mail:oaMail:edit")
+	@RequestMapping(value = "deleteAll")
+	public String deleteAll(String ids, RedirectAttributes redirectAttributes) {
+		String idArray[] = ids.split(",");
+		for (String id : idArray) {
+			oaMailService.delete(oaMailService.get(id));
+		}
+		addMessage(redirectAttributes, "删除站内邮件成功");
+		return "redirect:" + Global.getAdminPath() + Global.getMobilePath() + "/oa/mail/oaMail/?repage";
+	}
+
+	/**
+	 * 发送主送消息
+	 * 
+	 * 
+	 * sendMsg("@@proNotify@@/oa/a/oa/oaOvertime/form?flag=view&id=" +
+	 * oaOvertime.getId(), "您提交的加班申请流程【" +
+	 * DateUtils.formatDate(oaOvertime.getCreateDate()) + "】已被【" +
+	 * UserUtils.getUser().getName() + "】办结", oaOvertime.getCreateBy().getId());
+	 */
+	public void sendMain(OaMail oaMail) {
+		OaNotify oaNotify = new OaNotify();
+		oaNotify.setContent("@@proNotify@@/oa/a/oa/mail/oaMail/exam?id=" + oaMail.getId());// 注入@@proNotify@@作为超链接的注解，前台判断
+		oaNotify.setType("4");// 流程通知配置为4
+		oaNotify.setStatus("1");// 貌似是已发
+		oaNotify.setTitle("【站内邮件-主送】【" + oaMail.getTitle() + "】【" + DateUtils.formatDate(new Date()) + " "
+				+ UserUtils.getUser().getName() + "】");
+		oaNotify.setOaNotifyRecordIds(oaMail.getMainId());
+		oaNotifyService.save(oaNotify);
+	}
+
+	/** 发送抄送消息 */
+	public void sendOther(OaMail oaMail) {
+		OaNotify oaNotify = new OaNotify();
+		oaNotify.setContent("@@proNotify@@/oa/a/oa/mail/oaMail/view?id=" + oaMail.getId());// 注入@@proNotify@@作为超链接的注解，前台判断
+		oaNotify.setType("4");// 流程通知配置为4
+		oaNotify.setStatus("1");// 貌似是已发
+		oaNotify.setTitle("【站内邮件-抄送】【" + oaMail.getTitle() + "】【" + DateUtils.formatDate(new Date()) + " "
+				+ UserUtils.getUser().getName() + "】");
+		oaNotify.setOaNotifyRecordIds(oaMail.getOtherId());
+		oaNotifyService.save(oaNotify);
+	}
+
+	/*-------------------------------------参数--------------------------------------------*/
+
+	/** OaMail业务层 */
+	@Autowired
+	private OaMailService oaMailService;
+	@Autowired
+	private OaNotifyService oaNotifyService;// 发送通知service
+	@Autowired
+	private OaMailRecordService oaMailRecordService;// 站内邮件意见从表service
+
+}

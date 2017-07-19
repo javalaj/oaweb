@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.coding.OaCodingDao">
+    
+	<sql id="oaCodingColumns">
+		a.id AS "id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.dept_name AS "deptName",
+		a.user_name AS "userName",
+		a.user_no AS "userNo",
+		a.coding_time AS "codingTime",
+		a.equip_no AS "equipNo"
+	</sql>
+	
+	<sql id="oaCodingJoins">
+	</sql>
+    
+	<select id="get" resultType="OaCoding">
+		SELECT 
+			<include refid="oaCodingColumns"/>
+		FROM oa_coding a
+		<include refid="oaCodingJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaCoding">
+		SELECT 
+			<include refid="oaCodingColumns"/>
+		FROM oa_coding a
+		<include refid="oaCodingJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.user_no,a.coding_time ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaCoding">
+		SELECT 
+			<include refid="oaCodingColumns"/>
+		FROM oa_coding a
+		<include refid="oaCodingJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.user_no,a.coding_time ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_coding(
+			id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			dept_name,
+			user_name,
+			user_no,
+			coding_time,
+			equip_no
+		) VALUES (
+			#{id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{deptName},
+			#{userName},
+			#{userNo},
+			#{codingTime},
+			#{equipNo}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_coding SET 	
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			dept_name = #{deptName},
+			user_name = #{userName},
+			user_no = #{userNo},
+			coding_time = #{codingTime},
+			equip_no = #{equipNo}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_coding SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<select id="findMaxAndMinListBySearchDate" resultType="OaCoding">
+		SELECT 
+		    a.user_no AS "userNo", 
+		    v1.max_coding_time AS "maxCodingTime", 
+		    v2.min_coding_time AS "minCodingTime"
+		FROM
+		    (SELECT 
+		        user_no
+		    FROM
+		        oa_coding
+		    WHERE
+		        DATE_FORMAT(coding_time, '%Y-%m-%d') = #{searchDate}    
+		    GROUP BY user_no) a
+		        LEFT JOIN
+		    (SELECT 
+		        user_no, MAX(coding_time) AS max_coding_time
+		    FROM
+		        oa_coding
+		    WHERE
+		        DATE_FORMAT(coding_time, '%Y-%m-%d') = #{searchDate}
+		    GROUP BY user_no) v1 ON v1.user_no = a.user_no
+		        LEFT JOIN
+		    (SELECT 
+		        user_no, MIN(coding_time) AS min_coding_time
+		    FROM
+		        oa_coding
+		    WHERE
+		        DATE_FORMAT(coding_time, '%Y-%m-%d') = #{searchDate}
+		    GROUP BY user_no) v2 ON v2.user_no = a.user_no;
+	</select>
+	
+</mapper>

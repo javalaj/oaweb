@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaTaskRecordDao">
+ 
+	<sql id="oaTaskRecordColumns">
+		a.ID AS "id",
+		a.OA_Task_ID AS "oaTaskId",
+		a.USER_ID AS "userId",
+		a.TASK_FLAG AS "taskFlag",
+		a.TASK_DATE AS "taskDate"
+	</sql>
+	<!-- 链接查询语句 -->
+	<sql id="oaTaskRecordJoins">
+		JOIN sys_user u ON u.id = a.user_id
+		JOIN sys_office o ON o.id = u.office_id
+	</sql>
+    <!-- 通过id获取任务记录对象 -->
+	<select id="get" resultType="OaTaskRecord">
+		SELECT 
+			<include refid="oaTaskRecordColumns"/>
+		FROM oa_Task_record a
+		<include refid="oaTaskRecordJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	<!-- 通过任务id查找记录列表 -->
+	<select id="findList" resultType="OaTaskRecord">
+		SELECT 
+			<include refid="oaTaskRecordColumns"/>
+		FROM oa_Task_record a
+		<include refid="oaTaskRecordJoins"/>
+		WHERE 1=1
+		<if test="oaTask != null and oaTask.id != null and oaTask.id != ''">
+			AND oa_Task_id = #{oaPlan.id}
+		</if>
+		ORDER BY a.TASK_flag ASC
+	</select>
+	
+	<select id="findAllList" resultType="OaTaskRecord">
+		SELECT 
+			<include refid="oaTaskRecordColumns"/>
+		FROM oa_Task_record a
+		<include refid="oaTaskRecordJoins"/>
+		WHERE 1=1
+		ORDER BY a.TASK_flag ASC
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_Task_record(
+			ID,
+			OA_Task_ID,
+			USER_ID,
+			TASK_FLAG,
+			TASK_DATE
+		) VALUES (
+			#{id},
+			#{oaTaskId},
+			#{userId},
+			#{taskFlag},
+			#{taskDate}
+		)
+	</insert>
+	<!-- 插入任务发送记录 -->
+	<insert id="insertAll" >
+		INSERT INTO oa_Task_record(
+			ID,
+			OA_Task_ID,
+			USER_ID,
+			TASK_FLAG,
+			TASK_DATE
+		)VALUES
+				(#{id},
+				#{oaTaskId},
+				#{userId},
+				#{taskFlag},
+				#{taskDate})
+	</insert>
+	<!-- 更改任务状态 -->
+	<update id="update">
+		UPDATE oa_Task_record SET 	
+			TASK_FLAG = #{TASKFlag},
+			TASK_DATE = #{TASKDate}
+		WHERE OA_Task_ID = #{oaTask.id}
+			AND USER_ID = #{user.id}
+			AND TASK_FLAG != '3'
+	</update>
+	<!-- 物理删除 -->
+	<delete id="delete">
+		DELETE FROM oa_Task_record 
+		WHERE id = #{id}
+	</delete>
+	<!--通过任务id删除数据  -->
+	<delete id="deleteByOaTaskId">
+		DELETE FROM oa_Task_record 
+		WHERE oa_Task_id = #{oaTaskId}
+	</delete>
+	
+	
+		<sql id="oaPlanJoinss">
+		LEFT JOIN oa_plan u10 ON u10.id = a.OA_Task_ID
+	</sql>
+	<!-- 统计我收到的任务 -->
+	
+	<select id="recnmylist" resultMap="stoMap">
+	
+	 SELECT count(*) as sum  from oa_task_record WHERE user_id= #{userid }
+	</select>
+	<resultMap type="Map" id="stoMap">
+		<result property="sum" column="sum" ></result>
+	</resultMap>
+  <!-- 统计我的收到的任务未完成的 -->
+		<select id="unfinishedCount" resultMap="unfinishedstoMap">
+	 SELECT count(*) as sum  from oa_task_record   a
+	 <include refid="oaPlanJoinss" /> 
+	 WHERE user_id= #{userid } AND u10.state!=2	</select>
+	<resultMap type="Map" id="unfinishedstoMap">
+		<result property="sum" column="sum" ></result>
+	</resultMap>
+	
+	
+		<select id="geti" resultType="OaTaskRecord">
+		SELECT 
+			<include refid="oaTaskRecordColumns"/>
+		FROM oa_Task_record a
+		WHERE a.OA_Task_ID = #{oaTaskId}
+	</select>
+	<update id="updateuser">
+		UPDATE oa_Task_record SET 
+			USER_ID =#{userId}
+		WHERE OA_Task_ID = #{oaTaskId}
+	</update>
+	
+	
+	
+</mapper>

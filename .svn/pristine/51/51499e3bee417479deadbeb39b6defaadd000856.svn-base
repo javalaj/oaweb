@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.thinkgem.jeesite.mobile.modules.oa.dao.leaveMore.LeaveMoreDao">
+
+
+	<select id="getMoreByType" resultType="LeaveMore">
+		<choose>
+			<when test="type=='oa_pro_vacate2'">
+				SELECT
+				b.`name` AS 'name',
+				a.`begin_date` AS
+				'starttime',
+				a.`end_date`
+				AS 'endtime',
+				a.`apply_type_lit` AS 'type'
+				,b.`office_id`
+				FROM
+				oa_filling a
+				LEFT JOIN sys_user b
+				ON a.`apply_user`
+				= b.`id`LEFT JOIN
+				sys_office c
+				ON c.`id` = b.`office_id`
+				WHERE
+				(c.`parent_ids` LIKE
+				concat('%',#{officeid},'%') OR c.id = #{officeid})
+				AND
+				a.`apply_type_lit`='调休' AND
+				NOT(#{querydate}
+				>a.`end_date` OR
+				#{querydate2} <![CDATA[<]]>
+				a.`begin_date`)
+			</when>
+			<when test="type=='oa_pro_vacate'">
+				SELECT
+				b.`name` AS 'name',
+				a.`begin_date` AS
+				'starttime',
+				a.`end_date`
+				AS 'endtime',
+				a.`apply_type_lit` AS 'type'
+				,b.`office_id`
+				FROM
+				oa_filling a
+				LEFT JOIN sys_user b
+				ON a.`apply_user`
+				= b.`id`LEFT JOIN
+				sys_office c
+				ON c.`id` = b.`office_id`
+				WHERE
+				(c.`parent_ids` LIKE
+				concat('%',#{officeid},'%') OR c.id = #{officeid})
+				AND
+				a.`apply_type`='请假' AND
+				a.`apply_type_lit`!='调休' AND
+				NOT(#{querydate}
+				>a.`end_date` OR
+				#{querydate2} <![CDATA[<]]>
+				a.`begin_date`)
+			</when>
+			<when test="type=='oa_goout'">
+				SELECT
+				b.`name` AS 'name',
+				a.`begin_date` AS
+				'starttime',
+				a.`end_date`
+				AS 'endtime',
+				a.`apply_type_lit` AS 'type'
+				,b.`office_id`
+				FROM
+				oa_filling a
+				LEFT JOIN sys_user b
+				ON a.`apply_user`
+				= b.`id`LEFT JOIN
+				sys_office c
+				ON c.`id` = b.`office_id`
+				WHERE
+				(c.`parent_ids` LIKE
+				concat('%',#{officeid},'%') OR c.id = #{officeid})
+				AND
+				a.`apply_type`='外出' AND
+				NOT(#{querydate} >a.`end_date`
+				OR
+				#{querydate2} <![CDATA[<]]>
+				a.`begin_date`)
+			</when>
+			<when test="type=='oa_outwork'">
+				SELECT
+				b.`name` AS 'name',
+				a.`begin_date` AS
+				'starttime',
+				a.`end_date`
+				AS
+				'endtime',
+				a.`apply_type_lit` AS 'type'
+				,b.`office_id`
+				FROM
+				oa_filling a
+				LEFT JOIN sys_user b
+				ON a.`apply_user`
+				= b.`id`LEFT JOIN
+				sys_office c
+				ON c.`id` = b.`office_id`
+				WHERE (c.`parent_ids` LIKE
+				concat('%',#{officeid},'%') OR c.id = #{officeid})
+				AND
+				a.`apply_type`='出差' AND
+				NOT(#{querydate}
+				>a.`end_date` OR
+				#{querydate2} <![CDATA[<]]>
+				a.`begin_date`)
+			</when>
+		</choose>
+	</select>
+</mapper>

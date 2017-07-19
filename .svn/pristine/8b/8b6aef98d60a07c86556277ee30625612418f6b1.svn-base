@@ -1,0 +1,335 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="UTF-8">
+<meta name="" content="no-cache" http-equiv="Pragma" />
+<meta name="" content="no-cache" http-equiv="Cache-Control" />
+<meta name="" content="0" http-equiv="expires" />
+<meta name="viewport"
+	content="width=device-width,initial-scale=1,user-scalable=no" />
+<title>我的周计划</title>
+<!-- css-->
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/mobile/css/mui.min.css">
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/mobile/css/oabase.css" />
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/mobile/css/oa.css" />
+<!-- java-script -->
+
+<script type="text/javascript"
+	src="${ctxStatic}/jquery/jquery-1.9.1.min.js"></script>
+<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+<style type="text/css">
+ul {
+	/*页面日期输入框，显示异常改正代码*/
+	overflow: visible;
+}
+
+a {
+	color: #12b7f5;
+}
+
+input[name='begindate'], input[name='enddate'] {
+	height: 32px;
+}
+
+.mui-btn {
+	height: 32px;
+	line-height: .8;
+}
+
+button[id='btn-clear'] {
+	margin: 5px 0;
+	border-radius: 6px;
+}
+
+#serach, #add {
+	background-image: none !important;
+}
+
+#serach span {
+	float: left;
+}
+
+#add span {
+	float: right;
+}
+.mui-scroll-wrapper{
+overflow: initial;
+    position: inherit;
+}
+    
+.mui-scroll-wrapper ul {
+	list-style: none;
+	overflow: hidden;
+	display: inline-block;
+}
+
+.mui-scroll-wrapper li {
+	display: inline-block;
+	float: left;
+	width: 100%;
+}
+.mui-scroll-wrapper li:after {
+	position: absolute;
+	right: 0;
+	left: 15px;
+	bottom: 0;
+	height: 1px;
+	content: "";
+	transform: scaleY(.5);
+    background-color: #c8c7cc;
+}
+.mui-scroll-wrapper li:last-child {
+	border-bottom: none;
+}
+#scroll1 {
+	margin-top: 56px;
+}
+
+#scroll2 {
+	background: white;
+	top: 72px;
+	bottom: 50px;
+}
+
+.log-footer {
+	width: 100%;
+	height: 52px;
+	background: #F6F6F6;
+	text-align: center;
+	padding-top: 10px;
+}
+
+.query-form {
+	position: fixed;
+	top: 44px;
+	z-index: 99;
+	width: 100%;
+	height: 56px;
+	padding: 10px 15px;
+	background-color: #fff;
+	text-align: center;
+}
+
+.query-form .begindate {
+	text-align: center;
+	margin: 7px 1%;
+	padding: 3px;
+	width: 46%;
+}
+
+.query-form .enddate {
+	text-align: center;
+	width: 46%;
+	height: 36px;
+}
+
+/* .query-form button {
+	width: 34%;
+	margin: 1%;
+	padding: 1%;
+}
+ */
+.xin-left, .xin-right {
+	height: 40px;
+	padding-top: 8px;
+}
+
+.team-header {
+	padding: 0;
+}
+
+.log-item>.log-date>.date-span, .state {
+	padding-bottom: 8px;
+	font-size: 14px;
+}
+
+.mui-segmented-control {
+	border-color: #12b7f5;
+	border-left: 1px solid #8bcdf0;
+}
+
+.mui-segmented-control .mui-control-item.mui-active {
+	color: #666;
+	background: none;
+	border: none;
+}
+
+.mui-segmented-control .mui-control-item {
+	border-left: 1px solid #12b7f5;
+	color: #12b7f5;
+}
+
+.mui-control-item {
+	border-left: 1px solid #12b7f5;
+}
+
+.btn-submit {
+	background: #12b7f5;
+	border: 1px solid #12b7f5;
+}
+
+.btn-clear {
+	border-color: #12b7f5;
+	color: #12b7f5;
+}
+
+.divtime {
+	position: relative;
+}
+.divtime, .divcon {
+	height: initial;
+	width: 100%;
+	line-height: 20px;	
+    box-sizing: border-box;
+    padding: 0 15px 10px 15px;
+	margin: 0;
+}
+.divtime>span, .divcon>span {
+	vertical-align: top;
+	word-break: keep-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#dataTable{
+	/* padding:10px 0; */
+	float: left;
+    margin-top: 3px;
+}
+#dataTable input{
+	height:32px;
+	margin-bottom:0;
+}
+</style>
+</head>
+<body>
+
+<header class="mui-bar mui-bar-nav">
+
+	<div class="team-header journal-header">
+
+	<c:if test="${canInsert || (list1[0].isdraft == '0' && list1[0].firstdate.time == canUpdateStr)}">
+		<a class="mui-pull-right" href="${mctx}/user/userWeekplan/newform"><span class="mui-icon mui-icon-plus xin-right"></span></a>
+	</c:if>
+		<a  href="${mctx }/mobile/sys/index/index"><span class="mui-icon mui-icon-left-nav mui-pull-left xin-left"></span></a>
+	</div>
+	<div id="journal-tab" class="mui-segmented-control mui-segmented-control-primary"
+			style="width: 80%; margin: 8px auto;border: none;">
+		<a class="mui-control-item" id="me-div" style="color: #666;">
+		<c:choose>
+			<c:when test="${canInsert }">
+				<h3 style="text-align: center;font-size: 17px;font-weight: 400;">
+					<font>(<fmt:formatDate value="${newUserWeekplan.firstdate}"
+						pattern="yyyy-MM" />月
+					)&emsp;(第${newUserWeekplan.weeksign }周)</font>							
+				</h3>
+				<input type="hidden" value="" name="id" />
+				<input type="hidden"
+					value="<fmt:formatDate value="${newUserWeekplan.firstdate}" pattern="yyyy-MM-dd"/>"
+					name="firstdate" />
+				<input type="hidden" name="plandate"
+					value='<fmt:formatDate value="${newUserWeekplan.plandate}" pattern="yyyy-MM-dd"/>' />
+				<input type="hidden" name="weeksign"
+					value="${newUserWeekplan.weeksign  }" />
+			</c:when>
+			<c:otherwise>
+				<h3 style="text-align: center;font-size: 17px;font-weight: 400;">
+					<font ><fmt:formatDate value="${list1[0].firstdate}"
+						pattern="yyyy-MM" />月 (第${list1[0].weeksign }周)</font>
+				</h3>
+				<input type="hidden" value="${list1[0].id }" name="id" />
+				<input type="hidden"
+					value="<fmt:formatDate value="${list1[0].firstdate}"
+						pattern="yyyy-MM-dd" />"
+					name="firstdate" />
+				<input type="hidden" name="plandate"
+					value='<fmt:formatDate value="${list1[0].plandate}" pattern="yyyy-MM-dd"/>' />
+				<input type="hidden" name="weeksign" value="${list1[0].weeksign }" />
+			</c:otherwise>
+		</c:choose>
+		</a>
+	</div>
+</header>	
+<div class="mui-content">		
+	<div class="query-form">
+		<form:form action="${mctx}/user/userWeekplan/form" method="post" id="searchForm">
+			<oam:listView id="dataTable">						
+				<oam:datePicker options='{"type":"month"}' id="plandate" name="plandate" value="${fns:formatDate(plandate,'yyyy-MM')}"/>
+					<%-- <input name="plandate" id="date1" type="text" readonly="readonly"
+				maxlength="20" class="enddate mui-date"
+						readonly="readonly"
+				value="<fmt:formatDate value="${plandate}" pattern="yyyy-MM-dd"/>"/> --%>
+			</oam:listView>
+			<button type="submit" class="btnapp btn-submit" id="btn-submit">查询</button>
+		</form:form>
+	</div>
+	<div id="scroll1">
+		<div class="mui-scroll-wrapper">
+			<div class="mui-scroll">
+				<div style="min-width: 320px;">
+					<ul>
+						<c:forEach items="${list1}" var="now1" varStatus="i">
+							<c:forEach items="${list2[i.index] }" var="now2" varStatus="ii">
+							<a href="${mctx}/user/userWeekplan/editor?id=${now2.id}">
+								<li>
+									<input type="hidden" name="id" value="${now2.id}">
+									<div class="log-item">
+											<div class="log-date">
+												<span id="" class="date-span"><fmt:formatDate value="${now1.updateDate}" pattern="yyyy-MM-dd" /> &nbsp;&nbsp; 
+										<c:choose>
+										<c:when test="${now2.beginday=='1' }">周一</c:when>
+										<c:when test="${now2.beginday=='2' }">周二</c:when>
+										<c:when test="${now2.beginday=='3' }">周三</c:when>
+										<c:when test="${now2.beginday=='4' }">周四</c:when>
+										<c:when test="${now2.beginday=='5' }">周五</c:when>
+										<c:when test="${now2.beginday=='6' }">周六</c:when>
+										<c:otherwise>周日</c:otherwise>
+										</c:choose>~<c:choose>
+										<c:when test="${now2.endday=='1' }">周一</c:when>
+										<c:when test="${now2.endday=='2' }">周二</c:when>
+										<c:when test="${now2.endday=='3' }">周三</c:when>
+										<c:when test="${now2.endday=='4' }">周四</c:when>
+										<c:when test="${now2.endday=='5' }">周五</c:when>
+										<c:when test="${now2.endday=='6' }">周六</c:when>
+										<c:otherwise>周日</c:otherwise>
+										</c:choose>
+									</span><span class="state">	
+									<%-- 第${now1.weeksign }周 --%>
+										<c:choose>
+										<c:when test="${now1.isdraft==0}">
+										<font color="blue">草稿</font>
+										</c:when>
+										<c:otherwise>
+										<font color="red">已提交</font>
+										</c:otherwise>
+									</c:choose></span>
+										</div>
+											<div class="main" style="height: 100%;">
+												<div class="divtime">
+													<span id="time" style="display: inline-block;width: 25%;">工作内容:</span>
+													<span style="display: inline-block;width: 200px;">${now2.content }</span>
+												</div>
+												<div class="divcon">
+													<span class="content" style="display: inline-block;width: 25%;">交付物： </span>
+													<span style="display: inline-block;width: 200px;">${now2.deliverables }</span>
+												</div>
+											</div>
+													</div>
+								</li>
+							</a>
+							</c:forEach>
+						</c:forEach>
+					</ul>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<%@ page contentType="text/html;charset=UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+<title>公司收文登记管理</title>
+<meta name="decorator" content="default" />
+<script type="text/javascript">
+	$(document)
+			.ready(
+					function() {
+						/**主办人员特殊性定义验证 */
+						jQuery.validator.addMethod("special_validate_1",
+								function(value, element, param) {
+									if (value == ""
+											&& $(param[0]).attr("checked")
+											&& $(param[1]).attr("checked")) {
+										return false;
+									}
+									return true;
+								}, $.validator.format("必填信息 *"));
+						//加载自已的验证方法
+						xin_validate();
+						//保单验证
+						$("#inputForm")
+								.validate(
+										{
+											rules : {
+												hostPersonName : {
+													special_validate_1 : [
+															$("input[name=next][value=1]")[0],
+															$("input[name=exam][value=0]")[0] ]
+												}
+											},
+											messages : {},
+											submitHandler : function(form) {
+												//loading('正在提交，请稍等...');
+												form.submit();
+											},
+											errorContainer : "#messageBox",
+											errorPlacement : function(error,
+													element) {
+												$("#messageBox").text(
+														"输入有误，请先更正。");
+												if (element.is(":checkbox")
+														|| element.is(":radio")
+														|| element
+																.parent()
+																.is(
+																		".input-append")) {
+													error.appendTo(element
+															.parent().parent());
+												} else {
+													error.insertAfter(element);
+												}
+											}
+										});
+					});
+
+	/* 				$("#btnCancle2").click(function() {
+	 $("#flag").val("1");
+	 });
+	 */
+	/* $("#btnSubmit").click(
+			function() {
+				if ($("input[name=hostPersonId][type=hidden]")
+						.val() == ""
+						&& $("input[name=next][value=1]").attr(
+								"checked")
+						&& $("input[name=exam][value=0]").attr(
+								"checked")) {
+					$("#req_xin_m").text("必填选项 *");
+					return false;
+				}
+				$("#req_xin_m").text("");
+
+				return true;
+			}); */
+	//$("#name").focus();
+</script>
+<link rel="stylesheet" type="text/css"
+	href="${ctxStatic}/liuxin/css/liucheng.css">
+<style type="text/css">
+.input-group.treeselect-div label.error {
+	position: absolute;
+	width: 100px;
+	margin-left: 36px;
+	left: 100%;
+	top: 6px;
+}
+</style>
+</head>
+<body class="gray-bg">
+	<div class="wrapper wrapper-content">
+		<div class="ibox">
+			<div class="ibox-title">
+				<h5>${title}</h5>
+			</div>
+			<div class="ibox-content">
+				<form:form id="inputForm" modelAttribute="oaReceiveFile"
+					action="${ctx}/oa/oaReceiveFile/dealExam" method="post"
+					class="form-inline">
+					<input type="hidden" name="token" value="${token }">
+					<input type="hidden" name="sign" value="1">
+					<form:hidden path="id" />
+					<form:hidden path="procInsId" />
+					<form:hidden path="officename" />
+
+
+
+					<form:hidden path="code" />
+					<form:hidden path="unitcode" />
+					<input type="hidden" name="date"
+						value="<fmt:formatDate value="${oaReceiveFile.date}" pattern="yyyy-MM-dd"/>">
+					<form:hidden path="unitname" />
+					<form:hidden path="title" />
+					<form:hidden path="content" />
+					<form:hidden path="mainfile" />
+					<form:hidden path="otherfiles" />
+
+
+
+					<div class="control-group">
+						<label class="control-label">字&emsp;&emsp;号：</label>
+						${oaReceiveFile.code}
+					</div>
+					<div class="control-group">
+						<label class="control-label">登记部门：</label>
+						${oaReceiveFile.officename}
+					</div>
+					<div class="control-group">
+						<label class="control-label">登&nbsp;&nbsp;记&nbsp;&nbsp;人：</label>
+						${oaReceiveFile.createBy.name}
+					</div>
+					<div class="control-group">
+						<label class="control-label">登记时间：</label>
+						<fmt:formatDate value="${oaReceiveFile.createDate}"
+							pattern="yyyy-MM-dd HH:mm:ss" />
+					</div>
+					<div class="control-group">
+						<label class="control-label">收文字号：</label>
+						<div class="lc-view-div">${oaReceiveFile.unitcode}<br>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label">收文日期：</label>
+
+						<fmt:formatDate value="${oaReceiveFile.date}" pattern="yyyy-MM-dd" />
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">来文单位：</label>
+						<div class="lc-view-div">${oaReceiveFile.unitname}<br>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label">文件标题：</label>
+						<div class="lc-view-div">${oaReceiveFile.title}<br>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label">内容摘要：</label>
+						<div class="lc-view-div">${oaReceiveFile.content}<br>
+						</div>
+					</div>
+					<div class="control-group">
+						<label class="control-label">正&emsp;&emsp;文：</label>
+						<div class="lc-view-div" id="main-file">
+							<sys:split-file-name urls="${oaReceiveFile.mainfile}"
+								id="main-file"></sys:split-file-name>
+							<br>
+						</div>
+
+					</div>
+					<div class="control-group">
+						<label class="control-label">附&emsp;&emsp;件：</label>
+						<div class="lc-view-div" id="other-file">
+							<sys:split-file-name urls="${oaReceiveFile.otherfiles}"
+								id="other-file"></sys:split-file-name>
+							<br>
+						</div>
+					</div>
+
+
+
+
+
+					<div class="control-group">
+						<label class="control-label">是否交由总经理审批：</label> <input
+							type="radio" name="next" value="0" class="i-checks">是 <input
+							type="radio" name="next" value="1" checked="checked"
+							class="i-checks">否
+					</div>
+					<div class="control-group">
+						<label class="control-label">主办人员：</label>
+						<sys:treeselect id="user" name="hostPersonId" value=""
+							labelName="hostPersonName" labelValue="" title="用户"
+							url="/sys/office/treeData?type=3&isAll=true"
+							cssClass="form-control input-sm" allowClear="true"
+							cssStyle="background-color: #FFFFFF;" notAllowSelectParent="true" />
+						<span class="help-inline" style="margin-left: 32px;"><font
+							color="red" id="req_xin_m"></font> </span>
+					</div>
+
+
+					<div class="control-group">
+						<label class="control-label">审批决定：</label> <input type="radio"
+							name="exam" value="0" class="i-checks">同意 <input
+							type="radio" name="exam" class="i-checks" value="1"
+							checked="checked">不同意
+					</div>
+					<div class="control-group">
+						<label class="control-label">主办部门领导意见：</label>
+						<form:input path="examtext" htmlEscape="false" maxlength="255"
+							class="form-control input-sm " />
+					</div>
+
+					<div class="form-actions">
+						<shiro:hasPermission name="oa:oaReceiveFile:edit">
+							<input id="btnSubmit" class="btn btn-primary" type="submit"
+								value="审核提交" />&nbsp;</shiro:hasPermission>
+						<input id="btnCancel" class="btn" type="button" value="返 回"
+							onclick="history.go(-1)" />
+						<c:if test="${task != null}">
+				&nbsp;<input
+								onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");'
+								class="btn" type="button" value="流程跟踪" />
+						</c:if>
+					</div>
+				</form:form>
+				<c:if test="${not empty oaReceiveFile.id}">
+					<act:histoicFlow procInsId="${oaReceiveFile.procInsId}" />
+				</c:if>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

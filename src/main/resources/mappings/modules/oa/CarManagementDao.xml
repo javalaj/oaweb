@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.CarManagementDao">
+    
+	<sql id="carManagementColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.platenum AS "platenum",
+		a.brand AS "brand",
+		a.model AS "model",
+		a.seatnum AS "seatnum",
+		a.kilometers AS "kilometers",
+		a.buydate AS "buydate",
+		a.framenum AS "framenum",
+		a.price AS "price",
+		a.insurer AS "insurer",
+		a.policynum AS "policynum",
+		a.photo AS "photo",
+		a.reason AS "reason",
+		a.usereason AS "usereason",
+		a.delreason AS "delreason",
+		a.otherreason as "otherreason",
+		a.driverlicense AS "driverlicense",
+		a.lastlending as "lastlending",
+		a.state AS "state",
+		a.create_by AS "createBy.id",
+		a.dlicensedate AS "dlicensedate",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="carManagementJoins">
+	</sql>
+    
+	<select id="get" resultType="CarManagement">
+		SELECT 
+			<include refid="carManagementColumns"/>
+		FROM oa_car_management a
+		<include refid="carManagementJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByState" resultType="CarManagement">
+    	select 
+    		a.platenum AS "platenum"
+    	from oa_car_management a 
+    	where a.state = '0' and a.del_flag = '0'
+    </select>
+    
+	<select id="getByPlateNum" resultType="CarManagement">
+    	select 
+    		<include refid="carManagementColumns"/>
+    	from oa_car_management a 
+    	where a.platenum = #{platenum}
+    </select>
+	
+	<select id="findList" resultType="CarManagement">
+		SELECT 
+			<include refid="carManagementColumns"/>
+		FROM oa_car_management a
+		<include refid="carManagementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				AND a.id = #{id}
+			</if>
+			<if test="state != null and state != ''">
+				AND a.state = #{state}
+			</if>
+			<if test="createBy != null and createBy.id != null and createBy.id != ''">
+				AND a.create_by = #{createBy.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="CarManagement">
+		SELECT 
+			<include refid="carManagementColumns"/>
+		FROM oa_car_management a
+		<include refid="carManagementJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_car_management(
+			id,
+			proc_ins_id,
+			platenum,
+			brand,
+			model,
+			seatnum,
+			kilometers,
+			buydate,
+			framenum,
+			price,
+			insurer,
+			policynum,
+			photo,
+			reason,
+			delreason,
+			usereason,
+			otherreason,
+			driverlicense,
+			lastlending,
+			state,
+			dlicensedate,
+			create_by,			
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{procInsId},
+			#{platenum},
+			#{brand},
+			#{model},
+			#{seatnum},
+			#{kilometers},
+			#{buydate},
+			#{framenum},
+			#{price},
+			#{insurer},
+			#{policynum},
+			#{photo},
+			#{reason},
+			#{delreason},
+			#{usereason},
+			#{otherreason},
+			#{driverlicense},
+			#{lastlending},
+			#{state},
+			#{dlicensedate},
+			#{createBy.id},			
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_car_management SET 	
+			proc_ins_id = #{procInsId},
+			platenum = #{platenum},
+			brand = #{brand},
+			model = #{model},
+			seatnum = #{seatnum},
+			kilometers = #{kilometers},
+			buydate = #{buydate},
+			framenum = #{framenum},
+			price = #{price},
+			insurer = #{insurer},
+			policynum = #{policynum},
+			photo = #{photo},
+			reason = #{reason},
+			delreason = #{delreason},
+			usereason = #{usereason},
+			otherreason = #{otherreason},
+			driverlicense = #{driverlicense},
+			lastlending = #{lastlending},
+			state = #{state},
+			dlicensedate = #{dlicensedate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	
+	<update id="delete">
+		UPDATE oa_car_management SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.CyTspOaMonthlyPlanDao">
+    
+	<sql id="cyTspOaMonthlyPlanColumns">
+		a.id AS "id",
+		a.approval_user_id AS "approvalUserId",
+		a.approval_user_name AS "approvalUserName",
+		a.applyDate AS "approvalDate", 
+		a.approval_state AS "approvalState",
+		a.PROC_INS_ID AS "procInsId",
+		a.task_name AS "taskName",
+		a.creat_time AS "creatTime",
+		a.definiti AS "definiti",
+		a.acceptance_deliverables AS "acceptanceDeliverables",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.my_scores AS "myScores",
+		a.leader_scores AS "leaderScores",
+		a.vice_scores AS "viceScores",
+		a.user_id AS "userId",
+		a.task_scrores AS "taskScrores",
+		a.common_id AS"commonId",
+	    a.office_id AS"officeId",
+	    a.superior_name AS "superiorName",
+	    a.creat_name AS "creatName",
+	    a.transactor AS "transactor"
+	</sql>
+	
+	<sql id="cyTspOaMonthlyPlanJoins">
+		LEFT JOIN sys_user u11 ON u11.id = a.user_id
+	</sql>
+    
+	<select id="get" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a
+		<include refid="cyTspOaMonthlyPlanJoins"/>
+		WHERE a.id = #{id} 
+	</select>
+	
+	<select id="findList" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.start_time LIKE concat('%',#{startTime},'%') AND user_id=#{userId}
+			<if test="creatTime != null and creatTime != ''">
+				AND a.creat_time LIKE concat('%',#{creatTime},'%')
+			</if>
+	</select>
+	
+	<select id="findAllList" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a
+		<include refid="cyTspOaMonthlyPlanJoins"/>
+		<where>
+			
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+		<select id="finddate" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.start_time LIKE concat('%',#{startTime},'%') AND user_id=#{userId}
+			
+	</select>
+	
+	<!-- 统计任务分总分 -->
+	<select id="findScrores"  resultMap="stoMap">
+	SELECT sum(a.task_scrores)AS ts,sum(a.my_scores)AS ms FROM cy_tsp_oa_monthly_plan a where a.start_time LIKE concat('%',#{startTime},'%') and a.user_id=#{userId}
+	</select>
+	<resultMap type="HashMap" id="stoMap">
+		<result property="key" column="ts" ></result>
+		<result property="value" column="ms" ></result>
+	</resultMap>
+	
+	<insert id="insert" >
+	
+		INSERT INTO cy_tsp_oa_monthly_plan(
+			id,
+			task_name,
+			creat_time,
+			definiti,
+			acceptance_deliverables,
+			start_time,
+			end_time,
+			my_scores,
+			leader_scores,
+			vice_scores,
+			user_id,
+			task_scrores,
+			common_id,
+			approval_state,
+			office_id,
+			superior_name,
+			 creat_name,
+			 transactor
+		) VALUES 
+		
+<!-- 	<foreach collection="list" item="ccc" index="index" separator="," open="" close="" >
+	(
+   #{ccc.id},
+#{ccc.taskName},
+#{ccc.creatTime},
+#{ccc.definiti},
+#{ccc.acceptanceDeliverables},
+#{ccc.startTime},
+#{ccc.endTime},
+#{ccc.myScores},
+#{ccc.leaderScores},
+#{ccc.viceScores},
+#{ccc.userId,jdbcType=BIGINT},
+#{ccc.taskScrores}
+
+)
+		</foreach> 
+		 -->
+ 		
+		
+		
+		(
+			#{id},
+			#{taskName},
+			#{creatTime},
+			#{definiti},
+			#{acceptanceDeliverables},
+			#{startTime},
+			#{endTime},
+			#{myScores},
+			#{leaderScores},
+			#{viceScores},
+			#{userId},
+			#{taskScrores},
+			#{commonId},
+			#{approvalState},
+			#{officeId},
+			#{superiorName},
+			#{creatName},
+			#{transactor}
+		)  
+	</insert>
+	<!-- 保存并修改 -->
+	<update id="updatei">
+		UPDATE cy_tsp_oa_monthly_plan SET 	
+			task_name = #{taskName},
+			creat_time = #{creatTime},
+			definiti = #{definiti},
+			acceptance_deliverables = #{acceptanceDeliverables},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			my_scores = #{myScores},
+			leader_scores = #{leaderScores},
+			vice_scores = #{viceScores},
+			user_id = #{userId},
+			task_scrores = #{taskScrores},
+			approval_state =#{approvalState}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		DELETE FROM cy_tsp_oa_monthly_plan
+		WHERE id = #{id}
+	</update>
+	
+	<!-- 1.审核状态  2.流程实例Id 3.下一步办理人 4.申请人 5 申请时间 -->
+	<update id="saveApply">
+		UPDATE cy_tsp_oa_monthly_plan  SET 
+			applyDate=#{applyDate},
+			approval_user_id=#{approvalUserId},
+			approval_user_name=#{approvalUserName},
+			approval_state =#{approvalState},
+			PROC_INS_ID=#{procInsId},
+		    my_scores = #{myScores},
+		    leader_scores = #{leaderScores},
+		   vice_scores = #{viceScores},
+		   transactor=#{transactor}
+		   WHERE id = #{id}
+	</update>
+	
+	
+	
+	
+	<!-- 查询当前登入人,代办理的信息 -->
+	
+		<select id="findApprovalList" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.approval_user_id=#{approvalUserId} AND a.approval_state =1 AND common_id=#{commonId}
+			
+	</select>
+	<!-- 最高级查询当前登入人,代办理的信息 -->
+	
+		<select id="findApprovalListv" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.approval_user_id=#{approvalUserId} AND a.approval_state =2 AND common_id=#{commonId}
+			
+	</select>
+	
+		<select id="transactor" resultType="CyTspOaMonthlyPlan">
+		SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.common_id=#{commonId}
+			
+	</select>
+	
+	<!-- 审核完成后 -->
+	<select id="passlist" resultType="CyTspOaMonthlyPlan">
+			SELECT 
+			<include refid="cyTspOaMonthlyPlanColumns"/>
+		FROM cy_tsp_oa_monthly_plan a where a.common_id=#{commonId}
+		
+		</select>
+		
+		<sql id="cyTspOaMonthlyPlanColumnsEmp">
+		a.id AS "id",
+		a.approval_user_id AS "approvalUserId",
+		a.approval_user_name AS "approvalUserName",
+		a.applyDate AS "approvalDate", 
+		a.approval_state AS "approvalState",
+		a.PROC_INS_ID AS "procInsId",
+		a.task_name AS "taskName",
+		a.creat_name AS "creatName",
+		a.creat_time AS "creatTime",
+		a.definiti AS "definiti",
+		a.acceptance_deliverables AS "acceptanceDeliverables",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.my_scores AS "myScores",
+		a.leader_scores AS "leaderScores",
+		a.vice_scores AS "viceScores",
+		a.user_id AS "userId",
+		a.task_scrores AS "taskScrores",
+		a.common_id AS"commonId",
+	    a.office_id AS"officeId",
+	    so1.name AS "office.name",
+	    a.superior_name AS "superiorName"
+	</sql>
+		
+		
+		<sql id="mothlyplanJoins">
+         join sys_office so1 on so1.id=a.office_id
+    </sql>
+		
+		
+		<!-- 员工绩效 -->
+		
+		
+		<!-- 查询所有审核完成的员工绩效 -->
+		<select id="epList" resultType="CyTspOaMonthlyPlan">
+		  	SELECT 
+		  	 sum(a.my_scores)as my_scores ,sum(a.leader_scores) as leader_scores ,sum(a.vice_scores) as vice_scores,a.creat_name AS creatName,a.superior_name AS superiorName,a.common_id AS commonId from cy_tsp_oa_monthly_plan a where a.approval_state=3 
+		  	<if test="officeId != null and officeId != ''">
+				 AND a.office_id=#{officeId}
+			</if>
+		    AND  a.start_time LIKE concat('%',#{startTime},'%')   group by a.common_id
+		</select>
+<!-- 
+		<resultMap type="HashMap" id="stoMap">
+		<result property="key" column="ts" ></result>
+		<result property="value" column="ms" ></result>
+	</resultMap> -->
+		
+		
+		
+		
+	
+	
+</mapper>

@@ -1,0 +1,196 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>通知管理</title>
+	<meta name="decorator" content="default"/>
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/css/mui.min.css" />
+	<script src="${ctxStatic}/mobile/js/mui.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="${ctxStatic}/mobile/oa/css/oaDoc.css" />
+	<style class="text/css">
+		.mui-input-row label{
+			font-size:16px;
+		}
+		.mui-btn-primary{
+			    border: 1px solid #12b5f7;
+   				background-color: #12b5f7;
+   				width:20%;
+		}
+		.mui-input-row label{
+			width:27%;
+		}
+		.mui-input-row input{
+			width: 75%;
+		}
+	</style>
+
+	<script type="text/javascript">
+	mui.init({
+		swipeBack:true //启用右滑关闭功能
+	});
+	
+	/*表单验证*/
+    function doSubmit(){
+
+        if($("#title").val()!=null&&$("#title").val()!=""){
+        	if($("#title").val().length>20){
+        		 mui.init().alert("标题长度过长","提示",['确定'],null,false); 
+        	}else{
+          if($("#content").val()!=null&&$("#content").val()!=""){
+        	  if($("#type").val()!=null&&$("#type").val()!=""){
+        		  if($("#status").val()!=null&&$("#status").val()!=""){
+        			 if($("#oaNotifyRecordName").val()!=null&&$("#oaNotifyRecordName").val()!=""){
+        				  $("#inputForm").submit();   
+        			  }else{
+        				  mui.init().alert("接收人不能为空","提示",['确定'],null,false); 
+}       			         			  
+        		  }else{
+        			  mui.init().alert("状态不能为空","提示",['确定'],null,false);
+        		  }
+        		  
+        	  }else{
+        		  mui.init().alert("类型不能为空","提示",['确定'],null,false); 
+        	  }
+              
+
+		  }else{
+              mui.init().alert("内容不能为空","提示",['确定'],null,false);
+		  }
+        	}
+		}else{
+            mui.init().alert("标题不能为空","提示",['确定'],null,false);
+		}
+      
+	}
+		//var validateForm;
+		/* function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+			
+		  if(validateForm.form()){
+			  if($("#file").val()==null||$("#file").val()==""){
+					top.layer.msg('请上传一个文档！'); 
+					return false;
+				}else{
+					$("#inputForm").submit();
+					 return true;
+				}
+		  }
+		  return false;
+		} */
+		
+		//$(document).ready(function() {
+			
+		/* 	if("${oaDoc.isPublic}"=="1"||"${empty oaDoc.isPublic}"=="true"){
+				$("#div_office").hide();
+				$("#div_office_title").hide();
+				
+			}else{
+				$("#div_office").show();
+				$("#div_office_title").show();
+			}
+			//$("#name").focus();
+			validateForm = $("#inputForm").validate({
+				rules: {
+					"office.name": {
+				        required: true
+				     }
+				},
+			    messages: {
+			    	"office.name": {
+			          required: "必填信息",
+			        }
+			    },
+				submitHandler: function(form){
+					//loading('操作正在进行，请稍等...');
+					var index = top.layer.load();
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			
+			$("#isPublic").change(function(){  
+				$(this).valid();
+				if($(this).val()=="1"){
+					$("#div_office").hide();
+					$("#div_office_title").hide();
+				}else{
+					$("#div_office").show();
+					$("#div_office_title").show();
+				}
+			});
+			$("#docType").change(function(){  
+				$(this).valid();
+			});
+			$("#isNeedLend").change(function(){  
+				$(this).valid();
+			});
+			$("#officeName").change(function(){  
+				$(this).valid();  
+			}); */
+		//});
+	</script>
+</head>
+<body class="mui-ios mui-ios-9 mui-ios-9-1">
+ 	<header class="mui-bar mui-bar-nav" style="position: fixed; top: 0px; left: 0; z-index: 9999;">
+		<a class="mui-icon mui-icon-back mui-pull-left" onclick="location.href='${mctx}/oa/oaNotify/allList'"></a>
+		<h1 class="mui-title">发布通知</h1>
+	</header>
+	<div class="mui-content">
+		<form:form id="inputForm" modelAttribute="oaNotify" action="${mctx}/oa/oaNotify/save" method="post" class="mui-input-group">
+			<form:hidden path="id"/>
+			<input type="hidden" name="prePage" value="${param.prePage}"/>
+			<sys:message content="${message}"/>
+			<div class="mui-input-row">
+				<label class="oaDocFormLabel">标题</label>
+				<form:input path="title" htmlEscape="false" id="title" maxlength="64" placeholder="输入标题"/>				
+			</div>
+			
+			<div >
+				<!-- <label class="oaDocFormLabel">内容</label> -->
+				  	 <form:textarea path="content" htmlEscape="false" rows="10"  
+						 class="" id="content" placeholder="内容···" /> 							 
+				<!-- <span class="help-inline"><font color="red">*</font></span> -->
+			</div>
+			<div class="mui-input-row">
+				<label class="oaDocFormLabel">类型</label>
+				<form:select path="type" id="type">
+							<form:option value="" label="全部"/>
+							<form:options items="${fns:getDictList('my_notify_type')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+						</form:select>
+				<span class="help-inline"><font color="red"></font></span>
+			</div>
+			<div class="mui-input-row">
+				<label class="oaDocFormLabel">状态</label>
+	        
+						<form:select path="status" id="status">
+							<form:option value="" label="全部"/>
+							<form:options items="${fns:getDictList('oa_notify_status')}" itemLabel="label" itemValue="value" htmlEscape="false"/>
+						</form:select>
+					<span class="help-inline"> </span>
+			</div> 
+			<div class="mui-input-row">
+				<label class="oaDocFormLabel">接收人</label>
+				<sys:treeselect id="oaNotifyRecord" name="oaNotifyRecordIds" value="${oaNotify.oaNotifyRecordIds}" labelName="oaNotifyRecordNames" labelValue="${oaNotify.oaNotifyRecordNames}"
+					title="接收人" url="/sys/office/treeData?type=3" cssClass="" allowClear="false" notAllowSelectParent="true" checked="true"/>
+					<span class="help-inline"><font color="red">*</font></span>
+			</div>
+
+					
+			<div class="mui-button-row">
+				 <shiro:hasPermission name="oa:oaNotify:edit">				
+						<button type="button" class="mui-btn mui-btn-primary" onclick="doSubmit()"  style="width:20%">保存</button>&nbsp;&nbsp;
+						<!-- <button type="button"  onclick="doSubmit()" style="width:90%"><i class="fa fa-save"></i>发布</button>		 -->			
+				</shiro:hasPermission> 
+			</div>
+		</form:form>
+	</div>
+</body>
+</html>

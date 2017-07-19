@@ -1,0 +1,176 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>私车公用管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+			//$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					loading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="ibox-title">
+	<span style="font-size: 18px;font-weight: bold;">私车公用详情</span>
+		<!-- <div class="ibox-tools">
+			<a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a>
+		</div> -->
+	</div>
+	<ul class="nav nav-tabs">
+		<li class="active"><a href="${ctx}/oa/publicprivatecar/oaPublicPrivateCars/form?id=${oaPublicPrivateCars.id}">私车公用</a></li>
+	</ul><br/>
+	<form:form id="inputForm" modelAttribute="oaPublicPrivateCars" action="${ctx}/oa/publicprivatecar/oaPublicPrivateCars/dealExam" method="post" class="form-horizontal">
+		<legend>${title }</legend>
+		<form:hidden path="id"/>
+		<form:hidden path="officename"/>
+		<form:hidden path="usescope"/>
+		<form:hidden path="usereason"/>
+		<form:hidden path="gokilometer"/>
+		<form:hidden path="backkilometer"/>
+		<form:hidden path="destination"/>
+		<form:hidden path="picture"/>
+		<form:hidden path="examname"/>
+		<form:hidden path="examtext"/>
+		<input type="hidden" name="starttime"
+			value="<fmt:formatDate value="${oaPublicPrivateCars.starttime}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+		<input type="hidden" name="endtime"
+			value="<fmt:formatDate value="${oaPublicPrivateCars.endtime}" pattern="yyyy-MM-dd HH:mm:ss" />" />
+		<sys:message content="${message}"/>			
+		<div class="control-group">
+			<label class="control-label">文&nbsp;件&nbsp;编&nbsp;号：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.fileId}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申&nbsp;&nbsp;&nbsp;请&nbsp;&nbsp;&nbsp;人：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.createBy.name}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>	
+		<div class="control-group">
+			<label class="control-label">所&nbsp;在&nbsp;部&nbsp;门：</label>
+			<div class="controls">
+				<%-- ${oaPublicPrivateCars.createBy.office.name} --%>
+				<input type="text" value="${oaPublicPrivateCars.officename}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>			
+		<div class="control-group">
+			<label class="control-label">用&nbsp;车&nbsp;范&nbsp;围：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.usescope}" disabled class="form-control" style="width:40%;">			
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">事&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;由：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.usereason}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">起&nbsp;始&nbsp;时&nbsp;间：</label>
+			<div class="controls">
+				<input type="text" value="<fmt:formatDate value="${oaPublicPrivateCars.starttime}" pattern="yyyy-MM-dd HH:mm:ss" />" disabled class="form-control" style="width:40%;">				
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">结&nbsp;束&nbsp;时&nbsp;间：</label>
+			<div class="controls">
+				<input type="text" value="<fmt:formatDate value="${oaPublicPrivateCars.endtime}" pattern="yyyy-MM-dd HH:mm:ss" />" disabled class="form-control" style="width:40%;">				
+								
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">起始公里数：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.gokilometer}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">返回公里数：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.backkilometer}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">目&nbsp;&nbsp;&nbsp;的&nbsp;&nbsp;&nbsp;地：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.destination}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">上&nbsp;传&nbsp;照&nbsp;片：</label>
+			<div class="controls">
+				<form:hidden id="picture" path="picture" htmlEscape="false" maxlength="1000" class="input-xlarge"/>
+				<sys:ckfinder input="picture" type="images" uploadPath="/oa/publicprivatecar/oaPublicPrivateCars/photo" selectMultiple="true" maxWidth="100" maxHeight="100" buttonLabel="上传照片" readonly="true"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">行&nbsp;政&nbsp;签&nbsp;字：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.examname}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">行&nbsp;政&nbsp;意&nbsp;见：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.examtext}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">财&nbsp;务&nbsp;签&nbsp;字：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.examname1}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">财&nbsp;务&nbsp;意&nbsp;见：</label>
+			<div class="controls">
+				<input type="text" value="${oaPublicPrivateCars.examtext1}" disabled class="form-control" style="width:40%;">
+			</div>
+		</div>
+		
+		<div class="control-group">
+			<label class="control-label">备&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;注：</label>
+			<div class="controls">
+				<form:textarea path="remarks" readonly="true" value="${oaPublicPrivateCars.remarks}" htmlEscape="false" rows="4" maxlength="255" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="form-actions">			
+			<input id="btnCancel" class="btn" type="button" value="返 回" onclick="history.go(-1)"/>
+			<c:if test="${task != null}">
+				&nbsp;<input onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn" type="button" value="流程跟踪" />
+		</c:if>
+		</div>
+		
+	</form:form>
+	<c:if test="${not empty oaPublicPrivateCars.id}">
+		<act:histoicFlow procInsId="${oaPublicPrivateCars.procInsId}" />
+	</c:if>
+</body>
+</html>

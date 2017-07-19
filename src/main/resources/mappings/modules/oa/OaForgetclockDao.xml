@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaForgetclockDao">
+
+	<sql id="oaForgetclockColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.office_name AS "officeName",
+		a.date AS
+		"date",
+		a.time AS "time",
+		a.examname AS "examname",a.examtext AS
+		"examtext",a.examname2 AS "examname2",a.examtext2 AS "examtext2",a.timesign AS "timesign"
+	</sql>
+
+	<sql id="oaForgetclockJoins">
+	</sql>
+	<select id="getByProcInsId" resultType="OaForgetclock">
+		SELECT
+		<include refid="oaForgetclockColumns" />
+		FROM oa_forgetclock a
+		<include refid="oaForgetclockJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaForgetclock">
+		SELECT
+		<include refid="oaForgetclockColumns" />
+		FROM oa_forgetclock a
+		<include refid="oaForgetclockJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaForgetclock">
+		SELECT
+		<include refid="oaForgetclockColumns" />
+		FROM oa_forgetclock a
+		<include refid="oaForgetclockJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaForgetclock">
+		SELECT
+		<include refid="oaForgetclockColumns" />
+		FROM oa_forgetclock a
+		<include refid="oaForgetclockJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_forgetclock(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		office_name,
+		date,
+		time,
+		examname,
+		examtext,
+		examname2,
+		examtext2,
+		timesign
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{officeName},
+		#{date},
+		#{time},
+		#{examname},
+		#{examtext},
+		#{examname2},
+		#{examtext2},
+		#{timesign}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_forgetclock SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		office_name = #{officeName},
+		date = #{date},
+		time = #{time},
+		examname = #{examname},
+		examtext =
+		#{examtext},examname2 =
+		#{examname2},examtext2 = #{examtext2},timesign=#{timesign}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_forgetclock SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

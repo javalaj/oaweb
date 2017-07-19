@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.PerishableApplyDao">
+    
+	<sql id="perishableApplyColumns">
+		a.id AS "id",
+		a.serial_id AS "serialId",
+		a.perishable_id AS "perishable.id",
+		b.serial_number AS "perishable.serialNumber",
+		b.item_name AS "perishable.itemName",
+		b.item_category AS "perishable.itemCategory",
+		b.amount AS "perishable.amount",
+		b.unit_price AS "perishable.unitPrice",
+		b.model AS "perishable.model",
+		b.specifications AS "perishable.specifications",
+		b.supplier AS "perishable.supplier",
+		b.brand AS "perishable.brand",
+		b.create_by AS "perishable.createBy.id",
+		b.create_date AS "perishable.createDate",
+		b.update_by AS "perishable.updateBy.id",
+		b.remarks AS "perishable.remarks",
+		b.update_date AS "perishable.updateDate",
+		b.photo AS "perishable.photo",
+		b.total AS "perishable.total",
+		b.unit AS "perishable.unit",
+		a.amount AS "amount",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="perishableApplyJoins">
+		LEFT JOIN perishable_products b ON b.id = a.perishable_id
+	</sql>
+    
+	<select id="get" resultType="PerishableApply">
+		SELECT 
+			<include refid="perishableApplyColumns"/>
+		FROM perishable_apply a
+		<include refid="perishableApplyJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PerishableApply">
+		SELECT 
+			<include refid="perishableApplyColumns"/>
+		FROM perishable_apply a
+		<include refid="perishableApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PerishableApply">
+		SELECT 
+			<include refid="perishableApplyColumns"/>
+		FROM perishable_apply a
+		<include refid="perishableApplyJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO perishable_apply(
+			id,
+			serial_id,
+			perishable_id,
+			amount,
+			create_by,
+			create_date,
+			update_by,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{serialId},
+			#{perishable.id},
+			#{amount},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE perishable_apply SET 	
+			serial_id = #{serialId},
+			perishable_id = #{PerishableProducts},
+			amount = #{amount},
+			update_by = #{updateBy.id},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE perishable_apply SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

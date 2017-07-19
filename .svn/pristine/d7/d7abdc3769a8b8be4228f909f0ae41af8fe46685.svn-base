@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaGooutDao">
+
+	<sql id="oaGooutColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.officename AS "officename",
+		a.starttime AS
+		"starttime",
+		a.endtime AS "endtime",
+		a.time AS "time",
+		a.reason AS
+		"reason",
+		a.examname AS "examname",
+		a.examtext AS "examtext"
+	</sql>
+
+	<sql id="oaGooutJoins">
+	</sql>
+	<select id="getByProcInsId" resultType="OaGoout">
+		SELECT
+		<include refid="oaGooutColumns" />
+		FROM oa_goout a
+		<include refid="oaGooutJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaGoout">
+		SELECT
+		<include refid="oaGooutColumns" />
+		FROM oa_goout a
+		<include refid="oaGooutJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaGoout">
+		SELECT
+		<include refid="oaGooutColumns" />
+		FROM oa_goout a
+		<include refid="oaGooutJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaGoout">
+		SELECT
+		<include refid="oaGooutColumns" />
+		FROM oa_goout a
+		<include refid="oaGooutJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_goout(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		officename,
+		starttime,
+		endtime,
+		time,
+		reason,
+		examname,
+		examtext
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{officename},
+		#{starttime},
+		#{endtime},
+		#{time},
+		#{reason},
+		#{examname},
+		#{examtext}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_goout SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		officename = #{officename},
+		starttime = #{starttime},
+		endtime = #{endtime},
+		time = #{time},
+		reason = #{reason},
+		examname =
+		#{examname},
+		examtext = #{examtext}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_goout SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

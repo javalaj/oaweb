@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.project.OaProjectWeekreportDao">
+    
+	<sql id="oaProjectWeekreportColumns">
+		a.id AS "id",
+		a.title AS "title",
+		a.report_no AS "reportNo",
+		a.project_report_file AS "projectReportFile",
+		a.write_user_id AS "writeUser.id",
+		a.completed_task AS "completedTask",
+		a.added_task AS "addedTask",
+		a.update_user_id AS "updateUser.id",
+		a.project_id AS "project.id",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		u5.name AS "writeUser.name",
+		u8.name AS "updateUser.name"
+	</sql>
+	
+	<sql id="oaProjectWeekreportJoins">
+		LEFT JOIN oa_project b ON b.id = a.project_id
+		LEFT JOIN sys_user u5 ON u5.id = a.write_user_id
+		LEFT JOIN sys_user u8 ON u8.id = a.update_user_id
+	</sql>
+    
+	<select id="get" resultType="OaProjectWeekreport">
+		SELECT 
+			<include refid="oaProjectWeekreportColumns"/>
+		FROM oa_project_weekreport a
+		<include refid="oaProjectWeekreportJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaProjectWeekreport">
+		SELECT 
+			<include refid="oaProjectWeekreportColumns"/>
+		FROM oa_project_weekreport a
+		<include refid="oaProjectWeekreportJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="project != null and project.id != null and project.id != ''">
+				AND a.project_id = #{project.id}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaProjectWeekreport">
+		SELECT 
+			<include refid="oaProjectWeekreportColumns"/>
+		FROM oa_project_weekreport a
+		<include refid="oaProjectWeekreportJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.create_date ASC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_project_weekreport(
+			id,
+			title,
+			report_no,
+			project_report_file,
+			write_user_id,
+			completed_task,
+			added_task,
+			update_user_id,
+			project_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{title},
+			#{reportNo},
+			#{projectReportFile},
+			#{writeUser.id},
+			#{completedTask},
+			#{addedTask},
+			#{updateUser.id},
+			#{project.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_project_weekreport SET 	
+			title = #{title},
+			report_no = #{reportNo},
+			project_report_file = #{projectReportFile},
+			write_user_id = #{writeUser.id},
+			completed_task = #{completedTask},
+			added_task = #{addedTask},
+			update_user_id = #{updateUser.id},
+			project_id = #{project.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_project_weekreport SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		<choose>
+			<when test="id !=null and id != ''">
+				WHERE id = #{id}
+			</when>
+			<otherwise>
+				WHERE project_id = #{project.id}
+			</otherwise>
+		</choose>
+	</update>
+	
+</mapper>

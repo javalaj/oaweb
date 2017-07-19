@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.emp.OaEmpOpinionDao">
+    
+	<sql id="oaEmpOpinionColumns">
+		a.id AS "id",
+		a.type AS "type",
+		a.title AS "title",
+		a.opinion AS "opinion",
+		a.file AS "file",
+		a.istreated AS "istreated",
+		a.treated_user_id AS "treatedUser.id",
+		a.create_by AS "createBy.id",
+		u1.name AS "createBy.name",
+		u1.login_name AS "createBy.loginName",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="oaEmpOpinionJoins">
+		LEFT JOIN sys_user u1 ON u1.id = a.create_by
+	</sql>
+    
+	<select id="get" resultType="OaEmpOpinion">
+		SELECT 
+			<include refid="oaEmpOpinionColumns"/>
+		FROM oa_emp_opinion a
+		<include refid="oaEmpOpinionJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaEmpOpinion">
+		SELECT 
+			<include refid="oaEmpOpinionColumns"/>
+		FROM oa_emp_opinion a
+		<include refid="oaEmpOpinionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="type != null and type != ''">
+				AND a.type = #{type}
+			</if>
+			<if test="title != null and title != ''">
+				AND a.title LIKE 
+					<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+			<if test="istreated != null and istreated != ''">
+				AND a.istreated = #{istreated}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaEmpOpinion">
+		SELECT 
+			<include refid="oaEmpOpinionColumns"/>
+		FROM oa_emp_opinion a
+		<include refid="oaEmpOpinionJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_emp_opinion(
+			id,
+			type,
+			title,
+			opinion,
+			file,
+			istreated,
+			treated_user_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{type},
+			#{title},
+			#{opinion},
+			#{file},
+			#{istreated},
+			#{treatedUser.id},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_emp_opinion SET 	
+			type = #{type},
+			title = #{title},
+			opinion = #{opinion},
+			file = #{file},
+			istreated = #{istreated},
+			treated_user_id = #{treatedUser.id},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_emp_opinion SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

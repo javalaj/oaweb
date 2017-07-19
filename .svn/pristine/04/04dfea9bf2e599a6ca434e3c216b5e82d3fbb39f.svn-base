@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserWeekplanDao">
+	<sql id="userWeekplanColumns">
+		a.id AS "id",
+		a.plandate AS "plandate",
+		a.weeksign AS
+		"weeksign",
+		a.create_by AS "createBy.id",
+		a.isdraft AS "isdraft",
+		a.update_date AS "updateDate",
+		a.firstdate AS "firstdate"
+	</sql>
+
+	<sql id="userWeekplanJoins">
+	</sql>
+	<select id="findCountByPlandate" resultType="java.lang.Integer">
+		SELECT COUNT(*)
+		FROM user_weekplan a
+		<include refid="userWeekplanJoins" />
+		<where>
+			a.firstdate = #{firstdate} AND a.create_by=#{createBy.id}
+		</where>
+	</select>
+	<select id="get" resultType="UserWeekplan">
+		SELECT
+		<include refid="userWeekplanColumns" />
+		FROM user_weekplan a
+		<include refid="userWeekplanJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="UserWeekplan">
+		SELECT
+		<include refid="userWeekplanColumns" />
+		FROM user_weekplan a
+		<include refid="userWeekplanJoins" />
+		<where>
+			a.plandate = #{plandate} AND a.create_by=#{createBy.id} order
+			by a.weeksign desc
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="UserWeekplan">
+		SELECT
+		<include refid="userWeekplanColumns" />
+		FROM user_weekplan a
+		<include refid="userWeekplanJoins" />
+		<where>
+
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_weekplan(
+		id,
+		plandate,
+		weeksign,
+		create_by,
+		isdraft,
+		update_date,
+		firstdate
+		) VALUES (
+		#{id},
+		#{plandate},
+		#{weeksign},
+		#{createBy.id},
+		#{isdraft},
+		#{updateDate},
+		#{firstdate}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_weekplan SET
+		plandate = #{plandate},
+		weeksign = #{weeksign},
+		isdraft = #{isdraft},
+		update_date
+		=#{updateDate},
+		firstdate=#{firstdate}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		DELETE FROM user_weekplan
+		WHERE id = #{id}
+	</update>
+	
+	<select id="indexGetId" resultType="UserWeekplan">
+		SELECT
+		<include refid="userWeekplanColumns" />
+		FROM user_weekplan a
+		WHERE a.weeksign = #{weeksign} and a.create_by = #{createBy.id}
+	</select>
+</mapper>

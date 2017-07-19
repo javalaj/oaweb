@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.project.OaProjectApprovalDao">
+    
+	<sql id="oaProjectApprovalColumns">
+		a.id AS "id",
+		a.project_stage AS "projectStage",
+		a.contract_type AS "contractType",
+		a.is_bid AS "isBid",
+		a.write_time AS "writeTime",
+		a.expected_bid_time AS "expectedBidTime",
+		a.establishment_time AS "establishmentTime",
+		a.book_contract_time AS "bookContractTime",
+		a.actual_contract_time AS "actualContractTime",
+		a.actual_bid_time AS "actualBidTime",
+		a.project_start_time AS "projectStartTime",
+		a.project_money AS "projectMoney",
+		a.expected_money AS "expectedMoney",
+		a.contract_money AS "contractMoney",
+		a.account_manager_id AS "accountManager.id",
+		a.business_manager_id AS "businessManager.id",
+		a.technical_manager_id AS "technicalManager.id",
+		a.project_manager_id AS "projectManager.id",
+		a.account_name AS "accountName",
+		a.project_no AS "projectNo",
+		a.project_name AS "projectName",
+		a.project_bg_description AS "projectBgDescription",
+		a.owned_industry AS "ownedIndustry",
+		a.proc_ins_id AS "procInsId",
+		a.project_file AS "projectFile",
+		a.marketing_director_opinion AS "marketingDirectorOpinion",
+		a.vice_minister_opinion AS "viceMinisterOpinion",
+		a.pre_sales_manager_opinion AS "preSalesManagerOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.view_permission AS "viewPermission",
+		a.status AS "status",
+		a.is_start AS "isStart",
+		u15.name AS "accountManager.name",
+		u15.login_name AS "accountManager.loginName",
+		u16.name AS "businessManager.name",
+		u16.login_name AS "businessManager.loginName",
+		u17.name AS "technicalManager.name",
+		u17.login_name AS "technicalManager.loginName",
+		u18.name AS "projectManager.name",
+		u18.login_name AS "projectManager.loginName",
+		a.applicant_id AS "applicant.id",
+		a.apply_date AS "applyDate",
+		u3.name AS "applicant.name",
+		u3.login_name AS "applicant.loginName"
+	</sql>
+	
+	<sql id="oaProjectApprovalJoins">
+		LEFT JOIN sys_user u15 ON u15.id = a.account_manager_id
+		LEFT JOIN sys_user u16 ON u16.id = a.business_manager_id
+		LEFT JOIN sys_user u17 ON u17.id = a.technical_manager_id
+		LEFT JOIN sys_user u18 ON u18.id = a.project_manager_id
+		LEFT JOIN sys_user u29 ON u29.id = a.create_by
+		LEFT JOIN sys_user u31 ON u31.id = a.update_by
+		LEFT JOIN sys_user u3 ON u3.id = a.applicant_id
+	</sql>
+    
+	<select id="get" resultType="OaProjectApproval">
+		SELECT 
+			<include refid="oaProjectApprovalColumns"/>
+		FROM oa_project_approval a
+		<include refid="oaProjectApprovalJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaProjectApproval">
+		SELECT 
+			<include refid="oaProjectApprovalColumns"/>
+		FROM oa_project_approval a
+		<include refid="oaProjectApprovalJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	
+	<select id="findList" resultType="OaProjectApproval">
+		SELECT 
+			<include refid="oaProjectApprovalColumns"/>
+		FROM oa_project_approval a
+		<include refid="oaProjectApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractType != null and contractType != ''">
+				AND a.contract_type = #{contractType}
+			</if>
+			<if test="isBid != null and isBid != ''">
+				AND a.is_bid = #{isBid}
+			</if>
+			
+			<if test="beginEstablishmentTime != null and beginEstablishmentTime != '' ">
+				<![CDATA[AND a.establishment_time>=#{beginEstablishmentTime} ]]>
+			</if>
+			<if test="endEstablishmentTime != null and endEstablishmentTime != ''">
+				<![CDATA[AND a.establishment_time<=#{endEstablishmentTime} ]]>
+			</if>
+			
+			<if test="accountName != null and accountName != ''">
+				AND a.account_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{accountName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{accountName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{accountName},'%')</if>
+			</if>
+			<if test="projectName != null and projectName != ''">
+				AND a.project_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{projectName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{projectName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{projectName},'%')</if>
+			</if>
+			<if test="ownedIndustry != null and ownedIndustry != ''">
+				AND a.owned_industry = #{ownedIndustry}
+			</if>
+			<if test="status != null and status != ''">
+				AND a.status = #{status}
+			</if>
+			<if test="currentUserId != null and currentUserId != ''">
+				AND a.applicant_id = #{currentUserId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaProjectApproval">
+		SELECT 
+			<include refid="oaProjectApprovalColumns"/>
+		FROM oa_project_approval a
+		<include refid="oaProjectApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_project_approval(
+			id,
+			contract_type,
+			is_bid,
+			expected_bid_time,
+			establishment_time,
+			book_contract_time,
+			expected_money,
+			account_manager_id,
+			account_name,
+			project_name,
+			project_bg_description,
+			owned_industry,
+			proc_ins_id,
+			project_file,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			del_flag,
+			view_permission,
+			status,
+			is_start,
+			applicant_id,
+			apply_date
+		) VALUES (
+			#{id},
+			#{contractType},
+			#{isBid},
+			#{expectedBidTime},
+			#{establishmentTime},
+			#{bookContractTime},
+			#{expectedMoney},
+			#{accountManager.id},
+			#{accountName},
+			#{projectName},
+			#{projectBgDescription},
+			#{ownedIndustry},
+			#{procInsId},
+			#{projectFile},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{delFlag},
+			#{viewPermission},
+			#{status},
+			#{isStart},
+			#{applicant.id},
+			#{applyDate}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_project_approval SET 	
+			contract_type = #{contractType},
+			is_bid = #{isBid},
+			expected_bid_time = #{expectedBidTime},
+			establishment_time = #{establishmentTime},
+			book_contract_time = #{bookContractTime},
+			expected_money = #{expectedMoney},
+			account_manager_id = #{accountManager.id},
+			business_manager_id = #{businessManager.id},
+			technical_manager_id = #{technicalManager.id},
+			project_manager_id = #{projectManager.id},
+			account_name = #{accountName},
+			project_no = #{projectNo},
+			project_name = #{projectName},
+			project_bg_description = #{projectBgDescription},
+			owned_industry = #{ownedIndustry},
+			proc_ins_id = #{procInsId},
+			project_file = #{projectFile},
+			marketing_director_opinion = #{marketingDirectorOpinion},
+			vice_minister_opinion = #{viceMinisterOpinion},
+			pre_sales_manager_opinion = #{preSalesManagerOpinion},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			view_permission = #{viewPermission},
+			status = #{status},
+			is_start = #{isStart},
+			applicant_id = #{applicant.id},
+			apply_date = #{applyDate}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_project_approval SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

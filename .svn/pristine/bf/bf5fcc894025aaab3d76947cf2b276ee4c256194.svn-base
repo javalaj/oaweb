@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaContractDao">
+    
+	<sql id="oaContractColumns">
+		a.id AS "id",
+		a.cname AS "cname",
+		a.pname AS "pname",
+		a.ctype AS "ctype",
+		a.content AS "content",
+		a.utype AS "utype",
+		a.owner AS "owner",
+		a.ownerinfo AS "ownerinfo",
+		a.money AS "money",
+		a.cdate AS "cdate",
+		a.warrantytime AS "warrantytime",
+		a.warrantymoney AS "warrantymoney",
+		a.indate AS "indate",
+		a.cstate AS "cstate",
+		a.isback AS "isback",
+		a.isover AS "isover",
+		a.contract_degital AS "contractDegital",
+		a.contract_scanner AS "contractScanner",
+		a.punish AS "punish",
+		a.norecive AS "norecive",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="oaContractJoins">
+	</sql>
+    
+	<select id="get" resultType="OaContract">
+		SELECT 
+			<include refid="oaContractColumns"/>
+		FROM oa_contract a
+		<include refid="oaContractJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaContract">
+		SELECT 
+			<include refid="oaContractColumns"/>
+		FROM oa_contract a
+		<include refid="oaContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="ctype != null and ctype != ''">
+				AND a.ctype = #{ctype}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContract">
+		SELECT 
+			<include refid="oaContractColumns"/>
+		FROM oa_contract a
+		<include refid="oaContractJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract(
+			id,
+			cname,
+			pname,
+			ctype,
+			content,
+			utype,
+			owner,
+			ownerinfo,
+			money,
+			cdate,
+			warrantytime,
+			warrantymoney,
+			indate,
+			cstate,
+			isback,
+			isover,
+			contract_degital,
+			contract_scanner,
+			punish,
+			norecive,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{cname},
+			#{pname},
+			#{ctype},
+			#{content},
+			#{utype},
+			#{owner},
+			#{ownerinfo},
+			#{money},
+			#{cdate},
+			#{warrantytime},
+			#{warrantymoney},
+			#{indate},
+			#{cstate},
+			#{isback},
+			#{isover},
+			#{contractDegital},
+			#{contractScanner},
+			#{punish},
+			#{norecive},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract SET 	
+			cname = #{cname},
+			pname = #{pname},
+			ctype = #{ctype},
+			content = #{content},
+			utype = #{utype},
+			owner = #{owner},
+			ownerinfo = #{ownerinfo},
+			money = #{money},
+			cdate = #{cdate},
+			warrantytime = #{warrantytime},
+			warrantymoney = #{warrantymoney},
+			indate = #{indate},
+			cstate = #{cstate},
+			isback = #{isback},
+			isover = #{isover},
+			contract_degital = #{contractDegital},
+			contract_scanner = #{contractScanner},
+			punish = #{punish},
+			norecive = #{norecive},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

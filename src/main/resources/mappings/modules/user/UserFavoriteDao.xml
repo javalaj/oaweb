@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.user.dao.UserFavoriteDao">
+
+	<sql id="userFavoriteColumns">
+		a.id AS "id",
+		a.update_date AS "updateDate",
+		a.title AS
+		"title",
+		a.url AS "url",
+		a.del_flag AS "delFlag",
+		a.create_by AS
+		"createBy.id",
+		a.type AS "type",
+		a.sign AS "sign"
+	</sql>
+
+	<sql id="userFavoriteJoins">
+	</sql>
+
+	<select id="findCountByTypeSign" resultType="java.lang.Integer">
+		SELECT COUNT(*) FROM
+		user_favorite a WHERE a.sign=#{sign} AND
+		a.create_by=#{createBy.id} AND
+		a.del_flag = #{DEL_FLAG_NORMAL}
+	</select>
+
+	<select id="get" resultType="UserFavorite">
+		SELECT
+		<include refid="userFavoriteColumns" />
+		FROM user_favorite a
+		<include refid="userFavoriteJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="UserFavorite">
+		SELECT
+		<include refid="userFavoriteColumns" />
+		FROM user_favorite a
+		<include refid="userFavoriteJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{createBy.id}
+			<if test="type != null and type != ''">
+				AND a.type IN (${type})
+			</if>
+			<if test="title != null and title != ''">
+				AND a.title LIKE
+				<if test="dbName == 'oracle'">'%'||#{title}||'%'</if>
+				<if test="dbName == 'mssql'">'%'+#{title}+'%'</if>
+				<if test="dbName == 'mysql'">concat('%',#{title},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="UserFavorite">
+		SELECT
+		<include refid="userFavoriteColumns" />
+		FROM user_favorite a
+		<include refid="userFavoriteJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO user_favorite(
+		id,
+		update_date,
+		title,
+		url,
+		del_flag,
+		create_by,
+		type,
+		sign
+		) VALUES (
+		#{id},
+		#{updateDate},
+		#{title},
+		#{url},
+		#{delFlag},
+		#{createBy.id},
+		#{type},
+		#{sign}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE user_favorite SET
+		update_date = #{updateDate},
+		title = #{title},
+		url = #{url},
+		type = #{type},
+		sign =#{sign}
+		WHERE id =
+		#{id}
+	</update>
+
+	<update id="delete">
+		UPDATE user_favorite SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	<update id="deleteBySign">
+		UPDATE user_favorite SET
+		del_flag = #{DEL_FLAG_DELETE}
+		WHERE sign = #{sign}
+	</update>
+
+
+	<select id="findTypeList"
+		resultType="com.thinkgem.jeesite.modules.user.util.FavoriteMapUtil">
+		SELECT
+		a.type AS type ,COUNT(a.type) AS num
+		FROM user_favorite a
+		<include refid="userFavoriteJoins" />
+		WHERE
+		a.del_flag = #{DEL_FLAG_NORMAL} AND a.create_by=#{createBy.id}
+		GROUP
+		BY a.type
+	</select>
+</mapper>

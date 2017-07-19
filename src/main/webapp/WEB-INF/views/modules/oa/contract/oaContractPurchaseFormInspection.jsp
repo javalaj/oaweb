@@ -1,0 +1,85 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>采购合同管理</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		var validateForm;
+		function doSubmit(){//回调函数，在编辑和保存动作时，供openDialog调用提交表单。
+		  if(validateForm.form()){
+			$("#inputForm").submit();
+			 return true;
+		  }
+		  return false;
+		}
+		$(document).ready(function() {
+			//$("#name").focus();
+			validateForm=$("#inputForm").validate({
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍候...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+			
+			$("#projectId").change(function(){  
+				reloadOaContractSales($(this).val());
+			});
+			
+		});
+		
+		function reloadOaContractSales(projectIdx){
+			$.ajax({
+				type: "POST",
+				url: "${ctx}/oa/contract/oaContractSales/getOaContractSalesList",
+				data: {projectId: projectIdx},
+				dataType: 'json',
+				success: function(data){
+					$("#s2id_contractSalesId").children("a").children("span.select2-chosen").empty();
+					$("#contractSalesId").empty();
+					$.each(data, function(index,item){
+						$("#contractSalesId").append("<option value='"+item.id+"'>["+item.contractNo+"]"+item.contractName+"</option>");
+					});
+				}
+			});
+			
+		}
+	</script>
+</head>
+<body>
+	<form:form id="inputForm" modelAttribute="oaContractPurchase" action="${ctx}/oa/contract/oaContractPurchase/inspection" method="post" class="form-horizontal">
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>
+			<table class="table table-bordered  table-condensed dataTables-example dataTable no-footer">
+				<tr>
+					<td class="width-15 active" >合同编号</td>
+					<td class="width-35" >
+						${oaContractPurchase.contractNo}
+					</td>
+				</tr>
+				<tr>
+					<td class="width-15 active" >合同名称</td>
+					<td class="width-35" >
+						${oaContractPurchase.contractName}
+					</td>
+				</tr>
+				<tr>
+					<td class="width-15 active" >验货单</td>
+					<td class="width-35" >
+						<form:hidden id="inspectionFiles" path="inspectionFiles" htmlEscape="false" maxlength="1000" class="input-xlarge"/>
+						<sys:ckfinder input="inspectionFiles" type="files" uploadPath="/oa/contract/oaContractPurchase" selectMultiple="true"/>
+					</td>
+				</tr>
+			</table>
+	</form:form>
+</body>
+</html>

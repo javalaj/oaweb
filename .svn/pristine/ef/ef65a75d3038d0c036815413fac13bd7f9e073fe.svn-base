@@ -1,0 +1,39 @@
+<%@ tag language="java" pageEncoding="UTF-8"%>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<%@ attribute name="searchButtonCssClass" type="java.lang.String" required="false"%>
+<%@ attribute name="paddingTop" type="java.lang.String" required="false"%>
+<%@ attribute name="searchButtonCssStyle" type="java.lang.String" required="false"%>
+<%@ attribute name="cancelSelector" type="java.lang.String" required="false" description="可点击元素的元素选择器，点击元素后取消搜索"%>
+<script type="text/javascript">
+$(document).ready(function() {
+	$("div.search_div").css("max-height",$(document).height()-60);
+	$("${cancelSelector}").click(function(){
+		searchSlideToggle();
+	});
+});
+function searchSlideToggle(){
+	$('div.condition_div').slideToggle('slow');$('a.search_a').slideToggle('slow');
+}
+</script>
+<style>
+	.fa-search{
+		 margin-right: 4px;
+	}
+	font-14{
+		font-size: 14px;
+	}
+</style>
+<div style="height:40px;"></div>
+<div style="position: fixed; top: ${paddingTop}; left: 0; z-index: 996; width:100%">
+	<a class="search_a btn btn-sm font-14 ${searchButtonCssClass}" href="javascript:void(0);" style="width:100%;line-height:30px;height:40px;background-color: #e9e9e9;color:#8f8f94;${searchButtonCssStyle}" onclick="searchSlideToggle()">
+		<i class="fa fa-search "></i>搜索
+	</a>
+	<div class="condition_div" style="display:none;background-color: rgba(0,0,0,.3);">
+		<div style="height:5px;"></div>
+		<div class="search_div" style="overflow-y:auto;border: 1px solid #007aff; border-radius: 5px; padding:5px; margin: 0px 5px 5px 5px;background-color:white;">
+			<jsp:doBody></jsp:doBody>
+		</div>
+		<div style="height:5000px;width:100%;" onclick="searchSlideToggle()">
+		</div>
+	</div>
+</div>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractPurchasePayApprovalDao">
+    
+	<sql id="oaContractPurchasePayApprovalColumns">
+		a.id AS "id",
+		a.pay_approval_no AS "payApprovalNo",
+		a.applicant_id AS "applicant.id",
+		a.apply_date AS "applyDate",
+		a.oa_contract_purchase_stage_id AS "oaContractPurchaseStage.id",
+		a.contract_purchase_targeted_for AS "contractPurchaseTargetedFor",
+		a.pay_percent_money AS "payPercentMoney",
+		a.pay_money AS "payMoney",
+		a.content_description AS "contentDescription",
+		a.file AS "file",
+		a.accountmanageropinion AS "accountmanageropinion",
+		a.business_dept_linkman_opinion AS "businessDeptLinkmanOpinion",
+		a.project_manager_opinion AS "projectManagerOpinion",
+		a.finance_dept_payment_request AS "financeDeptPaymentRequest",
+		a.leader_opinion AS "leaderOpinion",
+		a.general_manager_opinion AS "generalManagerOpinion",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.proc_ins_id AS "procInsId",
+		a.status AS "status",
+		a.is_start AS "isStart",
+		a.engineering_dept_manager_opinion AS "engineeringDeptManagerOpinion",
+		a.tech_dept_vice_president_opinion AS "techDeptVicePresidentOpinion",
+		a.business_manager_opinion AS "businessManagerOpinion",
+		a.business_dept_vice_president_opinion AS "businessDeptVicePresidentOpinion",
+		a.finance_dept_vice_president_opinion AS "financeDeptVicePresidentOpinion",
+		u3.name AS "applicant.name",
+		u3.login_name AS "applicant.loginName"
+	</sql>
+	
+	<sql id="oaContractPurchasePayApprovalJoins">
+		LEFT JOIN sys_user u3 ON u3.id = a.applicant_id
+	</sql>
+    
+	<select id="get" resultType="OaContractPurchasePayApproval">
+		SELECT 
+			<include refid="oaContractPurchasePayApprovalColumns"/>
+		FROM oa_contract_purchase_pay_approval a
+		<include refid="oaContractPurchasePayApprovalJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="OaContractPurchasePayApproval">
+		SELECT 
+			<include refid="oaContractPurchasePayApprovalColumns"/>
+		FROM oa_contract_purchase_pay_approval a
+		<include refid="oaContractPurchasePayApprovalJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	
+	<select id="getByOaContractPurchaseStageId" resultType="OaContractPurchasePayApproval">
+		SELECT 
+			<include refid="oaContractPurchasePayApprovalColumns"/>
+		FROM oa_contract_purchase_pay_approval a
+		<include refid="oaContractPurchasePayApprovalJoins"/>
+		WHERE a.oa_contract_purchase_stage_id = #{oaContractPurchaseStageId} and a.del_flag = '0'
+	</select>
+	
+	<select id="findList" resultType="OaContractPurchasePayApproval">
+		SELECT 
+			<include refid="oaContractPurchasePayApprovalColumns"/>
+		FROM oa_contract_purchase_pay_approval a
+		<include refid="oaContractPurchasePayApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaContractPurchasePayApproval">
+		SELECT 
+			<include refid="oaContractPurchasePayApprovalColumns"/>
+		FROM oa_contract_purchase_pay_approval a
+		<include refid="oaContractPurchasePayApprovalJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findOaProjectsBeenLinkedToOaContractPurchase" resultType="OaProject">
+		SELECT 
+			a.project_id AS "id",
+			p1.project_no AS "projectNo",
+			p1.project_name AS "projectName"
+		FROM oa_contract_purchase a
+		LEFT JOIN oa_project p1 on p1.id=a.project_id 
+		GROUP BY a.project_id;
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract_purchase_pay_approval(
+			id,
+			pay_approval_no,
+			applicant_id,
+			apply_date,
+			contract_purchase_targeted_for,
+			pay_percent_money,
+			content_description,
+			file,
+			accountmanageropinion,
+			business_dept_linkman_opinion,
+			project_manager_opinion,
+			finance_dept_payment_request,
+			leader_opinion,
+			general_manager_opinion,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			proc_ins_id,
+			status,
+			is_start,
+			engineering_dept_manager_opinion,
+			tech_dept_vice_president_opinion,
+			business_manager_opinion,
+			business_dept_vice_president_opinion,
+			finance_dept_vice_president_opinion,
+			oa_contract_purchase_stage_id,
+			pay_money
+		) VALUES (
+			#{id},
+			#{payApprovalNo},
+			#{applicant.id},
+			#{applyDate},
+			#{contractPurchaseTargetedFor},
+			#{payPercentMoney},
+			#{contentDescription},
+			#{file},
+			#{accountmanageropinion},
+			#{businessDeptLinkmanOpinion},
+			#{projectManagerOpinion},
+			#{financeDeptPaymentRequest},
+			#{leaderOpinion},
+			#{generalManagerOpinion},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{procInsId},
+			#{status},
+			#{isStart},
+			#{engineeringDeptManagerOpinion},
+			#{techDeptVicePresidentOpinion},
+			#{businessManagerOpinion},
+			#{businessDeptVicePresidentOpinion},
+			#{financeDeptVicePresidentOpinion},
+			#{oaContractPurchaseStage.id},
+			#{payMoney}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_purchase_pay_approval SET 	
+			pay_approval_no = #{payApprovalNo},
+			applicant_id = #{applicant.id},
+			apply_date = #{applyDate},
+			contract_purchase_targeted_for = #{contractPurchaseTargetedFor},
+			pay_percent_money = #{payPercentMoney},
+			content_description = #{contentDescription},
+			file = #{file},
+			accountmanageropinion = #{accountmanageropinion},
+			business_dept_linkman_opinion = #{businessDeptLinkmanOpinion},
+			project_manager_opinion = #{projectManagerOpinion},
+			finance_dept_payment_request = #{financeDeptPaymentRequest},
+			leader_opinion = #{leaderOpinion},
+			general_manager_opinion = #{generalManagerOpinion},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			proc_ins_id = #{procInsId},
+			status = #{status},
+			is_start = #{isStart},
+			engineering_dept_manager_opinion = #{engineeringDeptManagerOpinion},
+			tech_dept_vice_president_opinion = #{techDeptVicePresidentOpinion},
+			business_manager_opinion = #{businessManagerOpinion},
+			business_dept_vice_president_opinion = #{businessDeptVicePresidentOpinion},
+			finance_dept_vice_president_opinion = #{financeDeptVicePresidentOpinion},
+			oa_contract_purchase_stage_id = #{oaContractPurchaseStage.id},
+			pay_money = #{payMoney}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_purchase_pay_approval SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

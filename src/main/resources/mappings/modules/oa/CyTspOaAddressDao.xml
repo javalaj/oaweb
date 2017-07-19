@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.CyTspOaAddressDao">
+
+	<sql id="OaAderssColumns">
+		a.id AS "id",
+		a.user_id AS "urseId",
+		a.group_id AS "groupId",
+		a.name AS "name",
+		a.company AS "company",
+		a.position AS "position",
+		a.iphone AS "iphone",
+		a.oph AS "oph",
+		a.qq AS "qq",
+		a.email AS "email",
+		a.ofaddress AS "ofaddress",
+		a.dele_time AS "deleTiem",
+		a.dele_flag AS "deleFlag",
+		a.share_flag AS "shareFlag",
+		a.share_user_id AS "shareFlagUserId" 
+		
+	</sql>
+	<sql id="OaAderssJoins">
+		JOIN cy_tsp_oa_address_group u ON u.group_id=a.group_id
+		
+    </sql>
+	
+<!-- 	
+	  -->
+	<!-- 根据记录人ID查询个人通讯数据 -->
+	<select id="findList_Oadress" resultType="CyTspOaAddress">
+		SELECT  
+			<include refid="OaAderssColumns"/>
+		FROM cy_tsp_oa_address a 
+		
+		
+		 WHERE a.user_id=#{urseId} and a.dele_flag=0 
+		 <if test="groupId != null and groupId != ''">
+		 and a.group_id=#{groupId}
+		 </if>
+			<if test="name != null and name != ''">
+				AND a.name LIKE concat('%',#{name},'%')
+			</if>
+			<if test="iphone != null and iphone != ''">
+				AND a.iphone LIKE concat('%',#{iphone},'%')
+			</if>
+		
+	</select>
+	
+	<select id="getcytspoaaddress" resultType="CyTspOaAddress">
+	SELECT  
+			<include refid="OaAderssColumns"/>
+		FROM CY_TSP_OA_ADDRESS a WHERE a.id=#{id}
+	</select>
+	
+	<!-- 根据记录人ID查询个人通讯数据 -->
+	<select id="findAllOaAdressByGroupId" resultType="CyTspOaAddress">
+		SELECT  
+			<include refid="OaAderssColumns"/>
+		FROM cy_tsp_oa_address a 
+		 WHERE a.dele_flag=0 
+		 <if test="groupId != null and groupId != ''">
+		 and a.group_id=#{groupId}
+		 </if>
+	</select>
+	<!-- 共享联系人 -->
+	<update id="ShareContacts">
+	UPDATE CY_TSP_OA_ADDRESS SET share_flag=#{flag},share_user_id=#{shareFlagUserId} WHERE id=#{id}
+	</update>
+	<!-- 查询共享的联系人 -->
+	<select id="findList_ShareContactsList" resultType="CyTspOaAddress">
+		SELECT
+	 <include refid="OaAderssColumns"/>
+		FROM CY_TSP_OA_ADDRESS a
+		WHERE a.share_flag=0 and a.dele_flag=0
+	</select>
+	<!-- 取消分享 -->
+ 	<update id="offShare">
+	  UPDATE CY_TSP_OA_ADDRESS SET share_flag=#{flag} WHERE id=#{id} AND share_user_id=#{shareFlagUserId}
+	</update>
+	<!-- 导出 -->
+	<select id="findList" resultType="CyTspOaAddress">
+		SELECT
+	 <include refid="OaAderssColumns"/>
+		FROM CY_TSP_OA_ADDRESS a
+	</select>
+	<!-- 导入 -->
+	<insert id="insert">
+	INSERT INTO CY_TSP_OA_ADDRESS(id,user_id,group_id,name,company,position, iphone,oph,qq,email,ofaddress,dele_flag,share_flag) VALUES (#{id},#{urseId},#{groupId},#{name},#{company},#{position},#{iphone},#{oph},#{qq},#{email},#{ofaddress},#{deleFlag},#{shareFlag})
+	</insert>
+	<!-- 新建联系人 -->
+	<insert id="insertContacts">
+	INSERT INTO CY_TSP_OA_ADDRESS(id,user_id,group_id,name,company,position, iphone,oph,qq,email,ofaddress,dele_flag,share_flag) VALUES (#{id},#{urseId},#{groupId},#{name},#{company},#{position},#{iphone},#{oph},#{qq},#{email},#{ofaddress},#{deleFlag},#{shareFlag})
+	</insert>
+	<!-- 删除联系人 -->
+	<update id="delete">
+	  UPDATE CY_TSP_OA_ADDRESS SET dele_flag=1 WHERE id=#{id}
+	</update>
+	
+	<update id="upaddress">
+	 UPDATE CY_TSP_OA_ADDRESS SET group_id=#{groupId},name=#{name},company=#{company},position=#{position}, iphone=#{iphone},oph=#{oph},qq=#{qq},email=#{email},ofaddress=#{ofaddress}
+WHERE id=#{id}
+	
+	</update>
+	
+
+</mapper>

@@ -1,0 +1,372 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.service;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.activiti.engine.task.Task;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.service.CrudService;
+import com.thinkgem.jeesite.common.utils.DateUtils;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.act.service.ActTaskService;
+import com.thinkgem.jeesite.modules.oa.actRouting.ActRouting;
+import com.thinkgem.jeesite.modules.oa.dao.OaOutworkDao;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.OaOutwork;
+import com.thinkgem.jeesite.modules.oa.entity.filling.OaFilling;
+import com.thinkgem.jeesite.modules.oa.service.filling.OaFillingService;
+import com.thinkgem.jeesite.modules.oa.service.flowback.OaFlowBackService;
+import com.thinkgem.jeesite.modules.sys.utils.OrdersUtils;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+import com.thinkgem.jeesite.modules.sys.utils.WorkflowUtils;
+
+/**
+ * 出差申请业务表Service
+ * 
+ * @author liuxin
+ * @version 2016-11-18
+ */
+@Service
+@Transactional(readOnly = true)
+public class OaOutworkService extends CrudService<OaOutworkDao, OaOutwork> {
+	private static final String PROC_DEF_KEY = "oa_outwork";//流程定义标示
+	@Autowired
+	private ActTaskService actTaskService;// 工作流业务类
+	@Autowired
+	private OaFillingService oaFillingService;// 归档表
+	@Autowired
+	private OaNotifyService oaNotifyService;// 抄送通知的service
+	@Autowired
+	private OaOvertimeService oaOvertimeService;// 抄送通知的service
+												// OaOvertimeService
+	@Autowired
+	private OaFlowBackService oaFlowBackService;// 流程撤回业务service
+
+	public OaOutwork get(String id) {
+		return super.get(id);
+	}
+
+	public List<OaOutwork> findList(OaOutwork oaOutwork) {
+		return super.findList(oaOutwork);
+	}
+
+	public Page<OaOutwork> findPage(Page<OaOutwork> page, OaOutwork oaOutwork) {
+		return super.findPage(page, oaOutwork);
+	}
+
+	@Transactional(readOnly = false)
+	public void delete(OaOutwork oaOutwork) {
+		super.delete(oaOutwork);
+	}
+
+	public OaOutwork getByProcInsId(String procInsId) {
+		return dao.getByProcInsId(procInsId);
+	}
+
+	/**
+	 * save业务逻辑方法
+	 */
+	@Transactional(readOnly = false)
+	public void save(OaOutwork oaOutwork, String flag) {
+		// 文件编号
+		if (StringUtils.isBlank(oaOutwork.getFileId())) {
+			oaOutwork.setFileId(OrdersUtils.getGenerateOrderNo8("CY"));
+		}
+		if (StringUtils.isBlank(oaOutwork.getOfficeName())) {
+			// 查询出部门名称，并设置
+			oaOutwork.setOfficeName(UserUtils.getUser().getOffice().getName());
+		}
+		super.save(oaOutwork);// 该步骤为默认继承步骤，直接保存该记录。
+		Map<String, Object> vars = new HashMap<String, Object>();
+		// 这里put 流程图上所有的需要值，以便于activiti流插件，的控制
+		vars.put("apply", UserUtils.getUser().getLoginName());// 发起人登陆名字
+		String upper = ActRouting.getUpperL();
+		vars.put("upper", upper);// 上级登陆名字
+		String deputyPerson = ActRouting.getDeputyL();
+		vars.put("deputyPerson", deputyPerson);// 部门副总的登陆名字（上级领导的上级领导）
+		vars.put("next", false);// 流程控制特殊跳转标志位 boolean
+		long time = oaOutwork.getEndTime().getTime() - oaOutwork.getStartTime().getTime();
+		if (deputyPerson.equals(upper) || time <= 2 * 24 * 60 * 60 * 1000) {// 判断是否还有上级？？？？待修改,假设老板是cz
+			// 时间小于2天的，跳过副总审核
+			vars.put("next", true);// 没有上级
+		}
+		//
+		// new - need
+		//
+		vars.put("boss", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "boss", Global.getDefaultUser()));// 总经理
+		//
+		// System.out.println("outwork----timelong----:" + time);
+		if (time <= 5 * 24 * 60 * 60 * 1000) {
+			vars.put("next2", true);
+		} else {
+			vars.put("next2", false);
+		}
+		//
+		//
+		//
+		vars.put("flag", true);// 流程控制标志位 boolean
+		vars.put("filling", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "filling", Global.getDefaultUser()));// 人力资源登陆名字
+		vars.put("accountant", WorkflowUtils.getWorkflowVarValue(PROC_DEF_KEY, "accountant", Global.getDefaultUser()));// 财务出差单据审核员
+		if (StringUtils.isBlank(oaOutwork.getProcInsId())) {
+			// 流程关联id为null所以为第一次创建
+			// 标题【名字 时间】2016-6-8
+			oaOutwork.setProcInsId(actTaskService.startProcess("oa_outwork", "oa_outwork", oaOutwork.getId(),
+					"出差申请流程【" + UserUtils.getUser().getName() + " " + DateUtils.getDate() + "】", vars));// 关键步骤，获取procInsId，否则推送失败
+			// 线程暂停两秒，使得流程流转信息排序正确，防止开始和申请排序颠倒
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			// 执行下一步
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaOutwork.getProcInsId(), "【提交】", null, vars);
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveINIT(oaOutwork.getProcInsId(), list.get(0),
+						"/oa/oaOutwork/form?flag=view&id=" + oaOutwork.getId());
+			}
+		} else {
+			// 打回后，以及第一次流程启动成功后的相同步骤
+			oaOutwork.setExamname(null);
+			oaOutwork.setExamname2(null);
+			oaOutwork.setExamtext(null);
+			oaOutwork.setExamtext2(null);
+			String examtext = "【重新提交】";
+			if (flag.equals("1")) {
+				vars.put("flag", false);// 流程控制标志位 boolean
+				examtext = "【作废】";
+			}
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				actTaskService.complete(list.get(0).getId(), oaOutwork.getProcInsId(), examtext, null, vars);
+				if (flag.equals("1")) {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNULL(oaOutwork.getProcInsId());
+				} else {
+					// 流程撤回操作数据设置
+					oaFlowBackService.saveNOW(oaOutwork.getProcInsId(), list.get(0));
+				}
+			}
+			super.save(oaOutwork);// 再次更新数据
+		}
+
+	}
+
+	/**
+	 * dealExam业务逻辑方法
+	 * 
+	 * exam 1不同意 ，0同意
+	 */
+	@Transactional(readOnly = false)
+	public void dealExam(OaOutwork oaOutwork, String exam, int state, String newsign, String examtextNew) {
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		if (exam.equals("0")) {// 上级审核同意
+			// 定制vars
+			vars.put("flag", true);// 流程控制标志位 boolean
+			examStr = "【同意】";
+		} else {
+			// 上级审核不同意
+			vars.put("flag", false);// 流程控制标志位 boolean
+			examStr = "【不同意】";
+			oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/oaOutwork/form?id=" + oaOutwork.getId(), "您提交的出差申请流程【"
+					+ DateUtils.formatDate(oaOutwork.getCreateDate()) + "】已被【" + UserUtils.getUser().getName() + "】退回",
+					oaOutwork.getCreateBy().getId());
+		}
+		// 审批人签名，编辑意见
+		if (state == 1) {
+			// 上级领导审核完毕
+			oaOutwork.setExamname(UserUtils.getUser().getName());
+			examStr += oaOutwork.getExamtext();
+			oaOutwork.setExamtext(examStr);
+		} else {
+			if (StringUtils.isBlank(newsign)) {
+				// 部门副总审核完毕
+				oaOutwork.setExamname2(UserUtils.getUser().getName());
+				examStr += examtextNew;
+				oaOutwork.setExamtext2(examStr);
+			} else {
+				// 总经理审核完毕
+				oaOutwork.setExamname21(UserUtils.getUser().getName());
+				examStr += examtextNew;
+				oaOutwork.setExamtext21(examStr);
+			}
+		}
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId()).list();
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaOutwork.getProcInsId(), examStr, null, vars);
+			// 流程撤回操作数据设置
+			oaFlowBackService.saveNOW(oaOutwork.getProcInsId(), list.get(0));
+		}
+		super.save(oaOutwork);// 更新业务表字段
+	}
+
+	/**
+	 * dealExam3业务逻辑方法
+	 * 
+	 * 
+	 * sign
+	 * 
+	 * 
+	 * 新增加的---1-出差结束确认时间填写---2-上级领导审核---3-财务报销状态填写----意见提交
+	 * 
+	 * exam 1不同意 ，0同意
+	 */
+	@Transactional(readOnly = false)
+	public void dealExam3(OaOutwork oaOutwork, String exam, int sign, String toSendMessageUserid) {
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		switch (sign) {
+		case 1:
+			examStr = "【提交】";
+			OaNotify oaNotify = new OaNotify();
+			if (toSendMessageUserid != null && toSendMessageUserid.length() > 0) {
+				oaNotify.setType("4");// 流程通知配置为4
+				oaNotify.setStatus("1");// 貌似是已发
+				oaNotify.setTitle(addTitle(oaOutwork));
+				oaNotify.setOaNotifyRecordIds(toSendMessageUserid);
+				oaNotify.setContent("@@proNotify@@/oa/a/oa/oaOutwork/form?flag=view&id=" + oaOutwork.getId());
+				oaNotifyService.save(oaNotify);
+			}
+			break;
+		case 2:
+			if (exam.equals("0")) {
+				// 同意
+				vars.put("flag", true);
+				examStr = "【同意】";
+				examStr += oaOutwork.getExamtext3();
+				oaOutwork.setExamname3(UserUtils.getUser().getName());
+				oaOutwork.setExamtext3(examStr);
+			} else {
+				// 不同意
+				vars.put("flag", false);
+				examStr = "【不同意】";
+				examStr += oaOutwork.getExamtext3();
+				oaOutwork.setExamname3(UserUtils.getUser().getName());
+				oaOutwork.setExamtext3(examStr);
+				oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/oaOutwork/form?id=" + oaOutwork.getId(),
+						"您提交的出差申请流程【" + DateUtils.formatDate(oaOutwork.getCreateDate()) + "】已被【"
+								+ UserUtils.getUser().getName() + "】退回",
+						oaOutwork.getCreateBy().getId());
+			}
+			break;
+		case 3:
+			oaOutwork.setExamname4(UserUtils.getUser().getName());
+			examStr = "【提交】";
+			oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/oaOutwork/form?flag=view&id=" + oaOutwork.getId(),
+					"您提交的出差申请流程【" + DateUtils.formatDate(oaOutwork.getCreateDate()) + "】已被【"
+							+ UserUtils.getUser().getName() + "】办结",
+					oaOutwork.getCreateBy().getId());
+			break;
+		default:
+			break;
+		}
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId()).list();
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaOutwork.getProcInsId(), examStr, null, vars);
+			if (sign == 3) {
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNULL(oaOutwork.getProcInsId());
+			} else {
+				// 流程撤回操作数据设置
+				oaFlowBackService.saveNOW(oaOutwork.getProcInsId(), list.get(0));
+			}
+		}
+		super.save(oaOutwork);// 更新业务表字段
+	}
+
+	/**
+	 * dealFilling业务逻辑方法
+	 * 
+	 */
+	@Transactional(readOnly = false)
+	public void dealFilling(OaOutwork oaOutwork, String exam, String ftext) {
+		List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+				.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId()).list();
+		//
+		Map<String, Object> vars = new HashMap<String, Object>();
+		String examStr = "";
+		if (exam.equals("0")) {// 上级审核同意
+			// 定制vars
+			vars.put("flag", true);// 流程控制标志位 boolean
+			examStr = "【同意】";
+			//
+			// 归档表数据录入
+			OaFilling oaFilling = new OaFilling();
+			oaFilling.setApplyDate(oaOutwork.getCreateDate());
+			oaFilling.setApplyReason(oaOutwork.getTask());
+			oaFilling.setApplyType("出差");
+			// oaFilling.setApplyTypeLit(DictUtils.getDictValue(oaOutwork.getVacatetype(),
+			// "pro_vacate_type", ""));// 通过数据字典去取得然后存中文
+			oaFilling.setApplyUser(oaOutwork.getCreateBy());
+			oaFilling.setFillingDate(new Date());
+			oaFilling.setHours(oaOutwork.getTime());
+			oaFilling.setBeginDate(oaOutwork.getStartTime());
+			oaFilling.setEndDate(oaOutwork.getEndTime());
+			oaFillingService.save(oaFilling);
+		} else {
+			// 上级审核不同意
+			vars.put("flag", false);// 流程控制标志位 boolean
+			examStr = "【不同意】";
+			oaOvertimeService.sendMsg("@@proNotify@@/oa/a/oa/oaOutwork/form?flag=view&id=" + oaOutwork.getId(),
+					"您提交的出差申请流程【" + DateUtils.formatDate(oaOutwork.getCreateDate()) + "】已被【"
+							+ UserUtils.getUser().getName() + "】退回",
+					oaOutwork.getCreateBy().getId());
+		}
+		if (list.size() > 0) {
+			actTaskService.complete(list.get(0).getId(), oaOutwork.getProcInsId(), examStr + "【归档】" + ftext, null,
+					vars);
+			// 流程撤回操作数据设置
+			oaFlowBackService.saveNOW(oaOutwork.getProcInsId(), list.get(0));
+		}
+
+	}
+
+	/**
+	 * 判断当前用户是否需要去form页面创建，审批，修改这个流程
+	 */
+	public boolean isDeal(OaOutwork oaOutwork) {
+		if (StringUtils.isBlank(oaOutwork.getId())) {
+			return true;
+		} else {
+			List<Task> list = actTaskService.getProcessEngine().getTaskService().createTaskQuery()
+					.taskAssignee(UserUtils.getUser().getLoginName()).processInstanceId(oaOutwork.getProcInsId())
+					.list();
+			if (list.size() > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** 加入流程标题 */
+	public String addTitle(OaOutwork oaOutwork) {
+		String name = null;
+		String date = null;
+		if (StringUtils.isNotBlank(oaOutwork.getId())) {
+			name = UserUtils.get(oaOutwork.getCreateBy().getId()).getName();
+			date = DateUtils.formatDate(oaOutwork.getCreateDate());
+		} else {
+			name = UserUtils.getUser().getName();
+			date = DateUtils.getDate();
+		}
+		return "出差申请流程【" + name + " " + date + "】";
+	}
+}

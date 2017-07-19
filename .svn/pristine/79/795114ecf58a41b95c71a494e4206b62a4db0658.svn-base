@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.computerpurchase.ComputerPurchaseDao">
+    
+	<sql id="computerPurchaseColumns">
+		a.id AS "id",
+		a.apply_dept AS "applyDept",
+		a.apply_time AS "applyTime",
+		a.user_name AS "userName.id",
+		a.configure AS "configure",
+		a.demand_model AS "demandModel",
+		a.cpu AS "cpu",
+		a.memory AS "memory",
+		a.hard_disk AS "hardDisk",
+		a.video_card AS "videoCard",
+		a.other AS "other",
+		a.dept_director_suggestion AS "deptDirectorSuggestion",
+		a.deputy_manager_suggestion AS "deputyManagerSuggestion",
+		a.admin_dept_manager_suggestion AS "adminDeptManagerSuggestion",
+		a.general_manager_suggestion AS "generalManagerSuggestion",
+		a.purchaser AS "purchaser",
+		a.admin AS "admin",
+		a.proc_ins_id AS "procInsId",
+		a.title AS "title",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.status AS "status",
+		a.is_start AS "isStart",
+		a.del_flag AS "delFlag",
+		u15.login_name AS "userName.loginName",
+		u15.name as "userName.name",
+		a.dept_id as "deptId"
+	</sql>
+	
+	<sql id="computerPurchaseJoins">
+	LEFT JOIN sys_user u15 ON u15.id = a.user_name
+	</sql>
+    
+	<select id="get" resultType="ComputerPurchase">
+		SELECT 
+			<include refid="computerPurchaseColumns"/>
+		FROM computer_purchase a
+		<include refid="computerPurchaseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="getByProcInsId" resultType="ComputerPurchase">
+		SELECT 
+			<include refid="computerPurchaseColumns"/>
+		FROM computer_purchase a
+		<include refid="computerPurchaseJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>	
+	
+	<select id="findList" resultType="ComputerPurchase">
+		SELECT 
+			<include refid="computerPurchaseColumns"/>
+		FROM computer_purchase a
+			<include refid="computerPurchaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		<if test="beginApplyTime != null and endApplyTime != null and beginApplyTime != '' and endApplyTime != ''">
+			AND a.apply_time BETWEEN #{beginApplyTime} AND #{endApplyTime}
+		</if>	
+		<if test="endApplyTime != null and endApplyTime != ''">
+			AND a.apply_time <![CDATA[<=]]> #{endApplyTime}
+		</if>
+		<if test="beginApplyTime != null and beginApplyTime != ''">
+			AND a.apply_time <![CDATA[>=]]> #{beginApplyTime}
+		</if>	
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="ComputerPurchase">
+		SELECT 
+			<include refid="computerPurchaseColumns"/>
+		FROM computer_purchase a
+		<include refid="computerPurchaseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO computer_purchase(
+			id,
+			apply_dept,
+			apply_time,
+			user_name,
+			configure,
+			demand_model,
+			cpu,
+			memory,
+			hard_disk,
+			video_card,
+			other,
+			dept_director_suggestion,
+			deputy_manager_suggestion,
+			admin_dept_manager_suggestion,
+			general_manager_suggestion,
+			purchaser,
+			admin,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			status,
+			is_start,
+			dept_id
+		) VALUES (
+			#{id},
+			#{applyDept},
+			#{applyTime},
+			#{userName.id},
+			#{configure},
+			#{demandModel},
+			#{cpu},
+			#{memory},
+			#{hardDisk},
+			#{videoCard},
+			#{other},
+			#{deptDirectorSuggestion},
+			#{deputyManagerSuggestion},
+			#{adminDeptManagerSuggestion},
+			#{generalManagerSuggestion},
+			#{purchaser},
+			#{admin},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{status},
+			#{isStart},
+			#{deptId}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE computer_purchase SET 	
+			apply_dept = #{applyDept},
+			apply_time = #{applyTime},
+			user_name = #{userName.id},
+			configure = #{configure},
+			demand_model = #{demandModel},
+			cpu = #{cpu},
+			memory = #{memory},
+			hard_disk = #{hardDisk},
+			video_card = #{videoCard},
+			other = #{other},
+			dept_director_suggestion = #{deptDirectorSuggestion},
+			deputy_manager_suggestion = #{deputyManagerSuggestion},
+			admin_dept_manager_suggestion = #{adminDeptManagerSuggestion},
+			general_manager_suggestion = #{generalManagerSuggestion},
+			purchaser = #{purchaser},
+			admin = #{admin},
+			create_by = #{createBy.id},
+			create_date = #{createDate},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			status = #{status},
+			is_start = #{isStart},
+			dept_id = #{deptId}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE computer_purchase SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

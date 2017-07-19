@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaSpacialLoanDao">
+
+	<sql id="oaSpacialLoanColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS
+		"createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS
+		"updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.date AS "date",
+		a.file_id AS "fileId",
+		a.office_name AS "officeName",
+		a.job AS "job",
+		a.reason AS "reason",
+		a.money_string AS "moneyString",
+		a.money_double AS "moneyDouble",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname2 AS
+		"examname2",
+		a.examtext2 AS "examtext2",
+		a.examname3 AS "examname3",
+		a.examtext3 AS "examtext3",
+		a.examname4 AS "examname4",
+		a.examtext4 AS
+		"examtext4",
+		a.examname5 AS "examname5",
+		a.examtext5 AS "examtext5"
+	</sql>
+
+	<sql id="oaSpacialLoanJoins">
+	</sql>
+	<select id="getByProcInsId" resultType="OaSpacialLoan">
+		SELECT
+		<include refid="oaSpacialLoanColumns" />
+		FROM oa_spacial_loan a
+		<include refid="oaSpacialLoanJoins" />
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+	<select id="get" resultType="OaSpacialLoan">
+		SELECT
+		<include refid="oaSpacialLoanColumns" />
+		FROM oa_spacial_loan a
+		<include refid="oaSpacialLoanJoins" />
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findList" resultType="OaSpacialLoan">
+		SELECT
+		<include refid="oaSpacialLoanColumns" />
+		FROM oa_spacial_loan a
+		<include refid="oaSpacialLoanJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findAllList" resultType="OaSpacialLoan">
+		SELECT
+		<include refid="oaSpacialLoanColumns" />
+		FROM oa_spacial_loan a
+		<include refid="oaSpacialLoanJoins" />
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+
+	<insert id="insert">
+		INSERT INTO oa_spacial_loan(
+		id,
+		proc_ins_id,
+		create_by,
+		create_date,
+		update_by,
+		update_date,
+		remarks,
+		del_flag,
+		date,
+		file_id,
+		office_name,
+		job,
+		reason,
+		money_string,
+		money_double,
+		examname,
+		examtext,
+		examname2,
+		examtext2,
+		examname3,
+		examtext3,
+		examname4,
+		examtext4,
+		examname5,
+		examtext5
+		) VALUES (
+		#{id},
+		#{procInsId},
+		#{createBy.id},
+		#{createDate},
+		#{updateBy.id},
+		#{updateDate},
+		#{remarks},
+		#{delFlag},
+		#{date},
+		#{fileId},
+		#{officeName},
+		#{job},
+		#{reason},
+		#{moneyString},
+		#{moneyDouble},
+		#{examname},
+		#{examtext},
+		#{examname2},
+		#{examtext2},
+		#{examname3},
+		#{examtext3},
+		#{examname4},
+		#{examtext4},
+		#{examname5},
+		#{examtext5}
+		)
+	</insert>
+
+	<update id="update">
+		UPDATE oa_spacial_loan SET
+		proc_ins_id = #{procInsId},
+		update_by = #{updateBy.id},
+		update_date = #{updateDate},
+		remarks =
+		#{remarks},
+		date = #{date},
+		file_id = #{fileId},
+		office_name =
+		#{officeName},
+		job = #{job},
+		reason = #{reason},
+		money_string =
+		#{moneyString},
+		money_double = #{moneyDouble},
+		examname = #{examname},
+		examtext = #{examtext},
+		examname2 = #{examname2},
+		examtext2 =
+		#{examtext2},
+		examname3 = #{examname3},
+		examtext3 = #{examtext3},
+		examname4 = #{examname4},
+		examtext4 = #{examtext4},
+		examname5 =
+		#{examname5},
+		examtext5 = #{examtext5}
+		WHERE id = #{id}
+	</update>
+
+	<update id="delete">
+		UPDATE oa_spacial_loan SET
+		del_flag =
+		#{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+</mapper>

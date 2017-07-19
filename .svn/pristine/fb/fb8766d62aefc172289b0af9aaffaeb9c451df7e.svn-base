@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.contract.OaContractProtocolDao">
+    
+	<sql id="oaContractProtocolColumns">
+		a.id AS "id",
+		a.contract_no AS "contractNo",
+		a.contract_name AS "contractName",
+		a.contract_status AS "contractStatus",
+		a.project_id AS "project.id",
+		p1.project_no AS "project.projectNo",
+		p1.project_name AS "project.projectName",
+		a.project_old_name AS "projectOldName",
+		a.contract_type AS "contractType",
+		a.contract_money AS "contractMoney",
+		a.contract_time AS "contractTime",
+		a.cooperation_units AS "cooperationUnits",
+		a.cooperation_contents AS "cooperationContents",
+		a.contact AS "contact",
+		a.contact_number AS "contactNumber",
+		a.contract_end_time AS "contractEndTime",
+		a.filing_status AS "filingStatus",
+		a.contract_electronic_version AS "contractElectronicVersion",
+		a.contract_scan_attachment AS "contractScanAttachment",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="oaContractProtocolJoins">
+		LEFT JOIN oa_project p1 ON p1.id = a.project_id
+	</sql>
+    
+	<select id="get" resultType="OaContractProtocol">
+		SELECT 
+			<include refid="oaContractProtocolColumns"/>
+		FROM oa_contract_protocol a
+		<include refid="oaContractProtocolJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="OaContractProtocol">
+		SELECT 
+			<include refid="oaContractProtocolColumns"/>
+		FROM oa_contract_protocol a
+		<include refid="oaContractProtocolJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="contractNo != null and contractNo != ''">
+				AND a.contract_no LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractNo}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractNo}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractNo},'%')</if>
+			</if>
+			<if test="contractName != null and contractName != ''">
+				AND a.contract_name LIKE 
+					<if test="dbName == 'oracle'">'%'||#{contractName}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{contractName}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{contractName},'%')</if>
+			</if>
+			<if test="contractStatus != null and contractStatus != ''">
+				AND a.contract_status = #{contractStatus}
+			</if>
+			<if test="cooperationUnits != null and cooperationUnits != ''">
+				AND a.cooperation_units LIKE 
+					<if test="dbName == 'oracle'">'%'||#{cooperationUnits}||'%'</if>
+					<if test="dbName == 'mssql'">'%'+#{cooperationUnits}+'%'</if>
+					<if test="dbName == 'mysql'">concat('%',#{cooperationUnits},'%')</if>
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findListByProjectId" resultType="OaContractProtocol">
+		SELECT 
+			<include refid="oaContractProtocolColumns"/>
+		FROM oa_contract_protocol a
+		<include refid="oaContractProtocolJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<choose>
+				<when test="project == null">
+					AND (a.project_id = null OR a.project_id ='')
+				</when>
+				<otherwise>
+					AND a.project_id = #{project.id}
+				</otherwise>
+			</choose>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>	
+	
+	<select id="findAllList" resultType="OaContractProtocol">
+		SELECT 
+			<include refid="oaContractProtocolColumns"/>
+		FROM oa_contract_protocol a
+		<include refid="oaContractProtocolJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_contract_protocol(
+			id,
+			contract_no,
+			contract_name,
+			contract_status,
+			project_id,
+			project_old_name,
+			contract_type,
+			contract_money,
+			contract_time,
+			cooperation_units,
+			cooperation_contents,
+			contact,
+			contact_number,
+			contract_end_time,
+			filing_status,
+			contract_electronic_version,
+			contract_scan_attachment,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{contractNo},
+			#{contractName},
+			#{contractStatus},
+			#{project.id},
+			#{projectOldName},
+			#{contractType},
+			#{contractMoney},
+			#{contractTime},
+			#{cooperationUnits},
+			#{cooperationContents},
+			#{contact},
+			#{contactNumber},
+			#{contractEndTime},
+			#{filingStatus},
+			#{contractElectronicVersion},
+			#{contractScanAttachment},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_contract_protocol SET 	
+			contract_no = #{contractNo},
+			contract_name = #{contractName},
+			contract_status = #{contractStatus},
+			project_id = #{project.id},
+			project_old_name = #{projectOldName},
+			contract_type = #{contractType},
+			contract_time = #{contractTime},
+			cooperation_units = #{cooperationUnits},
+			cooperation_contents = #{cooperationContents},
+			contact = #{contact},
+			contact_number = #{contactNumber},
+			contract_end_time = #{contractEndTime},
+			filing_status = #{filingStatus},
+			contract_electronic_version = #{contractElectronicVersion},
+			contract_scan_attachment = #{contractScanAttachment},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_contract_protocol SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

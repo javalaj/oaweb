@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.OaSealUseDao">
+    
+	<sql id="oaSealUseColumns">
+		a.id AS "id",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		a.file_id AS "fileId",
+		a.office_name AS "officeName",
+		a.date AS "date",
+		a.seal_type AS "sealType",
+		a.isout AS "isout",
+		a.matter AS "matter",
+		a.examname AS "examname",
+		a.examtext AS "examtext",
+		a.examname2 AS "examname2",
+		a.examtext2 AS "examtext2"
+	</sql>
+	
+	<sql id="oaSealUseJoins">
+	</sql>
+    
+	<select id="get" resultType="OaSealUse">
+		SELECT 
+			<include refid="oaSealUseColumns"/>
+		FROM oa_seal_use a
+		<include refid="oaSealUseJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	 <select id="getByProcInsId" resultType="OaSealUse">
+    	select 
+    		<include refid="oaSealUseColumns"/>
+    	from oa_seal_use a 
+    		<include refid="oaSealUseJoins"/>
+    	where a.proc_ins_id = #{procInsId}
+    </select>
+	
+	<select id="findList" resultType="OaSealUse">
+		SELECT 
+			<include refid="oaSealUseColumns"/>
+		FROM oa_seal_use a
+		<include refid="oaSealUseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			<if test="id != null and id != ''">
+				AND a.id = #{id}
+			</if>
+			<if test="procInsId != null and procInsId != ''">
+				AND a.proc_ins_id = #{procInsId}
+			</if>
+			<if test="delFlag != null and delFlag != ''">
+				AND a.del_flag = #{delFlag}
+			</if>
+			<if test="fileId != null and fileId != ''">
+				AND a.file_id = #{fileId}
+			</if>
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="OaSealUse">
+		SELECT 
+			<include refid="oaSealUseColumns"/>
+		FROM oa_seal_use a
+		<include refid="oaSealUseJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO oa_seal_use(
+			id,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag,
+			file_id,
+			office_name,
+			date,
+			seal_type,
+			isout,
+			matter,
+			examname,
+			examtext,
+			examname2,
+			examtext2
+		) VALUES (
+			#{id},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag},
+			#{fileId},
+			#{officeName},
+			#{date},
+			#{sealType},
+			#{isout},
+			#{matter},
+			#{examname},
+			#{examtext},
+			#{examname2},
+			#{examtext2}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE oa_seal_use SET 	
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks},
+			file_id = #{fileId},
+			office_name = #{officeName},
+			date = #{date},
+			seal_type = #{sealType},
+			isout = #{isout},
+			matter = #{matter},
+			examname = #{examname},
+			examtext = #{examtext},
+			examname2 = #{examname2},
+			examtext2 = #{examtext2}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE oa_seal_use SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

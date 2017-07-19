@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.thinkgem.jeesite.modules.oa.dao.fixedassets.PerishableSerialDao">
+    
+	<sql id="perishableSerialColumns">
+		a.id AS "id",
+		a.title AS "title",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+	
+	<sql id="perishableSerialJoins">
+		
+	</sql>
+    
+    <select id="selectSerialById" resultType="Integer" resultMap="perishableSerialResult">
+    	select
+		a.title AS "title",
+		a.proc_ins_id AS "procInsId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag",
+		b.serial_id as "serial_id",
+		b.amount as "amount",
+		b.perishable_id as "perishable_id",
+		b.id as "apply_id"
+		FROM perishable_serial a
+		LEFT JOIN perishable_apply b ON b.serial_id = a.id
+		WHERE a.id = #{id}
+    </select>
+    
+    <resultMap id="perishableSerialResult" type="PerishableSerial">
+		<id property="id" column="id"/>
+		<result property="title" column="title"/>
+		<result property="procInsId" column="proc_ins_id"/>
+		<result property="createBy.id" column="create_by"/>
+		<result property="createDate" column="create_date"/>
+		<result property="updateBy.id" column="update_by"/>
+		<result property="updateDate" column="update_date"/>
+		<result property="remarks" column="remarks"/>
+		<result property="delFlag" column="del_flag"/>
+		<collection property="applyList" 
+		ofType="com.thinkgem.jeesite.modules.oa.entity.fixedassets.PerishableApply" >
+			<id property="id" column="apply_id"/>
+			<result property="serialId" column="serial_id"/>
+			<result property="amount" column="amount"/>
+			<result property="perishable.id" column="perishable_id"/>
+		</collection>
+	</resultMap>
+    
+     <select id="getByProcInsId" resultType="PerishableSerial">
+		SELECT 
+		<include refid="perishableSerialColumns"/>
+		FROM perishable_serial a
+		<include refid="perishableSerialJoins"/>
+		WHERE a.proc_ins_id = #{procInsId}
+	</select>
+    
+	<select id="get" resultType="PerishableSerial">
+		SELECT 
+			<include refid="perishableSerialColumns"/>
+		FROM perishable_serial a
+		<include refid="perishableSerialJoins"/>
+		WHERE a.id = #{id}
+	</select>
+	
+	<select id="findList" resultType="PerishableSerial">
+		SELECT 
+			<include refid="perishableSerialColumns"/>
+		FROM perishable_serial a
+		<include refid="perishableSerialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="findAllList" resultType="PerishableSerial">
+		SELECT 
+			<include refid="perishableSerialColumns"/>
+		FROM perishable_serial a
+		<include refid="perishableSerialJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+		</where>		
+		<choose>
+			<when test="page !=null and page.orderBy != null and page.orderBy != ''">
+				ORDER BY ${page.orderBy}
+			</when>
+			<otherwise>
+				ORDER BY a.update_date DESC
+			</otherwise>
+		</choose>
+	</select>
+	
+	<insert id="insert">
+		INSERT INTO perishable_serial(
+			id,
+			title,
+			proc_ins_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+			#{id},
+			#{title},
+			#{procInsId},
+			#{createBy.id},
+			#{createDate},
+			#{updateBy.id},
+			#{updateDate},
+			#{remarks},
+			#{delFlag}
+		)
+	</insert>
+	
+	<update id="update">
+		UPDATE perishable_serial SET 	
+			title = #{title},
+			proc_ins_id = #{procInsId},
+			update_by = #{updateBy.id},
+			update_date = #{updateDate},
+			remarks = #{remarks}
+		WHERE id = #{id}
+	</update>
+	
+	<update id="delete">
+		UPDATE perishable_serial SET 
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+	
+</mapper>

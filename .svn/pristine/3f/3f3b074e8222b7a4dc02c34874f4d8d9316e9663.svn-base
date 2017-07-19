@@ -1,0 +1,137 @@
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ include file="/WEB-INF/views/include/taglib.jsp"%>
+<html>
+<head>
+	<title>印章使用申请</title>
+	<meta name="decorator" content="default"/>
+	<script type="text/javascript">
+		$(document).ready(function() {
+	
+				$("#btnCancle2").click(function(){
+					$("#flag").val("1");
+					
+				})
+			//$("#name").focus();
+			$("#inputForm").validate({
+				submitHandler: function(form){
+					oaLoading('正在提交，请稍等...');
+					form.submit();
+				},
+				errorContainer: "#messageBox",
+				errorPlacement: function(error, element) {
+					$("#messageBox").text("输入有误，请先更正。");
+					if (element.is(":checkbox")||element.is(":radio")||element.parent().is(".input-append")){
+						error.appendTo(element.parent().parent());
+					} else {
+						error.insertAfter(element);
+					}
+				}
+			});
+		});
+	</script>
+</head>
+<body>
+<div class="ibox-title">
+	<span style="font-size: 18px;font-weight: bold;">用印使用详情</span>
+		<div class="ibox-tools">
+			<!-- <a class="collapse-link">
+				<i class="fa fa-chevron-up"></i>
+			</a>
+			<a class="dropdown-toggle" data-toggle="dropdown" href="form_basic.html#">
+				<i class="fa fa-wrench"></i>
+			</a>
+			
+			<a class="close-link">
+				<i class="fa fa-times"></i>
+			</a> -->
+		</div>
+	</div>
+
+	<form:form id="inputForm" modelAttribute="oaSealUse" action="${ctx}/oa/oaSealUse/save" method="post" class="form-horizontal">
+		<legend>${title }</legend>
+		<input type="hidden" name="flag" value="0" id="flag">
+		<form:hidden path="id"/>
+		<sys:message content="${message}"/>		
+		
+		
+		<div class="control-group">
+			<label class="control-label">文件编号：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.fileId}" readonly="readonly" class="form-control" style="width:40%;"/>	
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申&nbsp;&nbsp;请&nbsp;&nbsp;人：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.createBy.name}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">所在部门：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.officeName}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">申请日期：</label>
+			<div class="controls">
+			<input type="text" value="<fmt:formatDate value="${oaSealUse.createDate}" pattern="yyyy-MM-dd HH:mm:ss" /> " readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">印章类型：</label>
+			<div class="controls"> 
+				<input type="text" value="${oaSealUse.sealType}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">携带外出：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.isout}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">摘要事项：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.matter}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">   经理签字：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.examname}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">经理意见：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.examtext}" readonly="readonly" class="form-control" style="width:40%;"/>				
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">归还签字：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.examname2}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		<div class="control-group">
+			<label class="control-label">归还意见：</label>
+			<div class="controls">
+				<input type="text" value="${oaSealUse.examtext2}" readonly="readonly" class="form-control" style="width:40%;"/>
+			</div>
+		</div>
+		
+		<div class="form-actions" style="text-align:left; margin-top:15px;margin-bottom: 15px;">			
+			<input id="btnCancel" class="btn" type="button" value="返 回" onclick="history.go(-1)"/>
+			<act:flow-back-btn></act:flow-back-btn>
+			<c:if test="${task != null}">
+				&nbsp;<input onclick='btnPNGshow("${task.processDefinitionId}/${task.executionId}");' class="btn" type="button" value="流程跟踪" />
+		</c:if>
+		</div>
+		
+	</form:form>
+	<c:if test="${not empty oaSealUse.id}">
+		<act:histoicFlow procInsId="${oaSealUse.procInsId}" />
+	</c:if>
+</body>
+</html>

@@ -1,0 +1,125 @@
+package com.thinkgem.jeesite.mobile.modules.oa.web.notify.util;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.thinkgem.jeesite.common.utils.SpringContextHolder;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.sys.entity.Dict;
+import com.thinkgem.jeesite.modules.sys.utils.DictUtils;
+
+public class NotifyUtil {
+	
+	private static OaNotifyService oaNotifyService = SpringContextHolder.getBean(OaNotifyService.class);
+	
+	/**字典中定义的通知类型*/
+	private final static String OA_NOTIFY_TYPE = "oa_notify_type";
+	
+	private final static String NEIBU = "群消息";
+	
+	/**
+	 * 按照类型获取通知数量
+	 * @param oaNotify
+	 * @return
+	 */
+	public static Map<String, Integer> getMessageMap(OaNotify oaNotify)
+	{
+		Map<String, Integer> messageMap = new HashMap<String, Integer>();
+		
+		List<Dict> dictList = DictUtils.getDictList(OA_NOTIFY_TYPE);
+		
+		Integer sum = 0;
+		
+		for (Dict dict : dictList) 
+		{
+			String value = dict.getValue();
+			
+			//排除内部通知
+			if (!DictUtils.getDictValue(NEIBU, OA_NOTIFY_TYPE, "").equals(value))
+			{	
+				oaNotify.setType(value);
+				
+				List<OaNotify> list = oaNotifyService.findList(oaNotify);
+				
+				if (list != null)
+				{
+					messageMap.put(value, list.size());
+					
+					sum += list.size();
+				}
+			}
+		}
+		
+		messageMap.put("sum", sum);
+		
+		if (messageMap.size() > 0)
+			return messageMap;
+		
+		return null;
+	}
+	
+	public static boolean hasMessages()
+	{
+		OaNotify oaNotify = new OaNotify();
+		
+		oaNotify.setSelf(true);
+
+		oaNotify.setMess(true);
+		
+		oaNotify.setNotRead(true);
+		
+		Map<String, Integer> messageMap = getMessageMap(oaNotify);
+		
+		if (messageMap.get("sum") > 0)
+			return true;
+		
+		return false;
+	}
+	
+	/**
+	 * 	/**
+	 * 
+	 * 发送流程信息通知
+	 * 流程
+	 * url:@@proNotify@@/oa/a/oa/oaOvertime/exam?id=
+	 * 
+	 * title:请假申请流程【2017-03-07】已办结
+
+	 * @param url 流程路径
+	 * @param title
+	 * @param userId
+	 */
+	public void sendMsg(String url, String title, String userId) {
+		OaNotify oaNotify = new OaNotify();
+		oaNotify.setContent(url);// 注入@@proNotify@@作为超链接的注解，前台判断
+		oaNotify.setType("4");// 流程通知配置为4
+		oaNotify.setStatus("1");// 貌似是已发
+		oaNotify.setTitle(title);
+		oaNotify.setOaNotifyRecordIds(userId);
+		oaNotifyService.save(oaNotify);
+	}
+	
+	/**
+	 * 获取我未读通知数目
+	 * @return
+	 */
+	public static Integer getMyNotifyNum()
+	{
+		OaNotify oaNotify = new OaNotify(); 
+		
+		oaNotify.setMobile(true);
+		
+		oaNotify.setSelf(true);
+		
+		oaNotify.setNotRead(true);
+		
+		List<OaNotify> list = oaNotifyService.findMyAllList(oaNotify);
+		
+		if (list != null)
+			return list.size();
+		
+		return 0;
+	}
+}

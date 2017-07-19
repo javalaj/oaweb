@@ -1,0 +1,239 @@
+/**
+ * Copyright &copy; 2012-2016 <a href="https://github.com/thinkgem/jeesite">JeeSite</a> All rights reserved.
+ */
+package com.thinkgem.jeesite.modules.oa.web.doc;
+
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.thinkgem.jeesite.common.config.Global;
+import com.thinkgem.jeesite.common.persistence.Page;
+import com.thinkgem.jeesite.common.web.BaseController;
+import com.thinkgem.jeesite.common.utils.StringUtils;
+import com.thinkgem.jeesite.modules.oa.entity.OaNotify;
+import com.thinkgem.jeesite.modules.oa.entity.doc.OaDoc;
+import com.thinkgem.jeesite.modules.oa.entity.doc.OaDocDownload;
+import com.thinkgem.jeesite.modules.oa.entity.doc.OaDocReadApply;
+import com.thinkgem.jeesite.modules.oa.service.OaNotifyService;
+import com.thinkgem.jeesite.modules.oa.service.doc.OaDocDownloadService;
+import com.thinkgem.jeesite.modules.oa.service.doc.OaDocReadApplyService;
+import com.thinkgem.jeesite.modules.oa.service.doc.OaDocService;
+import com.thinkgem.jeesite.modules.sys.entity.User;
+import com.thinkgem.jeesite.modules.sys.service.SystemService;
+import com.thinkgem.jeesite.modules.sys.utils.UserUtils;
+
+/**
+ * 文档管理Controller
+ * @author 李廷龙
+ * @version 2017-02-28
+ */
+@Controller
+@RequestMapping(value = "${adminPath}/oa/doc/oaDoc")
+public class OaDocController extends BaseController {
+
+	@Autowired
+	private OaDocService oaDocService;
+	@Autowired
+	SystemService systemService;
+	@Autowired
+	private OaNotifyService oaNotifyService;
+	@Autowired
+	private OaDocDownloadService oaDocDownloadService;
+	
+	@Autowired
+	private OaDocReadApplyService oaDocReadApplyService;
+	
+	@ModelAttribute
+	public OaDoc get(@RequestParam(required=false) String id) {
+		OaDoc entity = null;
+		if (StringUtils.isNotBlank(id)){
+			entity = oaDocService.get(id);
+		}
+		if (entity == null){
+			entity = new OaDoc();
+		}
+		return entity;
+	}
+	
+	@RequiresPermissions("oa:doc:oaDoc:view")
+	@RequestMapping(value = {"list", ""})
+	public String list(OaDoc oaDoc, HttpServletRequest request, HttpServletResponse response, Model model) {
+		if (!UserUtils.hasRole(Global.getConfig("docManagerRoleEnname"))) {
+			oaDoc.setCurrentUserId(UserUtils.getUser().getId());
+		}
+		
+		Page<OaDoc> page = oaDocService.findPage(new Page<OaDoc>(request, response), oaDoc); 
+		model.addAttribute("page", page);
+		return "modules/oa/doc/oaDocList";
+	}
+	
+	@RequiresPermissions("oa:doc:oaDoc:view")
+	@RequestMapping(value = {"officeList"})
+	public String officeList(OaDoc oaDoc, HttpServletRequest request, HttpServletResponse response, Model model) {
+		oaDoc.setIsPublic(OaDoc.DOC_TYPE_OFFICE);
+		oaDoc.setOffice(UserUtils.getUser().getOffice());
+		oaDoc.setLoanUserId(UserUtils.getUser().getId());
+		Page<OaDoc> page = oaDocService.findPage(new Page<OaDoc>(request, response), oaDoc); 
+		model.addAttribute("page", page);
+		return "modules/oa/doc/oaDocOfficeList";
+	}
+	
+	@RequiresPermissions("oa:doc:oaDoc:view")
+	@RequestMapping(value = {"publicList"})
+	public String publicList(OaDoc oaDoc, HttpServletRequest request, HttpServletResponse response, Model model) {
+		oaDoc.setIsPublic(OaDoc.DOC_TYPE_PUBLIC);
+		oaDoc.setLoanUserId(UserUtils.getUser().getId());
+		Page<OaDoc> page = oaDocService.findPage(new Page<OaDoc>(request, response), oaDoc); 
+		model.addAttribute("page", page);
+		return "modules/oa/doc/oaDocPublicList";
+	}
+
+	@RequiresPermissions("oa:doc:oaDoc:view")
+	@RequestMapping(value = "form")
+	public String form(OaDoc oaDoc, Model model) {
+		if (oaDoc.getIsNewRecord()){
+			oaDoc.setIsNeedLend(OaDoc.DOC_NOT_NEED_LEND);
+		}
+		model.addAttribute("oaDoc", oaDoc);
+		return "modules/oa/doc/oaDocForm";
+	}
+
+	@RequiresPermissions("oa:doc:oaDoc:edit")
+	@RequestMapping(value = "save")
+	public String save(OaDoc oaDoc, Model model, RedirectAttributes redirectAttributes) {
+		if (!beanValidator(model, oaDoc)){
+			return form(oaDoc, model);
+		}
+		boolean isNewPublicDoc=false;
+		if(StringUtils.isEmpty(oaDoc.getId())){
+			if(StringUtils.equals(OaDoc.DOC_TYPE_PUBLIC,oaDoc.getIsPublic() )){
+				oaDoc.setOffice(null);
+				isNewPublicDoc=true;
+			}
+		}
+		oaDocService.save(oaDoc);
+		sendMessage(oaDoc,isNewPublicDoc);
+		addMessage(redirectAttributes, "保存文档信息成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/doc/oaDoc/?repage";
+	}
+	
+	public void sendMessage(OaDoc oaDoc,boolean isNewPublicDoc){
+		if(isNewPublicDoc){
+			List<User> lists=systemService.findAllList();
+			String base="";
+			for (User user : lists) {
+				if(!StringUtils.equals(UserUtils.getUser().getId(), user.getId())){
+					base+=user.getId()+",";
+				}
+			}
+			OaNotify oaNotify = new OaNotify();
+			oaNotify.setContent("@@proNotify@@/oa/a/oa/doc/oaDoc/publicList");// 注入@@proNotify@@作为超链接的注解，前台判断
+			oaNotify.setType("4");// 流程通知配置为4
+			oaNotify.setStatus("1");// 貌似是已发
+			oaNotify.setTitle(UserUtils.getUser().getName()+"刚刚上传了文档《"+oaDoc.getTitle()+"》，戳此查看");
+			oaNotify.setOaNotifyRecordIds(base);
+			oaNotifyService.save(oaNotify);
+			
+		}
+		
+	}
+	@RequiresPermissions("oa:doc:oaDoc:edit")
+	@RequestMapping(value = "delete")
+	public String delete(OaDoc oaDoc, RedirectAttributes redirectAttributes) {
+		oaDocService.delete(oaDoc);
+		addMessage(redirectAttributes, "删除文档信息成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/doc/oaDoc/?repage";
+	}
+	
+	@RequiresPermissions("oa:doc:oaDoc:edit")
+	@RequestMapping(value = "deleteGroup")
+	public String deleteGroup(String groupId, RedirectAttributes redirectAttributes) {
+		oaDocService.deleteGroup(groupId);;
+		addMessage(redirectAttributes, "删除文档信息成功");
+		return "redirect:"+Global.getAdminPath()+"/oa/doc/oaDoc/?repage";
+	}
+	
+	@RequestMapping(value = "readCounter")
+	public @ResponseBody Map<String,String> readCounter(String oaDocId,String downloadUserId){
+		System.out.println(oaDocId+":"+downloadUserId);
+		Map<String,String> map=new HashMap<String,String>();
+		map.put("result", "ok");
+		OaDocDownload oaDocDownload=new OaDocDownload();
+		oaDocDownload.setDownloadDoc(new OaDoc(oaDocId));
+		oaDocDownload.setDownloadUser(new User(downloadUserId));
+		oaDocDownloadService.save(oaDocDownload);
+		/*long yesterday=new Date().getTime()-24*60*60*1000;
+		Date yesterdayDate=new Date(yesterday);
+		try {
+			oaCollectCodingService.asyncHsqkCloud(yesterdayDate);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put("info", "同步异常");
+			map.put("result", "wrong");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			map.put("info", "同步异常");
+			map.put("result", "wrong");
+		}*/
+		
+		return map;
+	}
+	
+	@RequestMapping(value = "getOaDocListCount")
+	public @ResponseBody Map<String,Object> getOaDocListCount(){
+		Map<String,Object> map=new HashMap<String,Object>();
+		map.put("status", "ok");
+		try {
+			OaDoc oaDoc=new OaDoc();
+			if (!UserUtils.hasRole(Global.getConfig("docManagerRoleEnname"))) {
+				oaDoc.setCurrentUserId(UserUtils.getUser().getId());
+			}
+			Integer countCommon=oaDocService.getOaDocListCount(oaDoc);
+			
+			oaDoc=new OaDoc();
+			oaDoc.setIsPublic(OaDoc.DOC_TYPE_OFFICE);
+			oaDoc.setOffice(UserUtils.getUser().getOffice());
+			oaDoc.setLoanUserId(UserUtils.getUser().getId());
+			Integer countOffice=oaDocService.getOaDocListCount(oaDoc);
+			
+			oaDoc=new OaDoc();
+			oaDoc.setIsPublic(OaDoc.DOC_TYPE_PUBLIC);
+			oaDoc.setLoanUserId(UserUtils.getUser().getId());
+			Integer countPublic=oaDocService.getOaDocListCount(oaDoc);
+			
+			OaDocReadApply oaDocReadApply=new OaDocReadApply();
+			oaDocReadApply.setLendUser(UserUtils.getUser());
+			Integer countReadApply=oaDocReadApplyService.getOaDocReadApplyListCount(oaDocReadApply);
+			map.put("countCommon", countCommon);
+			map.put("countOffice", countOffice);
+			map.put("countPublic", countPublic);
+			map.put("countReadApply", countReadApply);
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			map.put("status", "wrong");
+			map.put("info", e.getMessage());
+		}
+		
+		
+		return map;
+	}
+
+}

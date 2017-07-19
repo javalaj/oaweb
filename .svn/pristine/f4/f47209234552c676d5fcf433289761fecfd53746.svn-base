@@ -1,0 +1,243 @@
+.rest-index {
+	font-family: "Helvetica Neue", "PingFang SC", ΢���ź�, Tahoma, Arial, sans-serif;
+	font-size: 13px;
+	color: #666c77;
+}
+.rest-index .navbar-static-side {
+    background: #eff4f8;
+}
+
+.rest-index .navbar-fixed-top, .navbar-static-top {
+    background: #eff4f8;
+}
+
+.rest-index .nav-header{
+    padding:16px 20px;
+}
+
+.rest-index .nav-header .login-panel{
+    font-size: 22px;
+    color: #1b81d3;
+}
+
+.rest-index .nav > li.active {
+    background: #e3e8ec;
+}
+.rest-index .nav > li.active > a {
+    color: #35a5e7;
+    backgroud-color:#eff4f8;
+}
+.rest-index .nav li>a{
+    color: #434f66;
+}
+
+.rest-index .content-tabs {
+    border-bottom: solid 1px #1a81d0;
+    height:41px;
+}
+
+.rest-index .page-tabs a.active {
+    background: #1a81d0;
+    color: #ffffff;
+}
+
+.rest-index .wrapper-content{
+ background: #ffffff;
+}
+
+.rest-index .news{
+    top: -10px;
+}
+
+.rest-index #user-switch{
+    padding-right: 30px;
+}
+
+.rest-index .user-selected{
+    position: relative;
+}
+
+.rest-index .navbar-top-links li a {
+    padding: 10px 10px;
+}
+
+.rest-index .user-selected .user-flag{
+    height: 40px;
+    float: left;
+    border-radius: 50%;
+}
+.rest-index .user-selected span{
+    width: 60px;
+    display: inline-block;
+    line-height: 12px;
+    margin-left:5px;
+}
+
+.rest-index .navbar-right{ height: 50px;}
+
+.rest-index .user-selected i{
+    font-size: 14px;
+    position: absolute;
+    top:15px;
+    right:-15px;
+}
+
+.rest-index .navbar-header{
+    width: 50%;
+}
+
+.rest-index .form-control{
+    width: 80%;
+    float: left;
+    height: 38px;
+    line-height: 38px;
+    margin: 10px 26px;
+    padding-top: 10px;
+}
+.rest-index .form-control span{
+    float: left;
+}
+.rest-index .control-txt{
+    width: 95%;
+    text-overflow: ellipsis;
+    border: none;
+    line-height: normal;
+    float: left;
+    margin-left: 20px;
+}
+
+.rest-index .btn-scroll{
+    background: #1a81d0;
+    border-color:#1a81d0;
+}
+
+.rest-index .btn-scroll i{
+    color: #fff;
+}
+
+.rest-index .content-tabs-rest{
+    border-bottom: 1px solid #1a81d0;
+    height: 41px;
+}
+.rest-index .content-tabs-rest .page-tabs J_menuTabs{
+	height:40px;
+}
+.rest-index .dropdown .fa{
+	font-size:18px;
+	line-height:45px;
+}
+
+.rest-index .dropdown-toggle{
+    display: block;
+    height: 60px;
+    float: left;
+    line-height: 60px;
+    color: #35a5e7;
+    padding-left: 2%;
+    font-size: 21px;
+}
+
+.rest-index .count-info{
+	width: 100%;
+    height: 60px;
+    line-height: 3;
+}
+
+.rest-index .count-info span{
+    margin-right: 4px;
+}
+
+.rest-index .count-info .label{
+	left: 17px;
+    right: 2px;
+    top: 17px;
+    margin-right: 0;
+}
+
+.rest-index .btn-primary{
+	background-color: #35a5e7;
+    border-color: #35a5e7;
+}
+.rest-index .page-tabs a.active{
+	background:#35a5e7;
+}
+.rest-index .navbar-default .nav > li > a:hover, .navbar-default .nav > li > a:focus{
+	background-color:#35a5e7;
+	color:#fff;
+}
+
+.rest-index .pull-right{
+	float: left !important;
+    margin-left: 10px;
+}
+
+/* ���ֹ���������ʽ */
+.TickerNews {
+	width: 80%;
+    height: 36px;
+    line-height: 36px;
+    float: left;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin: 12px 12px;
+    position: relative;
+}
+
+.ti_wrapper {
+    width: 90%;
+    position: relative;
+    overflow: hidden;
+    height: 36px;
+}
+.leftside{
+    float: left;
+}
+.leftside span{
+    padding: 10px;
+}
+.ti_slide {
+    width: 30000px;
+    position: relative;
+    left: 0;
+    top: 0;
+}
+.ti_content {
+    width: 8000px;
+    position: relative;
+    float:left;
+}
+.ti_news { 
+	margin-left: 50px; 
+}
+
+#myinfo:hover{
+	backgroud-color:#eff4f8;
+}
+
+#myinfo .dropdown-menu{
+	padding:0;
+}
+
+#myinfo .dropdown-menu li a{
+	font-size:12px;
+	text-align:center;
+	margin:0
+}
+.btn.btn-white.btn-sm{
+	padding:4px 10px;
+	margin-top:2px;
+}
+
+/* 滚动条 */
+.TickerNews marquee{
+	width:90%;
+	height:36px;
+	line-height:34px;
+}
+.TickerNews marquee a{
+	margin-right:100px;
+}
+.TickerNews marquee a:hover{
+	color:#35a5e7;
+}
